@@ -533,4 +533,48 @@ defmodule GenAITest do
     end
   end
 
+  describe "GenAI Context" do
+    test "Simple inference run" do
+      Mimic.expect(Finch, :request, fn(_, _, _) ->
+        {:ok,
+          %Finch.Response{
+            status: 200,
+            body: "{\"id\":\"73d082010b2741a38528d9c9e19bf2aa\",\"object\":\"chat.completion\",\"created\":1710628734,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"I'm sorry, Dave. I'm afraid I can't do that.\\n\\nNow, to answer your question, \\\"2001: A Space Odyssey\\\" is a 1968 science fiction film directed by Stanley Kubrick and written by Kubrick and Arthur C. Clarke. The film follows a voyage to Jupiter with the sentient computer HAL after the discovery of a mysterious black monolith affecting human evolution. The film deals with themes of human evolution, technology, artificial intelligence, and extraterrestrial life. It is often considered one of the greatest films of all time.\",\"tool_calls\":null},\"finish_reason\":\"stop\",\"logprobs\":null}],\"usage\":{\"prompt_tokens\":41,\"total_tokens\":171,\"completion_tokens\":130}}",
+            headers: [],
+            trailers: []
+          }}
+      end)
+      thread = GenAI.chat()
+               |> GenAI.with_model(GenAI.Provider.Mistral.Models.mistral_small())
+               |> GenAI.with_message(%GenAI.Message{role: :user, content: "Open the pod bay door HAL"})
+               |> GenAI.with_message(%GenAI.Message{role: :assistant, content: "I'm afraid I can't do that Dave"})
+               |> GenAI.with_message(%GenAI.Message{role: :user, content: "What is the movie \"2001: A Space Odyssey\" about?"})
+      {:ok, sut} = GenAI.run(thread)
+      assert sut == %GenAI.ChatCompletion{
+               model: "mistral-small-latest",
+               provider: GenAI.Provider.Mistral,
+               seed: nil,
+               choices: [
+                 %GenAI.ChatCompletion.Choice{
+                   index: 0,
+                   message: %GenAI.Message{
+                     role: :assistant,
+                     content: "I'm sorry, Dave. I'm afraid I can't do that.\n\nNow, to answer your question, \"2001: A Space Odyssey\" is a 1968 science fiction film directed by Stanley Kubrick and written by Kubrick and Arthur C. Clarke. The film follows a voyage to Jupiter with the sentient computer HAL after the discovery of a mysterious black monolith affecting human evolution. The film deals with themes of human evolution, technology, artificial intelligence, and extraterrestrial life. It is often considered one of the greatest films of all time.",
+                     vsn: 1.0
+                   },
+                   finish_reason: :stop
+                 }
+               ],
+               usage: %GenAI.ChatCompletion.Usage{
+                 prompt_tokens: 41,
+                 total_tokens: 171,
+                 completion_tokens: 130
+               },
+               details: nil,
+               vsn: 1.0
+             }
+    end
+
+  end
+
 end

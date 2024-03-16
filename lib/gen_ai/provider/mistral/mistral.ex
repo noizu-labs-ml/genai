@@ -151,5 +151,15 @@ defmodule GenAI.Provider.Mistral do
   end
 
 
+  defmodule Models do
+    def mistral_small() do
+      %GenAI.Model{
+        model: "mistral-small-latest",
+        provider: GenAI.Provider.Mistral
+      }
+    end
+
+
+  end
 
 end
