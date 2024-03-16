@@ -150,7 +150,7 @@ defmodule GenAITest do
       assert choice.message.__struct__ == GenAI.Message.ToolCall
       [fc] = choice.message.tool_calls
       assert fc.function.name == "random_fact"
-      assert fc.function.arguments["subject"] == "Cats"
+      assert fc.function.arguments[:subject] == "Cats"
     end
 
 
@@ -174,7 +174,7 @@ defmodule GenAITest do
             content: "Okay, here is a tool call to generate a random fact about cats:\n\n",
             tool_calls: [
               %{
-                function: %{name: "random_fact", arguments: %{"subject" => "Cats"}},
+                function: %{name: "random_fact", arguments: %{:subject => "Cats"}},
                 id: "call_euQN3UTzL8HNn3jc2TzFnz",
                 type: "function"
               }
@@ -275,6 +275,85 @@ defmodule GenAITest do
       assert choice.message.content == "Hello there!"
       assert choice.finish_reason == :stop
     end
+
+
+    test "chat - with function calls" do
+
+      Mimic.expect(Finch, :request, fn(_, _, _) ->
+        {:ok,
+          %Finch.Response{
+            status: 200,
+            body: "{\n  \"candidates\": [\n    {\n      \"content\": {\n        \"parts\": [\n          {\n            \"functionCall\": {\n              \"name\": \"random_fact\",\n              \"args\": {\n
+      \"subject\": \"Cats\"\n              }\n            }\n          }\n        ],\n        \"role\": \"model\"\n      },\n      \"finishReason\": \"STOP\",\n      \"index\": 0,\n      \"safetyRatings\": [\n        {\n          \"category\": \"HARM_CATEGORY_HARASSMENT\",\n          \"probability\": \"NEGLIGIBLE\"\n        },\n        {\n          \"category\": \"HARM_CATEGORY_SEXUALLY_EXPLICIT\",\n          \"probability\": \"NEGLIGIBLE\"\n        },\n        {\n          \"category\": \"HARM_CATEGORY_DANGEROUS_CONTENT\",\n          \"probability\": \"NEGLIGIBLE\"\n        },\n        {\n          \"category\": \"HARM_CATEGORY_HATE_SPEECH\",\n          \"probability\": \"NEGLIGIBLE\"\n        }\n      ]\n    }\n  ],\n  \"promptFeedback\": {\n    \"safetyRatings\": [\n      {\n        \"category\": \"HARM_CATEGORY_SEXUALLY_EXPLICIT\",\n        \"probability\": \"NEGLIGIBLE\"\n      },\n      {\n        \"category\": \"HARM_CATEGORY_HATE_SPEECH\",\n        \"probability\": \"NEGLIGIBLE\"\n      },\n      {\n        \"category\": \"HARM_CATEGORY_HARASSMENT\",\n        \"probability\": \"NEGLIGIBLE\"\n      },\n      {\n        \"category\": \"HARM_CATEGORY_DANGEROUS_CONTENT\",\n        \"probability\": \"NEGLIGIBLE\"\n      }\n    ]\n  }\n}\n",
+            headers: [],
+            trailers: []
+          }}
+      end)
+
+      {:ok, response} = GenAI.Provider.Gemini.chat(
+        [
+          %GenAI.Message{role: :user, content: "Tell me a random fact about cats using a tool call."},
+        ],
+        [random_fact_tool()],
+        [model: "gemini-pro"]
+      )
+      choice = List.first(response.choices)
+      assert choice.index == 0
+      assert choice.message.role == :assistant
+      assert choice.message.__struct__ == GenAI.Message.ToolCall
+      [fc] = choice.message.tool_calls
+      assert fc.function.name == "random_fact"
+      assert fc.function.arguments[:subject] == "Cats"
+    end
+
+
+    test "chat - with function call response" do
+
+      Mimic.expect(Finch, :request, fn(_, _, _) ->
+        {:ok,
+          %Finch.Response{
+            status: 200,
+            body: "{\n  \"candidates\": [\n    {\n      \"content\": {\n        \"parts\": [\n          {\n            \"text\": \"Cats have 230 bones, while humans only have 206\"\n          }\n        ],\n        \"role\": \"model\"\n      },\n      \"finishReason\": \"STOP\",\n      \"index\": 0,\n      \"safetyRatings\": [\n        {\n          \"category\": \"HARM_CATEGORY_SEXUALLY_EXPLICIT\",\n          \"probability\": \"NEGLIGIBLE\"\n        },\n        {\n          \"category\": \"HARM_CATEGORY_HATE_SPEECH\",\n          \"probability\": \"NEGLIGIBLE\"\n        },\n        {\n          \"category\": \"HARM_CATEGORY_HARASSMENT\",\n          \"probability\": \"NEGLIGIBLE\"\n        },\n        {\n          \"category\": \"HARM_CATEGORY_DANGEROUS_CONTENT\",\n          \"probability\": \"NEGLIGIBLE\"\n        }\n      ]\n    }\n  ]\n}\n",
+            headers: [],
+            trailers: []
+          }}
+      end)
+
+      {:ok, response} = GenAI.Provider.Gemini.chat(
+        [
+          %GenAI.Message{role: :user, content: "Tell me a random fact about cats using a tool call."},
+          %GenAI.Message.ToolCall{
+            role: :assistant,
+            content: "Okay, here is a tool call to generate a random fact about cats:\n\n",
+            tool_calls: [
+              %{
+                function: %{name: "random_fact", arguments: %{subject: "Cats"}},
+                id: "call_euQN3UTzL8HNn3jc2TzFnz",
+                type: "function"
+              }
+            ],
+            vsn: 1.0
+          },
+          %GenAI.Message.ToolResponse{
+            response: %{
+              body: "Cats have 230 bones, while humans only have 206"
+            },
+            tool_call_id: "call_euQN3UTzL8HNn3jc2TzFnz",
+            name: "random_fact"
+          }
+        ],
+        [random_fact_tool()],
+        [model: "gemini-pro"]
+      )
+      #IO.inspect(response, limit: :infinity, printable_limit: :infinity)
+      choice = List.first(response.choices)
+      assert choice.index == 0
+      assert choice.message.role == :assistant
+      assert choice.message.__struct__ == GenAI.Message
+      assert choice.message.content == "Cats have 230 bones, while humans only have 206"
+    end
+
+
   end
 
   describe "Mistral Provider" do
@@ -321,7 +400,7 @@ defmodule GenAITest do
       assert choice.message.__struct__ == GenAI.Message.ToolCall
       [fc] = choice.message.tool_calls
       assert fc.function.name == "random_fact"
-      assert fc.function.arguments["subject"] == "cats"
+      assert fc.function.arguments[:subject] == "cats"
     end
 
 
@@ -347,7 +426,7 @@ defmodule GenAITest do
               %{
                 function: %{
                   name: "random_fact",
-                  arguments: %{"category" => "animals", "subject" => "cats"}
+                  arguments: %{"category" => "animals", :subject => "cats"}
                 },
                 id: "call_CzTrgmcWofyDCVp9tgkomE",
                 type: "function"
@@ -448,7 +527,7 @@ defmodule GenAITest do
       assert choice.message.__struct__ == GenAI.Message.ToolCall
       [fc] = choice.message.tool_calls
       assert fc.function.name == "random_fact"
-      assert fc.function.arguments["subject"] == "cats"
+      assert fc.function.arguments[:subject] == "cats"
     end
 
 
@@ -473,7 +552,7 @@ defmodule GenAITest do
             content: nil,
             tool_calls: [
               %{
-                function: %{name: "random_fact", arguments: %{"subject" => "cats"}},
+                function: %{name: "random_fact", arguments: %{:subject => "cats"}},
                 id: "call_pSe98iKMXYxjNriBuEqQFltC",
                 type: "function"
               }
@@ -546,6 +625,8 @@ defmodule GenAITest do
       end)
       thread = GenAI.chat()
                |> GenAI.with_model(GenAI.Provider.Mistral.Models.mistral_small())
+               |> GenAI.with_setting(:temperature, 0.7)
+               |> GenAI.with_api_key(GenAI.Provider.Gemini, "invalid")
                |> GenAI.with_message(%GenAI.Message{role: :user, content: "Open the pod bay door HAL"})
                |> GenAI.with_message(%GenAI.Message{role: :assistant, content: "I'm afraid I can't do that Dave"})
                |> GenAI.with_message(%GenAI.Message{role: :user, content: "What is the movie \"2001: A Space Odyssey\" about?"})

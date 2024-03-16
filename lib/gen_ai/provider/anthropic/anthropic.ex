@@ -155,7 +155,7 @@ defmodule GenAI.Provider.Anthropic do
       parameters_json = Floki.find(invoke, "parameters") |> Floki.text()
 
       # Parse the parameters JSON string into a map
-      parameters = Jason.decode!(parameters_json)
+      parameters = Jason.decode!(parameters_json, keys: :atoms)
 
       # Create a new map with :tool_name and :parameters keys
       {:ok, short_uuid} = ShortUUID.encode(UUID.uuid4())

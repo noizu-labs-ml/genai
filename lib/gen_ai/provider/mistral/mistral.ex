@@ -133,7 +133,7 @@ defmodule GenAI.Provider.Mistral do
           (%{function: _} = x) ->
             {:ok, short_uuid} = ShortUUID.encode(UUID.uuid4())
             x
-            |> put_in([Access.key(:function), Access.key(:arguments)], Jason.decode!(x.function.arguments))
+            |> put_in([Access.key(:function), Access.key(:arguments)], Jason.decode!(x.function.arguments, keys: :atoms))
             |> put_in([Access.key(:id)], "call_#{short_uuid}")
             |> put_in([Access.key(:type)], "function")
         end)

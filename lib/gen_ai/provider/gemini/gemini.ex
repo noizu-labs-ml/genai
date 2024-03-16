@@ -45,12 +45,13 @@ defmodule GenAI.Provider.Gemini do
     body = %{contents: messages}
     body = if tools do
       x = Enum.map(tools, &GenAI.Provider.Gemini.ToolProtocol.tool/1)
-      Map.put(body, :tools, %{function_declarations: x})
+      Map.put(body, :tools, [%{function_declarations: x}])
     else
       body
     end
 
     call = api_call(:post, url, headers, body)
+    #|> IO.inspect(limit: :infinity, printable_limit: :infinity)
     with {:ok, %Finch.Response{status: 200, body: body}} <- call,
          {:ok, json} <- Jason.decode(body, keys: :atoms) do
       completion_from_json(model, json)
@@ -98,6 +99,22 @@ defmodule GenAI.Provider.Gemini do
           content: text
         }
         {:ok, msg}
+      %{
+        role: "model",
+        parts: [%{functionCall: %{name: name, args: arguments}}]
+      } ->
+        # TODO multi call support
+        {:ok, short_uuid} = ShortUUID.encode(UUID.uuid4())
+
+        call = %{
+          function: %{
+            name: name,
+            arguments: arguments,
+          },
+          id: "call_#{short_uuid}",
+          type: "function"
+        }
+        {:ok, %GenAI.Message.ToolCall{role: :assistant, content: "", tool_calls: [call]}}
     end
   end
 

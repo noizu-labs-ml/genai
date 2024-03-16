@@ -130,7 +130,7 @@ defmodule GenAI.Provider.OpenAI do
         x = Enum.map(tc, fn
           (%{function: _} = x) ->
             x
-            |> put_in([Access.key(:function), Access.key(:arguments)],Jason.decode!(x.function.arguments))
+            |> put_in([Access.key(:function), Access.key(:arguments)],Jason.decode!(x.function.arguments, keys: :atoms))
             #|> put_in([Access.key(:function), Access.key(:identifier)], UUID.uuid4())
         end)
         {:ok, %GenAI.Message.ToolCall{role: :assistant, content: content, tool_calls: x}}
