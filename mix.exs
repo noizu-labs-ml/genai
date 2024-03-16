@@ -32,6 +32,8 @@ defmodule GenAI.MixProject do
       {:ex_doc, "~> 0.28.3", only: [:dev, :test], optional: true, runtime: false}, # Documentation Provider
       {:finch, "~> 0.15"},
       {:jason, "~> 1.2"},
+      {:ymlr, "~> 4.0"},
+      {:yaml_elixir, "~> 2.9.0"},
       {:mimic, "~> 1.0.0", only: :test},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
       {:sweet_xml, "~> 0.7", only: :test}
