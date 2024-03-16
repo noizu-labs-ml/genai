@@ -72,6 +72,7 @@ defmodule GenAI.Provider.Anthropic do
            |> optional_field(:system, system_prompt)
            |> Map.put(:messages, Enum.map(messages, &GenAI.Provider.Anthropic.MessageProtocol.message/1))
     call = GenAI.Provider.api_call(:post, "#{@api_base}/v1/messages", headers, body)
+    # |> IO.inspect(limit: :infinity, printable_limit: :infinity)
     with {:ok, %Finch.Response{status: 200, body: body}} <- call,
          {:ok, json} <- Jason.decode(body, keys: :atoms) do
       chat_completion_from_json(json)
