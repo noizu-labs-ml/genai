@@ -157,7 +157,12 @@ defmodule GenAI.Provider.Anthropic do
       parameters = Jason.decode!(parameters_json)
 
       # Create a new map with :tool_name and :parameters keys
-      %{function: %{name: tool_name, identifier: "call_" <> UUID.uuid4(), arguments: parameters}}
+      {:ok, short_uuid} = ShortUUID.encode(UUID.uuid4())
+      %{
+        id: "call_#{short_uuid}",
+        type: "function",
+        function: %{name: tool_name, arguments: parameters}
+      }
     end)
     {outside_content, calls}
   end

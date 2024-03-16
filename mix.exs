@@ -4,7 +4,7 @@ defmodule GenAI.MixProject do
   def project do
     [
       app: :genai,
-      version: "0.1.0",
+      version: "0.0.1",
       elixir: "~> 1.16",
       start_permanent: Mix.env() == :prod,
       deps: deps()
@@ -30,6 +30,7 @@ defmodule GenAI.MixProject do
       # {:dep_from_git, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"}
       {:floki, ">= 0.30.0"},
       {:elixir_uuid, "~> 1.2"},
+      {:shortuuid, "~> 3.0"},
       {:junit_formatter, "~> 3.3", only: [:test]},
       {:ex_doc, "~> 0.28.3", only: [:dev, :test], optional: true, runtime: false}, # Documentation Provider
       {:finch, "~> 0.15"},

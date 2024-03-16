@@ -57,7 +57,7 @@ defmodule GenAI.Provider.OpenAI do
                 end)
            |> Map.put(:messages, Enum.map(messages, &GenAI.Provider.OpenAI.MessageProtocol.message/1))
     call = GenAI.Provider.api_call(:post, "#{@api_base}/v1/chat/completions", headers, body)
-
+    #IO.inspect(call, limit: :infinity, printable_limit: :infinity)
     with {:ok, %Finch.Response{status: 200, body: response_body}} <- call,
          {:ok, json} <- Jason.decode(response_body, keys: :atoms),
          {:ok, response} <- chat_completion_from_json(json) do

@@ -244,8 +244,6 @@ defmodule GenAITest do
         }
       end)
 
-
-
       {:ok, [h|_]} = GenAI.Provider.Mistral.models()
       assert h.model == "open-mistral-7b"
     end
@@ -278,6 +276,57 @@ defmodule GenAITest do
       [fc] = choice.message.tool_calls
       assert fc.function.name == "random_fact"
       assert fc.function.arguments["subject"] == "cats"
+    end
+
+
+    test "chat - with function call response" do
+
+      Mimic.expect(Finch, :request, fn(_, _, _) ->
+        {:ok,
+          %Finch.Response{
+            status: 200,
+            body: "{\"id\":\"49a7ddd8dead421784aff32558d27f69\",\"object\":\"chat.completion\",\"created\":1710623529,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"Here's a random fact about cats: Cats are awesome! Is there anything else you'd like to know?\",\"tool_calls\":null},\"finish_reason\":\"stop\",\"logprobs\":null}],\"usage\":{\"prompt_tokens\":153,\"total_tokens\":178,\"completion_tokens\":25}}",
+            headers: [],
+            trailers: []
+          }}
+      end)
+
+      {:ok, response} = GenAI.Provider.Mistral.chat(
+        [
+          %GenAI.Message{role: :user, content: "Tell me a random fact about cats using a tool call."},
+          %GenAI.Message.ToolCall{
+            role: :assistant,
+            content: "",
+            tool_calls: [
+              %{
+                function: %{
+                  name: "random_fact",
+                  arguments: %{"category" => "animals", "subject" => "cats"}
+                },
+                id: "call_CzTrgmcWofyDCVp9tgkomE",
+                type: "function"
+              }
+            ],
+            vsn: 1.0
+          },
+          %GenAI.Message.ToolResponse{
+            response: %{
+              body: "Cats are awesome, now there's a cat fact!"
+            },
+            tool_call_id: "call_CzTrgmcWofyDCVp9tgkomE"
+          }
+        ],
+        [random_fact_tool()],
+        [model: "mistral-small-latest"]
+      )
+      assert response.provider == GenAI.Provider.Mistral
+      assert response.model == "mistral-small-latest"
+      assert response.seed == nil
+      choice = List.first(response.choices)
+      assert choice.index == 0
+      assert choice.message.role == :assistant
+      assert choice.message.content == "Here's a random fact about cats: Cats are awesome! Is there anything else you'd like to know?"
+      assert choice.finish_reason == :stop
     end
 
     test "chat" do
@@ -355,6 +404,56 @@ defmodule GenAITest do
       assert fc.function.name == "random_fact"
       assert fc.function.arguments["subject"] == "cats"
     end
+
+
+
+    test "chat - with function call response" do
+
+      Mimic.expect(Finch, :request, fn(_, _, _) ->
+        {:ok,
+          %Finch.Response{
+            status: 200,
+            body: "{\n  \"id\": \"chatcmpl-93VRTHCMIdPNud23DjX3GHs2T2sV8\",\n  \"object\": \"chat.completion\",\n  \"created\": 1710622875,\n  \"model\": \"gpt-3.5-turbo-0125\",\n  \"choices\": [\n    {\n      \"index\": 0,\n      \"message\": {\n        \"role\": \"assistant\",\n        \"content\": \"Here's a random fact about cats: \\\"Cats are awesome, now there's a cat fact!\\\"\"\n      },\n      \"logprobs\": null,\n      \"finish_reason\": \"stop\"\n    }\n  ],\n  \"usage\": {\n    \"prompt_tokens\": 108,\n    \"completion_tokens\": 22,\n    \"total_tokens\": 130\n  },\n  \"system_fingerprint\": \"fp_4f2ebda25a\"\n}\n",
+            headers: [],
+            trailers: []
+          }}
+      end)
+
+      {:ok, response} = GenAI.Provider.OpenAI.chat(
+        [
+          %GenAI.Message{role: :user, content: "Tell me a random fact about cats using a tool call."},
+          %GenAI.Message.ToolCall{
+            role: :assistant,
+            content: nil,
+            tool_calls: [
+              %{
+                function: %{name: "random_fact", arguments: %{"subject" => "cats"}},
+                id: "call_pSe98iKMXYxjNriBuEqQFltC",
+                type: "function"
+              }
+            ],
+            vsn: 1.0
+          },
+          %GenAI.Message.ToolResponse{
+            response: %{
+              body: "Cats are awesome, now there's a cat fact!"
+            },
+            tool_call_id: "call_pSe98iKMXYxjNriBuEqQFltC"
+          }
+        ],
+        [random_fact_tool()],
+        [model: "gpt-3.5-turbo"]
+      )
+      assert response.provider == GenAI.Provider.OpenAI
+      assert response.model == "gpt-3.5-turbo-0125"
+      assert response.seed == nil
+      choice = List.first(response.choices)
+      assert choice.index == 0
+      assert choice.message.role == :assistant
+      assert choice.message.content == "Here's a random fact about cats: \"Cats are awesome, now there's a cat fact!\""
+      assert choice.finish_reason == :stop
+    end
+
 
     test "chat" do
       Mimic.expect(Finch, :request, fn(_, _, _) ->

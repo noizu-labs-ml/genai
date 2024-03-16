@@ -59,6 +59,7 @@ defmodule GenAI.Provider.Mistral do
                 end)
            |> Map.put(:messages, Enum.map(messages, &GenAI.Provider.Mistral.MessageProtocol.message/1))
     call = GenAI.Provider.api_call(:post, "#{@api_base}/v1/chat/completions", headers, body)
+    #IO.inspect(call, limit: :infinity, printable_limit: :infinity)
     with {:ok, %Finch.Response{status: 200, body: response_body}} <- call,
          {:ok, json} <- Jason.decode(response_body, keys: :atoms),
          {:ok, response} <- chat_completion_from_json(json) do
@@ -130,9 +131,11 @@ defmodule GenAI.Provider.Mistral do
       } ->
         x = Enum.map(tc, fn
           (%{function: _} = x) ->
+            {:ok, short_uuid} = ShortUUID.encode(UUID.uuid4())
             x
-            |> put_in([Access.key(:function), Access.key(:arguments)],Jason.decode!(x.function.arguments))
-            |> put_in([Access.key(:function), Access.key(:id)], "call_" <> UUID.uuid4())
+            |> put_in([Access.key(:function), Access.key(:arguments)], Jason.decode!(x.function.arguments))
+            |> put_in([Access.key(:id)], "call_#{short_uuid}")
+            |> put_in([Access.key(:type)], "function")
         end)
         {:ok, %GenAI.Message.ToolCall{role: :assistant, content: content, tool_calls: x}}
       %{
