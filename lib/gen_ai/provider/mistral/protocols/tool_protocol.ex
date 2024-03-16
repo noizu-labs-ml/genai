@@ -6,6 +6,6 @@ end
 
 defimpl GenAI.Provider.Mistral.ToolProtocol, for: GenAI.Tool.Function do
   def tool(subject) do
-    subject
+    %{type: :function, function: subject}
   end
 end

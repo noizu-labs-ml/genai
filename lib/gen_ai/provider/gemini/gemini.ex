@@ -36,13 +36,20 @@ defmodule GenAI.Provider.Gemini do
     }
   end
 
-  def chat(messages, _tools, settings) do
+  def chat(messages, tools, settings) do
     api_key = api_key(settings)
     headers = headers(settings)
     model = settings[:model] || throw "required"
     url = "https://generativelanguage.googleapis.com/v1beta/models/#{model}:generateContent?key=#{api_key}"
     messages = Enum.map(messages, &GenAI.Provider.Gemini.MessageProtocol.message/1)
     body = %{contents: messages}
+    body = if tools do
+      x = Enum.map(tools, &GenAI.Provider.Gemini.ToolProtocol.tool/1)
+      Map.put(body, :tools, %{function_declarations: x})
+    else
+      body
+    end
+
     call = api_call(:post, url, headers, body)
     with {:ok, %Finch.Response{status: 200, body: body}} <- call,
          {:ok, json} <- Jason.decode(body, keys: :atoms) do

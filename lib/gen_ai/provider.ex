@@ -20,6 +20,11 @@ defmodule GenAI.Provider do
     end
   end
 
+  def optional_field(body, _, nil), do: body
+  def optional_field(body, field, value) do
+    Map.put(body, field, value)
+  end
+
   def with_setting(body, setting, settings, default \\ nil) do
     case settings[setting] do
       nil ->

@@ -57,6 +57,7 @@ defmodule GenAI.Provider.OpenAI do
                 end)
            |> Map.put(:messages, Enum.map(messages, &GenAI.Provider.OpenAI.MessageProtocol.message/1))
     call = GenAI.Provider.api_call(:post, "#{@api_base}/v1/chat/completions", headers, body)
+
     with {:ok, %Finch.Response{status: 200, body: response_body}} <- call,
          {:ok, json} <- Jason.decode(response_body, keys: :atoms),
          {:ok, response} <- chat_completion_from_json(json) do
@@ -114,17 +115,34 @@ defmodule GenAI.Provider.OpenAI do
       %{
         role: "assistant",
         content: content,
+        tool_calls: nil
       } ->
         msg = %GenAI.Message{
           role: :assistant,
           content: content
         }
         {:ok, msg}
-      #      %{
-      #        role: "assistant",
-      #        content: "",
-      #        tool_calls: temp
-      #      } -> {:ok, :wip}
+      %{
+        role: "assistant",
+        content: content,
+        tool_calls: tc
+      } ->
+        x = Enum.map(tc, fn
+          (%{function: _} = x) ->
+            x
+            |> put_in([Access.key(:function), Access.key(:arguments)],Jason.decode!(x.function.arguments))
+            #|> put_in([Access.key(:function), Access.key(:identifier)], UUID.uuid4())
+        end)
+        {:ok, %GenAI.Message.ToolCall{role: :assistant, content: content, tool_calls: x}}
+      %{
+        role: "assistant",
+        content: content,
+      } ->
+        msg = %GenAI.Message{
+          role: :assistant,
+          content: content
+        }
+        {:ok, msg}
     end
   end
 end

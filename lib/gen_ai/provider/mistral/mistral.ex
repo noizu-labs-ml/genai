@@ -123,11 +123,27 @@ defmodule GenAI.Provider.Mistral do
           content: content
         }
         {:ok, msg}
-#      %{
-#        role: "assistant",
-#        content: "",
-#        tool_calls: temp
-#      } -> {:ok, :wip}
+      %{
+        role: "assistant",
+        content: content,
+        tool_calls: tc
+      } ->
+        x = Enum.map(tc, fn
+          (%{function: _} = x) ->
+            x
+            |> put_in([Access.key(:function), Access.key(:arguments)],Jason.decode!(x.function.arguments))
+            |> put_in([Access.key(:function), Access.key(:id)], "call_" <> UUID.uuid4())
+        end)
+        {:ok, %GenAI.Message.ToolCall{role: :assistant, content: content, tool_calls: x}}
+      %{
+        role: "assistant",
+        content: content,
+      } ->
+        msg = %GenAI.Message{
+          role: :assistant,
+          content: content
+        }
+        {:ok, msg}
     end
   end
 

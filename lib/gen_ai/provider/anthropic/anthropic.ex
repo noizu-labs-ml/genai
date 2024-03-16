@@ -20,11 +20,56 @@ defmodule GenAI.Provider.Anthropic do
     ]
   end
 
-  def chat(messages, _tools, settings) do
+  defp tool_system_prompt(nil), do: nil
+  defp tool_system_prompt([]), do: nil
+  defp tool_system_prompt(tools) do
+    tools = Enum.map(tools, &GenAI.Provider.Anthropic.ToolProtocol.tool/1)
+            |> Jason.encode!()
+            |> Jason.decode!()
+    tools = %{tools: tools}
+    with {:ok, yaml} <- Ymlr.document(tools) do
+      yaml = String.trim_leading(yaml, "---\n")
+      """
+      Tool Usage
+      ==============
+      The following tools are available for use in this conversation.
+      You may call them like this:
+      <function_calls>
+        <invoke>
+          <tool_name>$TOOL_NAME</tool_name>
+          <parameters>$PARAMETERS_JSON</parameters>
+        </invoke>
+      </function_calls>
+
+      Here  are the available tools:
+      ```yaml
+      #{yaml}
+      ```
+      """
+    end
+  end
+
+  def chat(messages, tools, settings) do
     headers = headers(settings)
+    system_prompt = settings[:system_prompt]
+
+    # todo inject stop sequence </function_calls>
+    tool_usage_prompt = tool_system_prompt(tools)
+
+    system_prompt = cond do
+      tool_usage_prompt ->
+        if system_prompt do
+          "#{system_prompt}\n-----\n#{tool_usage_prompt}"
+        else
+          tool_usage_prompt
+        end
+      :else -> system_prompt
+    end
+
     body = %{}
            |> with_required_setting(:model, settings)
            |> with_setting(:max_tokens, settings, 4096)
+           |> optional_field(:system, system_prompt)
            |> Map.put(:messages, Enum.map(messages, &GenAI.Provider.Anthropic.MessageProtocol.message/1))
     call = GenAI.Provider.api_call(:post, "#{@api_base}/v1/messages", headers, body)
     with {:ok, %Finch.Response{status: 200, body: body}} <- call,
@@ -74,8 +119,47 @@ defmodule GenAI.Provider.Anthropic do
   end
   def chat_message_from_json(json) do
     case json do
-      [%{type: "text", text: text}] -> {:ok, %GenAI.Message{role: :assistant, content: text}}
+      [%{type: "text", text: text}] ->
+        # check for tool usage
+        if String.contains?(text, "<function_calls>") do
+          {text, f} = extract_function_calls(text)
+          {:ok, %GenAI.Message.ToolCall{role: :assistant, content: text, tool_calls: f}}
+        else
+          {:ok, %GenAI.Message{role: :assistant, content: text}}
+        end
     end
+  end
+
+  def extract_function_calls(input) do
+    # Parse the HTML string
+    {:ok, html_tree} = Floki.parse_document(input)
+
+    # Extract the content inside the <function_calls> tag
+    function_calls_content = Floki.find(html_tree, "function_calls")
+                             |> Floki.raw_html()
+                             |> String.replace("<function_calls>", "")
+                             |> String.replace("</function_calls>", "")
+
+    # Extract the content outside the <function_calls> tag
+    outside_content = Floki.raw_html(html_tree)
+                      |> String.replace("<function_calls>#{function_calls_content}</function_calls>", "")
+    # Extract calls, assign unique identifiers.
+    {:ok, html_tree} = Floki.parse_document(input)
+    # Find the <invoke> tags
+    invokes = Floki.find(html_tree, "invoke")
+    # Transform each <invoke> tag
+    calls = Enum.map(invokes, fn invoke ->
+      # Find the <tool_name> and <parameters> tags and get their text content
+      tool_name = Floki.find(invoke, "tool_name") |> Floki.text()
+      parameters_json = Floki.find(invoke, "parameters") |> Floki.text()
+
+      # Parse the parameters JSON string into a map
+      parameters = Jason.decode!(parameters_json)
+
+      # Create a new map with :tool_name and :parameters keys
+      %{function: %{name: tool_name, identifier: "call_" <> UUID.uuid4(), arguments: parameters}}
+    end)
+    {outside_content, calls}
   end
 
 end

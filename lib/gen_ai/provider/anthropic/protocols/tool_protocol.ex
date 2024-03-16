@@ -6,6 +6,7 @@ end
 
 defimpl GenAI.Provider.Anthropic.ToolProtocol, for: GenAI.Tool.Function do
   def tool(subject) do
+    # TODO xml
     subject
   end
 end
