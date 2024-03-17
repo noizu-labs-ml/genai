@@ -1,5 +1,11 @@
-
 defprotocol GenAI.Provider.Mistral.MessageProtocol do
+  @moduledoc """
+  This protocol defines how to transform GenAI message structs into a format compatible with the Mistral chat API.
+  """
+
+  @doc """
+  Transforms a GenAI message struct into a Mistral message format.
+  """
   def message(message)
 end
 
