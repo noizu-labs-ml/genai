@@ -21,7 +21,7 @@ This repository contains an Elixir library for interacting with various generati
 ```elixir
 def deps do
   [
-    {:gen_ai, "~> 0.0.1"}
+    {:genai, "~> 0.0.1"}
   ]
 end
 ```
