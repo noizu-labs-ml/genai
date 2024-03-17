@@ -1,4 +1,6 @@
-# GenAI Elixir Library: A Framework for Interacting with Generative AI
+GenAI Library
+====
+GenAI Elixir Library: A Framework for Interacting with Generative AI
 
 **Version:** 0.0.1
 
@@ -25,6 +27,23 @@ end
 ```
 
 2. Configure your API keys and other settings in your application environment.
+
+```
+
+config :genai, :mistral,
+   api_key: System.get_env("MISTRAL_API_KEY")
+
+config :genai, :gemini,
+       api_key: System.get_env("GEMINI_API_KEY")
+
+config :genai, :openai,
+       api_key: System.get_env("OPENAI_API_KEY")
+       api_org: System.get_env("OPTIONAL_OPENAI_API_ORG")
+
+config :genai, :anthropic,
+       api_key: System.get_env("ANTHROPIC_API_KEY")
+
+```
 
 3. Start interacting with generative AI models using the provided functions and protocols.
 
