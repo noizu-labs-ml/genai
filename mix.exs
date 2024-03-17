@@ -4,24 +4,69 @@ defmodule GenAI.MixProject do
   def project do
     [
       app: :genai,
+      name: "Noizu Labs, GenAI Wrapper",
+      description: description(),
+      package: package(),
       version: "0.0.1",
       elixir: "~> 1.16",
       start_permanent: Mix.env() == :prod,
-      deps: deps()
+      deps: deps(),
+      dialyzer: [
+        plt_file: {:no_warn, "priv/plts/project.plt"}
+      ],
+      test_coverage: [
+        summary: [
+          threshold: 40
+        ],
+        ignore_modules: [
+        ]
+      ]
+    ]
+  end
+
+
+  defp description() do
+    "Generative AI Wrapper: access multiple apis through single standardized interface."
+  end
+
+
+  defp package() do
+    [
+      licenses: ["MIT"],
+      links: %{
+        project: "https://github.com/noizu-labs-ml/genai",
+        noizu_labs: "https://github.com/noizu-labs",
+        noizu_labs_machine_learning: "https://github.com/noizu-labs-ml",
+        noizu_labs_scaffolding: "https://github.com/noizu-labs-scaffolding",
+        developer_github: "https://github.com/noizu"
+      }
     ]
   end
 
   # Run "mix help compile.app" to learn about applications.
   def application do
+    dev_apps = if Mix.env() in [:dev] do
+      [:ex_doc]
+    else
+      []
+    end
+
+    test_apps = if Mix.env() in [:test] do
+      [:junit_formatter]
+    else
+      []
+    end
+
     [
       mod: {
         GenAI.Application,
         [
         ]
       },
-      extra_applications: [:logger]
+      extra_applications: [:logger, :finch, :jason] ++ dev_apps ++ test_apps
     ]
   end
+  
 
   # Run "mix help deps" to learn about dependencies.
   defp deps do
