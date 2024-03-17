@@ -11,6 +11,14 @@ defmodule GenAI.MixProject do
       elixir: "~> 1.16",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
+      docs: [
+        main: "GenAI",
+        extras: [
+          "README.md",
+          "CONTRIBUTING.md",
+          "LICENSE"
+        ]
+      ],
       dialyzer: [
         plt_file: {:no_warn, "priv/plts/project.plt"}
       ],
@@ -66,7 +74,7 @@ defmodule GenAI.MixProject do
       extra_applications: [:logger, :finch, :jason] ++ dev_apps ++ test_apps
     ]
   end
-  
+
 
   # Run "mix help deps" to learn about dependencies.
   defp deps do
