@@ -1,6 +1,7 @@
 defmodule GenAI.ChatCompletion do
   @vsn 1.0
   defstruct [
+    id: nil,
     model: nil,
     provider: nil,
     seed: nil,

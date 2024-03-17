@@ -15,7 +15,7 @@ defmodule GenAI.Provider do
   def with_required_setting(body, setting, settings) do
     case settings[setting] do
       nil ->
-        throw "Missing required setting: #{setting}"
+        raise GenAI.RequestError, "Missing required setting: #{setting}"
       v -> Map.put(body, setting, v)
     end
   end

@@ -10,6 +10,7 @@ defmodule GenAI.Settings do
     api_key: %{},
     api_org: %{},
     hyper_params: [],
+    tools: [],
     vsn: @vsn
   ]
 
@@ -24,6 +25,13 @@ defmodule GenAI.Settings do
       %{context | model: [model | context.model]}
     end
 
+    def with_tool(context, tool) do
+      %{context | tools: [tool | context.tools]}
+    end
+    def with_tools(context, tools) do
+      %{context | tools: tools ++ context.tools}
+    end
+
     def with_api_key(context, provider, api_key) do
       %{context | api_key: Map.put(context.api_key, provider, api_key)}
     end
@@ -34,6 +42,10 @@ defmodule GenAI.Settings do
 
     def with_setting(context, setting, value) do
       %{context | hyper_params: [{setting, value} | context.hyper_params]}
+    end
+
+    def with_safety_setting(context, safety_setting, threshold) do
+      %{context | hyper_params: [ {:safety_setting, %{category: safety_setting, threshold: threshold}} | context.hyper_params]}
     end
 
     # Messages are not stored in settings, so these functions simply return the context unchanged.
@@ -72,6 +84,14 @@ defmodule GenAI.Chat do
       %{context | settings: GenAIProtocol.with_model(context.settings, model)}
     end
 
+
+    def with_tool(context, tool) do
+      %{context | settings: GenAIProtocol.with_tool(context.settings, tool)}
+    end
+    def with_tools(context, tools) do
+      %{context | settings: GenAIProtocol.with_tools(context.settings, tools)}
+    end
+
     def with_api_key(context, provider, api_key) do
       %{context | settings: GenAIProtocol.with_api_key(context.settings, provider, api_key)}
     end
@@ -83,6 +103,11 @@ defmodule GenAI.Chat do
     def with_setting(context, setting, value) do
       %{context | settings: GenAIProtocol.with_setting(context.settings, setting, value)}
     end
+
+    def with_safety_setting(context, safety_setting, threshold) do
+      %{context | settings: GenAIProtocol.with_safety_setting(context.settings, safety_setting, threshold)}
+    end
+
 
     def with_message(context, message) do
       %{context | messages: [message | context.messages]}
@@ -104,7 +129,7 @@ defmodule GenAI.Chat do
     def run(context) do
       # Logic to pick/determine final set of settings, models, messages, with RAG/summarization.
       model = hd(context.settings.model)
-      apply(model.provider, :chat, [context.messages, nil, [model: model.model]])
+      apply(model.provider, :chat, [context.messages, context.settings.tools, [{:model, model.model} | (context.settings.hyper_params)]])
     end
   end
 end

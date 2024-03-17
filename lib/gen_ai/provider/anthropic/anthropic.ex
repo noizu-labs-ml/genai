@@ -69,6 +69,11 @@ defmodule GenAI.Provider.Anthropic do
     body = %{}
            |> with_required_setting(:model, settings)
            |> with_setting(:max_tokens, settings, 4096)
+           |> with_setting(:metadata, settings)
+           |> with_setting_as(:stop_sequences, :stop, settings)
+           |> with_setting(:temperature, settings)
+           |> with_setting(:top_p, settings)
+           |> with_setting(:top_k, settings)
            |> optional_field(:system, system_prompt)
            |> Map.put(:messages, Enum.map(messages, &GenAI.Provider.Anthropic.MessageProtocol.message/1))
     call = GenAI.Provider.api_call(:post, "#{@api_base}/v1/messages", headers, body)
@@ -81,7 +86,7 @@ defmodule GenAI.Provider.Anthropic do
 
   defp chat_completion_from_json(json) do
     with %{
-           #id: id,
+           id: id,
            usage: %{
              input_tokens: prompt_tokens,
              output_tokens: completion_tokens
@@ -106,6 +111,7 @@ defmodule GenAI.Provider.Anthropic do
       }
 
       completion = %GenAI.ChatCompletion{
+        id: id,
         provider: __MODULE__,
         model: model,
         usage: %GenAI.ChatCompletion.Usage{

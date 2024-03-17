@@ -71,7 +71,7 @@ defmodule GenAI.Provider.Mistral do
            |> with_setting(:safe_prompt, settings)
            |> with_setting_as(:seed, :random_seed, settings)
            |> then(fn body ->
-      if tools do
+      if is_list(tools) and length(tools) > 0 do
         body
         |> with_setting(:tool_choice, settings)
         |> Map.put(:tools, Enum.map(tools, &GenAI.Provider.Mistral.ToolProtocol.tool/1))
@@ -109,6 +109,7 @@ defmodule GenAI.Provider.Mistral do
         |> Enum.map(fn {:ok, c} -> c end)
 
       completion = %GenAI.ChatCompletion{
+        id: id,
         provider: __MODULE__,
         model: model,
         usage: %GenAI.ChatCompletion.Usage{
@@ -192,5 +193,20 @@ defmodule GenAI.Provider.Mistral do
         provider: GenAI.Provider.Mistral
       }
     end
+
+    def mistral_medium() do
+      %GenAI.Model{
+        model: "mistral-medium-latest",
+        provider: GenAI.Provider.Mistral
+      }
+    end
+
+    def mistral_large() do
+      %GenAI.Model{
+        model: "mistral-large-latest",
+        provider: GenAI.Provider.Mistral
+      }
+    end
+
   end
 end

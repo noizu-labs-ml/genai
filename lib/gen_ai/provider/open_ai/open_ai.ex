@@ -38,16 +38,25 @@ defmodule GenAI.Provider.OpenAI do
 
   def chat(messages, tools, settings) do
     headers = headers(settings)
+
     body = %{}
            |> with_required_setting(:model, settings)
-#           |> with_setting(:temperature, settings)
-#           |> with_setting(:top_p, settings)
-#           |> with_setting(:max_tokens, settings)
-#           |> with_setting(:safe_prompt, settings)
-#           |> with_setting_as(:seed, :random_seed, settings)
+           |> with_setting(:frequency_penalty, settings)
+           |> with_setting(:logprobe, settings)
+           |> with_setting(:top_logprobs, settings)
+           |> with_setting(:logit_bias, settings)
+           |> with_setting(:max_tokens, settings)
+           |> with_setting_as(:n, :completion_choices, settings)
+           |> with_setting(:presence_penalty, settings)
+           |> with_setting(:response_format, settings)
+           |> with_setting(:seed, settings)
+           |> with_setting(:stop, settings)
+           |> with_setting(:temperature, settings)
+           |> with_setting(:top_p, settings)
+           |> with_setting(:user, settings)
            |> then(
                 fn(body) ->
-                  if tools do
+                  if is_list(tools) and length(tools) > 0 do
                     body
                     |> with_setting(:tool_choice, settings)
                     |> Map.put(:tools, Enum.map(tools, &GenAI.Provider.OpenAI.ToolProtocol.tool/1))
@@ -81,6 +90,7 @@ defmodule GenAI.Provider.OpenAI do
       choices = Enum.map(choices, &chat_choice_from_json(id, &1))
                 |> Enum.map(fn {:ok, c} -> c end)
       completion = %GenAI.ChatCompletion{
+        id: id,
         provider: __MODULE__,
         model: model,
         usage: %GenAI.ChatCompletion.Usage{
@@ -144,5 +154,46 @@ defmodule GenAI.Provider.OpenAI do
         }
         {:ok, msg}
     end
+  end
+
+  defmodule Models do
+
+    def gpt_3_5_turbo() do
+     %GenAI.Model{
+       model: "gpt-3.5-turbo",
+       provider: GenAI.Provider.OpenAI
+     }
+    end
+
+    def gpt_4() do
+      %GenAI.Model{
+        model: "gpt-4",
+        provider: GenAI.Provider.OpenAI
+      }
+    end
+
+    def gpt_4_turbo() do
+      %GenAI.Model{
+        model: "gpt-4-turbo-preview",
+        provider: GenAI.Provider.OpenAI
+      }
+    end
+
+    def gpt_4_vision() do
+      %GenAI.Model{
+        model: "gpt-4-vision-preview",
+        provider: GenAI.Provider.OpenAI
+      }
+    end
+
+    def gpt_3_5_turbo_16k() do
+      %GenAI.Model{
+        model: "gpt-3.5-turbo-16k",
+        provider: GenAI.Provider.OpenAI
+      }
+    end
+
+
+
   end
 end

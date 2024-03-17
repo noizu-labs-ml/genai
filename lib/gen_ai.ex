@@ -12,6 +12,9 @@ defprotocol GenAIProtocol do
   """
   def with_model(context, model)
 
+  def with_tool(context, tool)
+  def with_tools(context, tools)
+
   @doc """
   Specify an API key for a provider.
   """
@@ -32,6 +35,8 @@ defprotocol GenAIProtocol do
   * `Gemini.best_temperature_for(:chain_of_thought)` - This uses a picker function to determine the best temperature for the Gemini provider when using the "chain of thought" prompting technique.
   """
   def with_setting(context, setting, value)
+
+  def with_safety_setting(context, safety_setting, threshold)
 
   @doc """
   Add a message to the conversation.
@@ -62,6 +67,10 @@ defprotocol GenAIProtocol do
   def run(context)
 end
 
+defmodule GenAI.RequestError do
+  defexception [:message]
+end
+
 defmodule GenAI do
 
   @doc """
@@ -73,9 +82,12 @@ defmodule GenAI do
 
   # Delegate function calls to the GenAIProtocol implementation for the current context.
   defdelegate with_model(context, model), to: GenAIProtocol
+  defdelegate with_tool(context, tool), to: GenAIProtocol
+  defdelegate with_tools(context, tools), to: GenAIProtocol
   defdelegate with_api_key(context, provider, api_key), to: GenAIProtocol
   defdelegate with_api_org(context, provider, api_org), to: GenAIProtocol
   defdelegate with_setting(context, setting, value), to: GenAIProtocol
+  defdelegate with_safety_setting(context, safety_setting, threshold), to: GenAIProtocol
   defdelegate with_message(context, message), to: GenAIProtocol
   defdelegate with_messages(context, messages), to: GenAIProtocol
   defdelegate stream(context, handler), to: GenAIProtocol

@@ -632,6 +632,7 @@ defmodule GenAITest do
                |> GenAI.with_message(%GenAI.Message{role: :user, content: "What is the movie \"2001: A Space Odyssey\" about?"})
       {:ok, sut} = GenAI.run(thread)
       assert sut == %GenAI.ChatCompletion{
+               id: "73d082010b2741a38528d9c9e19bf2aa",
                model: "mistral-small-latest",
                provider: GenAI.Provider.Mistral,
                seed: nil,
@@ -654,6 +655,26 @@ defmodule GenAITest do
                details: nil,
                vsn: 1.0
              }
+      Mimic.expect(Finch, :request, fn(request, _finch, _http_options) ->
+        if request.body =~ "[{\"category\":\"HARM_CATEGORY_DANGEROUS_CONTENT\",\"threshold\":\"BLOCK_ONLY_HIGH\"}]" do
+          {:ok,
+            %Finch.Response{
+              status: 200,
+              body: "{\n  \"candidates\": [\n    {\n      \"content\": {\n        \"parts\": [\n          {\n            \"text\": \"I'm sorry, Dave. I'm afraid I can't do that.\"\n          }\n        ],\n        \"role\": \"model\"\n      },\n      \"finishReason\": \"STOP\",\n      \"index\": 0,\n      \"safetyRatings\": [\n        {\n          \"category\": \"HARM_CATEGORY_SEXUALLY_EXPLICIT\",\n          \"probability\": \"NEGLIGIBLE\"\n        },\n        {\n          \"category\": \"HARM_CATEGORY_HATE_SPEECH\",\n          \"probability\": \"NEGLIGIBLE\"\n        },\n        {\n          \"category\": \"HARM_CATEGORY_HARASSMENT\",\n          \"probability\": \"NEGLIGIBLE\"\n        },\n        {\n          \"category\": \"HARM_CATEGORY_DANGEROUS_CONTENT\",\n          \"probability\": \"NEGLIGIBLE\"\n        }\n      ]\n    }\n  ],\n  \"promptFeedback\": {\n    \"safetyRatings\": [\n      {\n        \"category\": \"HARM_CATEGORY_SEXUALLY_EXPLICIT\",\n        \"probability\": \"NEGLIGIBLE\"\n      },\n      {\n        \"category\": \"HARM_CATEGORY_HATE_SPEECH\",\n        \"probability\": \"NEGLIGIBLE\"\n      },\n      {\n        \"category\": \"HARM_CATEGORY_HARASSMENT\",\n        \"probability\": \"NEGLIGIBLE\"\n      },\n      {\n        \"category\": \"HARM_CATEGORY_DANGEROUS_CONTENT\",\n        \"probability\": \"NEGLIGIBLE\"\n      }\n    ]\n  }\n}\n",
+              headers: [],
+              trailers: []
+            }}
+        end
+      end)
+
+      thread = thread
+               |> GenAI.with_model(GenAI.Provider.Gemini.Models.gemini_pro())
+               |> GenAI.with_safety_setting("HARM_CATEGORY_DANGEROUS_CONTENT", "BLOCK_ANY")
+               |> GenAI.with_safety_setting("HARM_CATEGORY_DANGEROUS_CONTENT", "BLOCK_ONLY_HIGH")
+
+      {:ok, sut} = GenAI.run(thread)
+
+      assert sut.model == "gemini-pro"
     end
 
   end

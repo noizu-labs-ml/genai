@@ -39,11 +39,35 @@ defmodule GenAI.Provider.Gemini do
   def chat(messages, tools, settings) do
     api_key = api_key(settings)
     headers = headers(settings)
-    model = settings[:model] || throw "required"
+    model = settings[:model] || raise(GenAI.RequestError, "required")
     url = "https://generativelanguage.googleapis.com/v1beta/models/#{model}:generateContent?key=#{api_key}"
     messages = Enum.map(messages, &GenAI.Provider.Gemini.MessageProtocol.message/1)
+
+    generation_config = %{}
+                        |> with_setting_as(:stop_sequences, :stop, settings)
+                        |> with_setting_as(:max_output_tokens, :max_tokens, settings)
+                        |> with_setting(:temperature, settings)
+                        |> with_setting(:top_p, settings)
+                        |> with_setting(:top_k, settings)
+                        |> then(& &1 == %{} && nil || &1)
+
+    safety_settings = Keyword.get_values(settings, :safety_setting)
+                      |> Enum.group_by(& &1[:category])
+                      |> Enum.map(
+                           fn
+                             {_, [h|_]} ->
+                               # @todo inherit/fall through support
+                               h
+                             _ -> nil
+                           end)
+                      |> Enum.reject(&is_nil/1)
+                      |> then(& &1 == [] && nil || &1)
+
     body = %{contents: messages}
-    body = if tools do
+           |> optional_field(:generation_config, generation_config)
+           |> optional_field(:safety_settings, safety_settings)
+
+    body = if is_list(tools) and length(tools) > 0 do
       x = Enum.map(tools, &GenAI.Provider.Gemini.ToolProtocol.tool/1)
       Map.put(body, :tools, [%{function_declarations: x}])
     else
@@ -58,7 +82,7 @@ defmodule GenAI.Provider.Gemini do
     end
   end
 
-  def completion_from_json(model, json) do
+  defp completion_from_json(model, json) do
     with %{candidates: choices} <- json do
       choices = Enum.map(choices, &chat_choice_from_json/1)
                 |> Enum.map(fn {:ok, c} -> c end)
@@ -72,7 +96,7 @@ defmodule GenAI.Provider.Gemini do
       {:ok, completion}
     end
   end
-  def chat_choice_from_json(json) do
+  defp chat_choice_from_json(json) do
     with %{
            index: index,
            content: message,
@@ -88,7 +112,7 @@ defmodule GenAI.Provider.Gemini do
       end
     end
   end
-  def chat_choice_message_from_json(json) do
+  defp chat_choice_message_from_json(json) do
     case json do
       %{
         role: "model",
@@ -118,4 +142,22 @@ defmodule GenAI.Provider.Gemini do
     end
   end
 
+
+  defmodule Models do
+
+    def gemini_pro() do
+      %GenAI.Model{
+        model: "gemini-pro",
+        provider: GenAI.Provider.Gemini
+      }
+    end
+
+    def gemini_pro_vision() do
+      %GenAI.Model{
+        model: "gemini-pro-vision",
+        provider: GenAI.Provider.Gemini
+      }
+    end
+
+  end
 end
