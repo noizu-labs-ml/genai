@@ -174,4 +174,35 @@ defmodule GenAI.Provider.Anthropic do
     {outside_content, calls}
   end
 
+
+  defmodule Models do
+
+
+    def claude_opus() do
+      %GenAI.Model{
+        model: "claude-3-opus-20240229",
+        provider: GenAI.Provider.Anthropic
+      }
+    end
+
+
+    def claude_sonnet() do
+      %GenAI.Model{
+        model: "claude-3-sonnet-20240229",
+        provider: GenAI.Provider.Anthropic
+      }
+    end
+
+
+    def claude_haiku() do
+      %GenAI.Model{
+        model: "claude-3-haiku-20240307",
+        provider: GenAI.Provider.Anthropic
+      }
+    end
+
+
+
+
+  end
 end
