@@ -49,12 +49,15 @@ defmodule GenAI.Settings do
     end
 
     # Messages are not stored in settings, so these functions simply return the context unchanged.
-    def with_message(context, _message), do: context
-    def with_messages(context, _messages), do: context
+    def with_message(context, _message,_), do: context
+    def with_messages(context, _messages,_), do: context
 
     # Settings do not support streaming or direct inference execution.
     def stream(_, _), do: {:error, {:unsupported, GenAI.Settings}}
     def run(_), do: {:error, {:unsupported, GenAI.Settings}}
+
+
+
   end
 end
 
@@ -109,17 +112,44 @@ defmodule GenAI.Chat do
     end
 
 
-    def with_message(context, message) do
+    def with_message(context, message,_) do
       %{context | messages: [message | context.messages]}
     end
 
-    def with_messages(context, messages) do
+    def with_messages(context, messages,_) do
       %{context | messages: Enum.reverse(messages) ++ context.messages}
     end
 
     def stream(_context, _handler) do
       {:ok, :nyi}
     end
+
+
+    def freeze(context, _, _) do
+      context
+    end
+
+    def tune_prompt(context, _) do
+      context
+    end
+
+    def score(context, _, _) do
+      context
+    end
+
+    def fitness(context, _, _) do
+      context
+    end
+    def early_stopping(context, _, _) do
+      context
+    end
+    def execute(context, _, _) do
+      {:ok, :nyi}
+    end
+
+
+
+
 
     @doc """
     Runs inference on the chat context.

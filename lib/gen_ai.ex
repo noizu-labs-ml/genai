@@ -41,12 +41,12 @@ defprotocol GenAIProtocol do
   @doc """
   Add a message to the conversation.
   """
-  def with_message(context, message)
+  def with_message(context, message, options)
 
   @doc """
   Add a list of messages to the conversation.
   """
-  def with_messages(context, messages)
+  def with_messages(context, messages, options)
 
   @doc """
   Start inference using a streaming handler.
@@ -65,6 +65,14 @@ defprotocol GenAIProtocol do
   * Returns the inference result.
   """
   def run(context)
+
+  def freeze(context, label, options)
+  def tune_prompt(context, options)
+  def score(context, scorer, options)
+  def fitness(context, fitness, options)
+  def early_stopping(context, sentinel, options)
+  def execute(context, type, options)
+
 end
 
 defmodule GenAI.RequestError do
@@ -72,6 +80,18 @@ defmodule GenAI.RequestError do
 end
 
 defmodule GenAI do
+
+
+  defmacro loop(context, over, count, do: chain) do
+        # todo use a process dict hack to track entry/outro so we can repopulate context correctly.
+        # rather than passing the |> pip which may break
+        quote do
+          unquote(context)
+          # todo add loop details to type.
+          # todo add freeze indicator unless options[:nofreeze]
+          |> unquote(chain)
+        end
+  end
 
   @doc """
   Creates a new chat context.
@@ -88,9 +108,46 @@ defmodule GenAI do
   defdelegate with_api_org(context, provider, api_org), to: GenAIProtocol
   defdelegate with_setting(context, setting, value), to: GenAIProtocol
   defdelegate with_safety_setting(context, safety_setting, threshold), to: GenAIProtocol
-  defdelegate with_message(context, message), to: GenAIProtocol
-  defdelegate with_messages(context, messages), to: GenAIProtocol
+  defdelegate with_message(context, message, options \\ nil), to: GenAIProtocol
+  defdelegate with_messages(context, messages, options \\ nil), to: GenAIProtocol
   defdelegate stream(context, handler), to: GenAIProtocol
   defdelegate run(context), to: GenAIProtocol
+
+  # FUTURE WORK
+
+  def freeze(context, _label, _options \\ nil) do
+    context
+  end
+
+  def tune_prompt(context, by_label: _label) do
+    context
+  end
+
+  def score(context, _scorer \\ nil, _options \\ nil) do
+    context
+  end
+
+  def fitness(context, fitness, options \\ nil) do
+    context
+  end
+  def early_stopping(context, _sentinel, _options \\ nil) do
+    context
+  end
+  def execute(context, _type, _options \\ nil) do
+    {:ok, :nyi}
+  end
+
+
+
+end
+
+
+defmodule GenAI.DataLoader do
+  def sample(_, _ \\ nil) do
+    :ok
+  end
+  def take_one(_, _ \\ nil) do
+    %GenAI.Message{role: :user, content: "nyi"}
+  end
 
 end
