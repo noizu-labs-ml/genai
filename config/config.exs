@@ -7,6 +7,10 @@
 # General application configuration
 import Config
 
+config :genai, :local_llama,
+       enabled: true,
+       otp_app: :genai
+
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
 import_config "#{config_env()}.exs"

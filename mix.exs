@@ -7,10 +7,11 @@ defmodule GenAI.MixProject do
       name: "Noizu Labs, GenAI Wrapper",
       description: description(),
       package: package(),
-      version: "0.0.2",
+      version: "0.0.3",
       elixir: "~> 1.16",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
+      elixirc_paths: elixirc_paths(Mix.env()),
       docs: [
         main: "GenAI",
         extras: [
@@ -19,7 +20,7 @@ defmodule GenAI.MixProject do
           "LICENSE"
         ]
       ],
-      dialyzer: [
+        dialyzer: [
         plt_file: {:no_warn, "priv/plts/project.plt"}
       ],
       test_coverage: [
@@ -32,6 +33,20 @@ defmodule GenAI.MixProject do
     ]
   end
 
+  defp check_extension(name, env_flag) do
+    cond do
+      (x = Application.get_env(:genai, name)[:enabled]
+       is_boolean(x)
+        ) -> x
+      :else -> System.get_env(env_flag) == "true"
+    end
+  end
+
+  defp extensions() do
+    %{
+      local_llama: check_extension(:local_llama, "NZ_LOCAL_LLAMA")
+    } |> IO.inspect(label: :Extensions)
+  end
 
   defp description() do
     "Generative AI Wrapper: access multiple apis through single standardized interface."
@@ -47,7 +62,17 @@ defmodule GenAI.MixProject do
         noizu_labs_machine_learning: "https://github.com/noizu-labs-ml",
         noizu_labs_scaffolding: "https://github.com/noizu-labs-scaffolding",
         developer_github: "https://github.com/noizu"
-      }
+      },
+      files: [
+        "lib",
+        "extensions",
+        "BOOK.md",
+        "CONTRIBUTING.md",
+        "LICENSE",
+        "mix.exs",
+        "README.md",
+        "TODO.md",
+      ]
     ]
   end
 
@@ -75,6 +100,21 @@ defmodule GenAI.MixProject do
     ]
   end
 
+  # Specifies which paths to compile per environment.
+  defp extension_paths() do
+    [
+      extensions()[:local_llama] && "extensions/local_llama"
+    ] |> Enum.reject(&is_nil/1)
+  end
+  defp elixirc_paths(:test), do: ["lib", "test/support" | extension_paths()] |> IO.inspect
+  defp elixirc_paths(_), do: ["lib" | extension_paths()]
+
+
+  defp extension_deps do
+    [
+      extensions()[:local_llama] && {:ex_llama, "~> 0.0.1"},
+    ] |> Enum.reject(&is_nil/1)
+  end
 
   # Run "mix help deps" to learn about dependencies.
   defp deps do
@@ -93,6 +133,7 @@ defmodule GenAI.MixProject do
       {:mimic, "~> 1.0.0", only: :test},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
       {:sweet_xml, "~> 0.7", only: :test}
-    ]
+      | extension_deps()
+    ] |> IO.inspect
   end
 end
