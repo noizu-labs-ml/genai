@@ -2,6 +2,10 @@
 .envrc
 .idea/
 genai.iml
+
+# test assets
+priv/
+
 # The directory Mix will write compiled artifacts to.
 /_build/
 
