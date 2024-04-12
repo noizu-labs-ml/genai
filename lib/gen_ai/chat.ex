@@ -159,7 +159,7 @@ defmodule GenAI.Chat do
     def run(context) do
       # Logic to pick/determine final set of settings, models, messages, with RAG/summarization.
       model = hd(context.settings.model)
-      apply(model.provider, :chat, [context.messages, context.settings.tools, [{:model, model.model} | (context.settings.hyper_params)]])
+      apply(model.provider, :chat, [context.messages |> Enum.reverse(), context.settings.tools, [{:model, model.model} | (context.settings.hyper_params)]])
     end
   end
 end

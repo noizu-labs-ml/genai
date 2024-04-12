@@ -45,7 +45,7 @@ defmodule GenAI.MixProject do
   defp extensions() do
     %{
       local_llama: check_extension(:local_llama, "NZ_LOCAL_LLAMA")
-    } |> IO.inspect(label: :Extensions)
+    }
   end
 
   defp description() do
@@ -103,10 +103,10 @@ defmodule GenAI.MixProject do
   # Specifies which paths to compile per environment.
   defp extension_paths() do
     [
-      extensions()[:local_llama] && "extensions/local_llama"
+      extensions()[:local_llama] && "extensions/local_llama" || nil
     ] |> Enum.reject(&is_nil/1)
   end
-  defp elixirc_paths(:test), do: ["lib", "test/support" | extension_paths()] |> IO.inspect
+  defp elixirc_paths(:test), do: ["lib", "test/support" | extension_paths()] 
   defp elixirc_paths(_), do: ["lib" | extension_paths()]
 
 
@@ -134,6 +134,6 @@ defmodule GenAI.MixProject do
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
       {:sweet_xml, "~> 0.7", only: :test}
       | extension_deps()
-    ] |> IO.inspect
+    ]
   end
 end

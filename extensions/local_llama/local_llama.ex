@@ -26,10 +26,12 @@ defmodule GenAI.Provider.LocalLLama do
   def chat(messages, tools, settings) do
     messages = Enum.map(messages, &GenAI.Provider.LocalLLama.MessageProtocol.message/1)
 
+
     model = %ExLLama.Model{} =  settings[:model]
 #    options = %{}
 #               |> with_setting(:max_tokens, settings)
 #               |> with_setting(:seed, settings)
+
 
     # todo cast completion to GenAI.ChatCompletion
     with {:ok, %{id: id, model: model, seed: seed, choices: choices, usage: usage}} <- ExLLama.chat_completion(model, messages, settings),
