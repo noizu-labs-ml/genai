@@ -106,13 +106,13 @@ defmodule GenAI.MixProject do
       extensions()[:local_llama] && "extensions/local_llama" || nil
     ] |> Enum.reject(&is_nil/1)
   end
-  defp elixirc_paths(:test), do: ["lib", "test/support" | extension_paths()] 
+  defp elixirc_paths(:test), do: ["lib", "test/support" | extension_paths()]
   defp elixirc_paths(_), do: ["lib" | extension_paths()]
 
 
   defp extension_deps do
     [
-      extensions()[:local_llama] && {:ex_llama, "~> 0.0.1"},
+      extensions()[:local_llama] && {:ex_llama, "~> 0.0.1"} || nil,
     ] |> Enum.reject(&is_nil/1)
   end
 
