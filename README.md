@@ -2,9 +2,19 @@ GenAI Library
 ====
 GenAI Elixir Library: A Framework for Interacting with Generative AI
 
-**Version:** 0.0.1
+**Version:** 0.0.3
 
 This repository contains an Elixir library for interacting with various generative AI providers and models through a common interface. The library is designed to be flexible, extensible, and easy to use.
+
+It currently supports: 
+- Local Models via my ex_llama nif wrapper for the llama_cpp rust library 
+- Anthropic
+- Gemini
+- Mistral
+- Groq
+- OpenAI
+
+with pending (soon to be added) support for hugging face, ollama, dx and media generation. 
 
 ### Features
 
