@@ -69,7 +69,7 @@ defmodule GenAI.Provider.Mistral do
            |> with_setting(:top_p, settings)
            |> with_setting(:max_tokens, settings)
            |> with_setting(:safe_prompt, settings)
-           |> with_setting_as(:seed, :random_seed, settings)
+           |> with_setting_as(:random_seed, :seed, settings)
            |> then(fn body ->
       if is_list(tools) and length(tools) > 0 do
         body
