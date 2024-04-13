@@ -42,7 +42,7 @@ defmodule GenAI.Provider.Gemini do
     model = settings[:model] || raise(GenAI.RequestError, "required")
     url = "https://generativelanguage.googleapis.com/v1beta/models/#{model}:generateContent?key=#{api_key}"
     messages = Enum.map(messages, &GenAI.Provider.Gemini.MessageProtocol.message/1)
-
+               |> normalize_messages()
     generation_config = %{}
                         |> with_setting_as(:stop_sequences, :stop, settings)
                         |> with_setting_as(:max_output_tokens, :max_tokens, settings)
@@ -81,6 +81,29 @@ defmodule GenAI.Provider.Gemini do
       completion_from_json(model, json)
     end
   end
+
+
+  def normalize_messages(messages, acc \\ [])
+
+  def normalize_messages([%{role: :user} = a, %{role: :user} = b|t], acc) do
+    a =%{a| content: a.content <> "\n\n<check-in>ack?</check-in>"}
+    patch = %{
+      role: :model,
+      content: "ack",
+    }
+    normalize_messages(t, [b, patch, a | acc])
+  end
+  def normalize_messages([%{role: :model} = a, %{role: :model} = b|t], acc) do
+    patch = %{
+      role: :user,
+      content: "continue.",
+    }
+    [b, patch, a]
+    normalize_messages(t, [b, patch, a | acc])
+  end
+  def normalize_messages([h|t], acc), do: normalize_messages(t, [h|acc])
+  def normalize_messages([], acc), do: Enum.reverse(acc)
+
 
   defp completion_from_json(model, json) do
     with %{candidates: choices} <- json do
