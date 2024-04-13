@@ -86,17 +86,17 @@ defmodule GenAI.Provider.Gemini do
   def normalize_messages(messages, acc \\ [])
 
   def normalize_messages([%{role: :user} = a, %{role: :user} = b|t], acc) do
-    a =%{a| content: a.content <> "\n\n<check-in>ack?</check-in>"}
+    a =%{a| parts: a.parts ++ [%{text:  "\n\n<check-in>ack?</check-in>"}]}
     patch = %{
       role: :model,
-      content: "ack",
+      parts: [%{text: "ack"}],
     }
     normalize_messages(t, [b, patch, a | acc])
   end
   def normalize_messages([%{role: :model} = a, %{role: :model} = b|t], acc) do
     patch = %{
       role: :user,
-      content: "continue.",
+      parts: [%{text: "continue"}]
     }
     [b, patch, a]
     normalize_messages(t, [b, patch, a | acc])
