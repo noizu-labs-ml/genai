@@ -75,7 +75,10 @@ defmodule GenAI.Provider.Anthropic do
            |> with_setting(:top_p, settings)
            |> with_setting(:top_k, settings)
            |> optional_field(:system, system_prompt)
-           |> Map.put(:messages, Enum.map(messages, &GenAI.Provider.Anthropic.MessageProtocol.message/1))
+           |> Map.put(:messages,
+                Enum.map(messages, &GenAI.Provider.Anthropic.MessageProtocol.message/1)
+                |> normalize_messages()
+              )
     call = GenAI.Provider.api_call(:post, "#{@api_base}/v1/messages", headers, body)
     # |> IO.inspect(limit: :infinity, printable_limit: :infinity)
     with {:ok, %Finch.Response{status: 200, body: body}} <- call,
@@ -83,6 +86,28 @@ defmodule GenAI.Provider.Anthropic do
       chat_completion_from_json(json)
     end
   end
+
+
+  def normalize_messages(messages, acc \\ [])
+
+  def normalize_messages([%{role: :user} = a, %{role: :user} = b|t], acc) do
+   a =%{a| content: a.content <> "\n\n<check-in>ack?</check-in>"}
+    patch = %{
+        role: :assistant,
+        content: "ack",
+      }
+    normalize_messages(t, [b, patch, a | acc])
+  end
+  def normalize_messages([%{role: :assistant} = a, %{role: :assistant} = b|t], acc) do
+    patch = %{
+      role: :assistant,
+      content: "continue.",
+    }
+    [b, patch, a]
+    normalize_messages(t, [b, patch, a | acc])
+  end
+  def normalize_messages([h|t], acc), do: normalize_messages(t, [h|acc])
+  def normalize_messages([], acc), do: Enum.reverse(acc)
 
   defp chat_completion_from_json(json) do
     with %{

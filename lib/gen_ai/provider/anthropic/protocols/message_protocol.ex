@@ -6,11 +6,10 @@ end
 defimpl GenAI.Provider.Anthropic.MessageProtocol, for: GenAI.Message do
   def message(message) do
     role = case message.role do
-      :user -> :user
-      :assistant -> :assistant
-      :system -> :user
+      :user -> %{role: :user, content:  message.content}
+      :assistant ->%{role: :assistant, content:  message.content}
+      :system -> %{role: :user, content:  "<system>" <> message.content <> "</system>"}
     end
-    %{role: role, content: message.content}
   end
 end
 
