@@ -1,65 +1,3 @@
-defmodule GenAI.Settings do
-  @moduledoc """
-  This module defines the settings struct used to configure GenAI interactions.
-  """
-
-  @vsn 1.0
-
-  defstruct [
-    model: [],
-    api_key: %{},
-    api_org: %{},
-    hyper_params: [],
-    tools: [],
-    vsn: @vsn
-  ]
-
-
-  defimpl GenAIProtocol do
-    @moduledoc """
-    Implements the `GenAIProtocol` for `GenAI.Settings`.
-
-    This allows settings to be used as a context for configuring GenAI interactions.
-    """
-    def with_model(context, model) do
-      %{context | model: [model | context.model]}
-    end
-
-    def with_tool(context, tool) do
-      %{context | tools: [tool | context.tools]}
-    end
-    def with_tools(context, tools) do
-      %{context | tools: tools ++ context.tools}
-    end
-
-    def with_api_key(context, provider, api_key) do
-      %{context | api_key: Map.put(context.api_key, provider, api_key)}
-    end
-
-    def with_api_org(context, provider, api_org) do
-      %{context | api_org: Map.put(context.api_org, provider, api_org)}
-    end
-
-    def with_setting(context, setting, value) do
-      %{context | hyper_params: [{setting, value} | context.hyper_params]}
-    end
-
-    def with_safety_setting(context, safety_setting, threshold) do
-      %{context | hyper_params: [ {:safety_setting, %{category: safety_setting, threshold: threshold}} | context.hyper_params]}
-    end
-
-    # Messages are not stored in settings, so these functions simply return the context unchanged.
-    def with_message(context, _message,_), do: context
-    def with_messages(context, _messages,_), do: context
-
-    # Settings do not support streaming or direct inference execution.
-    def stream(_, _), do: {:error, {:unsupported, GenAI.Settings}}
-    def run(_), do: {:error, {:unsupported, GenAI.Settings}}
-
-
-
-  end
-end
 
 defmodule GenAI.Chat do
   @moduledoc """
@@ -83,32 +21,35 @@ defmodule GenAI.Chat do
     """
 
     # Delegate setting functions to the settings struct.
-    def with_model(context, model) do
-      %{context | settings: GenAIProtocol.with_model(context.settings, model)}
+    def with_model(context, model, options) do
+      %{context | settings: GenAIProtocol.with_model(context.settings, model, options)}
     end
 
 
-    def with_tool(context, tool) do
-      %{context | settings: GenAIProtocol.with_tool(context.settings, tool)}
+    def with_tool(context, tool, options) do
+      %{context | settings: GenAIProtocol.with_tool(context.settings, tool, options)}
     end
-    def with_tools(context, tools) do
-      %{context | settings: GenAIProtocol.with_tools(context.settings, tools)}
-    end
-
-    def with_api_key(context, provider, api_key) do
-      %{context | settings: GenAIProtocol.with_api_key(context.settings, provider, api_key)}
+    def with_tools(context, tools, options) do
+      %{context | settings: GenAIProtocol.with_tools(context.settings, tools, options)}
     end
 
-    def with_api_org(context, provider, api_org) do
-      %{context | settings: GenAIProtocol.with_api_org(context.settings, provider, api_org)}
+    def with_api_key(context, provider, api_key, options) do
+      %{context | settings: GenAIProtocol.with_api_key(context.settings, provider, api_key, options)}
     end
 
-    def with_setting(context, setting, value) do
-      %{context | settings: GenAIProtocol.with_setting(context.settings, setting, value)}
+    def with_api_org(context, provider, api_org, options) do
+      %{context | settings: GenAIProtocol.with_api_org(context.settings, provider, api_org, options)}
     end
 
-    def with_safety_setting(context, safety_setting, threshold) do
-      %{context | settings: GenAIProtocol.with_safety_setting(context.settings, safety_setting, threshold)}
+    def with_setting(context, setting, value, options) do
+      %{context | settings: GenAIProtocol.with_setting(context.settings, setting, value, options)}
+    end
+    def with_setting(context, setting,  _) do
+      context
+    end
+
+    def with_safety_setting(context, safety_setting, threshold, options) do
+      %{context | settings: GenAIProtocol.with_safety_setting(context.settings, safety_setting, threshold, options)}
     end
 
 
@@ -120,16 +61,12 @@ defmodule GenAI.Chat do
       %{context | messages: Enum.reverse(messages) ++ context.messages}
     end
 
-    def stream(_context, _handler) do
+    def stream(_context, _handler, _) do
       {:ok, :nyi}
     end
 
 
-    def freeze(context, _, _) do
-      context
-    end
-
-    def tune_prompt(context, _) do
+    def tune_prompt(context, _, _) do
       context
     end
 
@@ -156,7 +93,7 @@ defmodule GenAI.Chat do
 
     This function determines the final settings and model, prepares the messages, and then delegates the actual inference execution to the selected provider's `chat/3` function.
     """
-    def run(context) do
+    def run(context, _) do
       # Logic to pick/determine final set of settings, models, messages, with RAG/summarization.
       model = hd(context.settings.model)
       apply(model.provider, :chat, [context.messages |> Enum.reverse(), context.settings.tools, [{:model, model.model} | (context.settings.hyper_params)]])

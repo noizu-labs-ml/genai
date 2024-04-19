@@ -1,3 +1,11 @@
+
+defmodule GenAI.ToolList do
+  @vsn 1.0
+  defstruct [
+    tools: []
+  ]
+end
+
 defmodule GenAI.Tool.Function do
   @vsn 1.0
   defstruct [
