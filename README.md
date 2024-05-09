@@ -402,8 +402,8 @@ summary3 = %GenAI.Message{
     H -- Good Generalization --> J[Advanced Generalization Techniques]
     J --> K[Application of Techniques: Dropout, Regularization, and Meta-learning]
     I --> G
-    K --> L[Model Tests for Emergent Behaviors]
-    L --> M{Check for Complex Adaptive Behaviors}
+    K --> L[Model Tests for Emergent Behaviours]
+    L --> M{Check for Complex Adaptive Behaviours}
     M -- Not Detected --> N[Iterate: Further Data and Training Adjustments]
     M -- Detected --> O[Potential Emergent Sentience]
     N --> B
@@ -412,7 +412,7 @@ summary3 = %GenAI.Message{
     click B "https://research.google/pubs/pub43455/" "Research on Data Diversity"
     click D "https://papers.nips.cc/paper/2019/hash/f1748d6b0fd9d439f71450117eba2725-Abstract.html" "Study on Data Volume and AI Performance"
     click J "https://arxiv.org/abs/1801.06146" "Research on AI Generalization"
-    click M "https://www.frontiersin.org/articles/10.3389/frobt.2020.00034/full" "Studies on Complex Adaptive Behaviors in AI"
+    click M "https://www.frontiersin.org/articles/10.3389/frobt.2020.00034/full" "Studies on Complex Adaptive Behaviours in AI"
     click O "https://www.nature.com/articles/s42256-021-00359-8" "Exploring AI Sentience"
 
     ```

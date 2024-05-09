@@ -68,6 +68,10 @@ defprotocol GenAIProtocol do
   def run(context, options)
 
 
+
+  def tag(context, tag, options)
+  def loop(context, tag, iterator, options)
+
   def tune_prompt(context, handle, options)
   def score(context, scorer, options)
   def fitness(context, fitness, options)
@@ -112,6 +116,12 @@ defimpl GenAIProtocol, for: Tuple do
 
   def run({:ok, context}, options), do: GenAIProtocol.run(context, options)
   def run(error = {:error, _}, _options), do: error
+
+  def tag({:ok, context}, tag, options), do: GenAIProtocol.tag(context, tag, options)
+  def tag(error = {:error, _}, _tag, _options), do: error
+
+  def loop({:ok, context}, tag, iterator, options), do: GenAIProtocol.loop(context, tag, iterator, options)
+  def loop(error = {:error, _}, _tag, _iterator, _options), do: error
 
   def tune_prompt({:ok, context}, handle, options), do: GenAIProtocol.tune_prompt(context, handle, options)
   def tune_prompt(error = {:error, _}, _handle, _options), do: error

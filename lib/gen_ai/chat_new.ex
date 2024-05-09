@@ -28,12 +28,43 @@ end
 defmodule GenAI.EarlyStopLambda do
   @vsn 1.0
   defstruct [
+    handle: nil,
     sentinel: nil,
     vsn: @vsn
   ]
 end
 
-defmodule GenAI.EarlyStopBehavior do
+
+defmodule GenAI.EarlyStopThreshold do
+  @vsn 1.0
+  defstruct [
+    handle: nil,
+    threshold: nil, # stop if during loop/epoch score does not improve more than cut off.
+    vsn: @vsn
+  ]
+  def new(threshold) do
+    %__MODULE__{
+      threshold: threshold
+    }
+  end
+end
+
+defmodule GenAI.EarlyStopDelta do
+  @vsn 1.0
+  defstruct [
+    handle: nil,
+    delta: nil, # stop if during loop/epoch score does not improve more than cut off.
+    vsn: @vsn
+  ]
+
+  def new(delta) do
+    %__MODULE__{
+      delta: delta
+    }
+  end
+end
+
+defmodule GenAI.EarlyStopBehaviour do
 
 end
 
@@ -44,15 +75,25 @@ defmodule GenAI.Score.Basic do
   ]
 end
 
-defmodule GenAI.ScoreBehavior do
+defmodule GenAI.ScoreBehaviour do
 
 end
 
 defmodule GenAI.Fitness.Basic do
   @vsn 1.0
   defstruct [
+    fitness: nil,
+    options: nil,
     vsn: @vsn
   ]
+
+  def new(fitness, options) do
+    %__MODULE__{
+      fitness: fitness,
+      options: options
+    }
+  end
+
 end
 
 defmodule GenAI.FitnessBehaviour do
@@ -66,7 +107,9 @@ end
 defmodule GenAI.PromptTune.Simple do
   @vsn 1.0
   defstruct [
-    prompt: nil,
+    handle: nil,
+    message: nil,
+    options: nil,
     vsn: @vsn
   ]
 end
@@ -355,7 +398,7 @@ defmodule GenAI.ChatNew do
 
     def with_model(%GenAI.ChatNew{} = this, model, options ) do
       handle = options[:handle]
-      node = GenAI.Node.new(GenAI.MessageBehavior, model, handle: handle)
+      node = GenAI.Node.new(GenAI.MessageBehaviour, model, handle: handle)
       GenAI.ChatNew.append_node(this, node)
     end
 
@@ -428,34 +471,49 @@ defmodule GenAI.ChatNew do
       {:ok, :nyi}
     end
 
+    def tune_prompt(this, tuner, _options) when is_struct(tuner) do
+      GenAI.ChatNew.append_node(this, tuner)
+    end
     def tune_prompt(this, handle, options ) do
       node_handle = options[:handle]
-      content = %GenAI.PromptTune.Simple{prompt: handle}
+      content = %GenAI.PromptTune.Simple{message: handle}
       node = GenAI.Node.new(GenAI.MessageMutateBehaviour, content, node_handle)
       GenAI.ChatNew.append_node(this, node)
     end
 
     def score(this, scorer, options) do
       handle = options[:handle]
-      node = GenAI.Node.new(GenAI.ScoreBehavior, scorer, handle)
+      node = GenAI.Node.new(GenAI.ScoreBehaviour, scorer, handle)
       GenAI.ChatNew.append_node(this, node)
     end
 
+    def fitness(this, fitness, options)  when is_struct(fitness) do
+      handle = options[:handle] || fitness.handle
+      node = GenAI.Node.new(GenAI.FitnessBehaviour, fitness, handle)
+      GenAI.ChatNew.append_node(this, node)
+    end
     def fitness(this, fitness, options)  do
       handle = options[:handle]
-      node = GenAI.Node.new(GenAI.FitnessBehavior, fitness, handle)
+      basic_fitness = GenAI.Fitness.Basic.new(fitness, options)
+      node = GenAI.Node.new(GenAI.FitnessBehaviour, basic_fitness, handle)
       GenAI.ChatNew.append_node(this, node)
     end
 
+    def early_stopping(this, sentinel, options) when is_float(sentinel) do
+      handle = options[:handle]
+      content = %GenAI.EarlyStopDelta{delta: sentinel}
+      node = GenAI.Node.new(GenAI.EarlyStopBehaviour, sentinel, handle)
+      GenAI.ChatNew.append_node(this, node)
+    end
     def early_stopping(this, sentinel, options) when is_struct(sentinel) do
       handle = options[:handle]
-      node = GenAI.Node.new(GenAI.EarlyStopBehavior, sentinel, handle)
+      node = GenAI.Node.new(GenAI.EarlyStopBehaviour, sentinel, handle)
       GenAI.ChatNew.append_node(this, node)
     end
     def early_stopping(this, sentinel, options) when is_function(sentinel) do
       handle = options[:handle]
       content = %GenAI.EarlyStopLambda{sentinel: sentinel}
-      node = GenAI.Node.new(GenAI.EarlyStopBehavior, sentinel, handle)
+      node = GenAI.Node.new(GenAI.EarlyStopBehaviour, sentinel, handle)
       GenAI.ChatNew.append_node(this, node)
     end
 

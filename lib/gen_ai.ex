@@ -3,12 +3,13 @@ defmodule GenAI do
   defmacro loop(context, name, iterator, options \\ nil, do: chain) do
         # todo use a process dict hack to track entry/outro so we can repopulate context correctly.
         # rather than passing the |> pip which may break
+        # or at least modify so context var is injected and inside of loop user may use context |> logic
         tag = {:loop_start, name}
       quote do
           unquote(context)
-          |> GenAI.tag(unquote(tag))
+          |> GenAIProtocol.tag(unquote(tag), unquote(options))
           |> unquote(chain)
-          |> GenAI.loop(name, iterator, options)
+          |> GenAIProtocol.loop(unquote(name), unquote(iterator), unquote(options))
         end
   end
 
@@ -19,6 +20,9 @@ defmodule GenAI do
     %GenAI.Chat{}
   end
   def chat(:new) do
+    %GenAI.ChatNew{}
+  end
+  def thread() do
     %GenAI.ChatNew{}
   end
 
@@ -40,6 +44,6 @@ defmodule GenAI do
   defdelegate early_stopping(context, sentinel, options \\ nil), to: GenAIProtocol
   defdelegate execute(context, type, options \\ nil), to: GenAIProtocol
 
-
+  defdelegate tag(context, tag, options \\ nil), to: GenAIProtocol
 
 end
