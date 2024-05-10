@@ -6,10 +6,12 @@ defmodule GenAI do
         # or at least modify so context var is injected and inside of loop user may use context |> logic
         tag = {:loop_start, name}
       quote do
-          unquote(context)
-          |> GenAIProtocol.tag(unquote(tag), unquote(options))
-          |> unquote(chain)
-          |> GenAIProtocol.loop(unquote(name), unquote(iterator), unquote(options))
+         with {:ok, {context, {enter_loop, exit_loop}}} <- GenAIProtocol.loop(unquote(context), unquote(name), unquote(iterator), unquote(options)) do
+           context
+           |> GenAIProtocol.enter_loop(enter_loop)
+           |> unquote(chain)
+           |> GenAIProtocol.exit_loop(exit_loop)
+         end
         end
   end
 

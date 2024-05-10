@@ -14,14 +14,26 @@ end
 defmodule GenAI.Loop do
   @vsn 1.0
   defstruct [
-    to: nil,
     iterator: nil,
     options: [],
     vsn: @vsn
   ]
 end
 
+defmodule GenAI.LoopClose do
+  @vsn 1.0
+  defstruct [
+    loop_start: nil,
+    vsn: @vsn
+  ]
+end
+
 defmodule GenAI.LoopBehaviour do
+
+end
+
+
+defmodule GenAI.LoopCloseBehaviour do
 
 end
 
@@ -190,6 +202,13 @@ defmodule GenAI.Tree do
   defstruct [
     selection: %{},
     nodes: %{},
+    # run/execution/loop state specific node state.
+    # For static nodes like messages entry will simple be the node itself (actually no entry will be populated and the base entry will be pulled from node list.
+    # For dynamic nodes entry will contain current loop/run specific unpacked/generated value.
+    # For mutators like prompt tune entry will contain a mutation node with inner contents referencing original effective node.
+    # While the original effective node will be stored as a special value where our key will be something like {:mutated, node_guid} rather than just node_guid
+    # So that on subsequent loops the underlying value to mutate can be fetched.
+    effective_nodes: %{},
     handles: %{},
     root: nil,
     path: [],
@@ -214,6 +233,57 @@ defmodule GenAI.Tree do
       do_to_list(tree, tree.selection[n], [n|visited], [tree.nodes[n] | acc])
     else
       {:error, {:cyclical_path, n}}
+    end
+  end
+
+  def get_node(this, :by_handle, handle) do
+    with node_id <- this.handles[handle],
+         {:handle, :ok} <- node_id && {:handle, :ok} || {:error, {:handle, handle,  :not_found}},
+         node_element <- this.nodes[node_id],
+         {:node, :ok} <- node_element && {:node, :ok} || {:error, {:node, node_id, :not_found}} do
+         {:ok, node_element}
+    end
+  end
+
+  def get_node(this, node_id) do
+    with node_element <- this.nodes[node_id],
+         {:node, :ok} <- node_element && {:node, :ok} || {:error, {:node, node_id, :not_found}} do
+      {:ok, node_element}
+    end
+  end
+
+  def get_effective_node(this, :by_handle, handle) do
+    with node_id <- this.handles[handle],
+         {:handle, :ok} <- node_id && {:handle, :ok} || {:error, {:handle, handle,  :not_found}},
+         node_element <- this.effective_nodes[node_id],
+         {:effective_node, :ok} <- node_element && {:effective_node, :ok} || {:error, {:effective_node, node_id, :not_found}} do
+      {:ok, node_element}
+    end
+  end
+
+  def get_effective_node(this, node_id) do
+    cond do
+      x = this.effective_nodes[node_id] -> {:ok, {:effective_node, x}}
+      x = this.nodes[node_id] -> {:ok, {:node, x}}
+      :else -> {:error, {:effective_node, node_id, :not_found}}
+    end
+  end
+
+  def set_effective_node(this, node) do
+    # if node is identical to existing node do nothing.
+    # otherwise add to effective node entry
+    case get_effective_node(this, node.id) do
+      {:ok, {:effective_node, ^node}} ->
+        {:ok, this}
+      {:ok, {:effective_node, x}} ->
+        this = put_in(this, [Access.key(:effective_nodes), node.id], node)
+        {:ok, this}
+      {:ok, {:node, ^node}} ->
+        {:ok, this}
+      {:ok, {:node, _}} ->
+        this = put_in(this, [Access.key(:effective_nodes), node.id], node)
+        {:ok, this}
+      error -> error
     end
   end
 
@@ -398,20 +468,13 @@ defmodule GenAI.ChatNew do
 
     def with_model(%GenAI.ChatNew{} = this, model, options ) do
       handle = options[:handle]
-      node = GenAI.Node.new(GenAI.MessageBehaviour, model, handle: handle)
+      node = GenAI.Node.new(GenAI.ModelBehaviour, model, handle: handle)
       GenAI.ChatNew.append_node(this, node)
     end
 
     def with_tool(this, tool, options ) do
       handle = options[:handle]
       node = GenAI.Node.new(GenAI.ToolBehaviour, tool, handle: handle)
-      GenAI.ChatNew.append_node(this, node)
-    end
-
-    def with_tool(this, tools, options ) do
-      handle = options[:handle]
-      content = %GenAI.ToolList{tools: tools}
-      node = GenAI.Node.new(GenAI.ToolBehaviour, content, handle: handle)
       GenAI.ChatNew.append_node(this, node)
     end
 
@@ -525,15 +588,64 @@ defmodule GenAI.ChatNew do
     end
 
     def loop(this, tag, iterator, options) do
-      handle = tag
-      to = options[:to] || {:loop_start, tag}
-      content = %GenAI.Loop{to: to, iterator: iterator, options: options}
-      node = GenAI.Node.new(GenAI.LoopBehaviour, content, handle)
+      # @todo tag might be a struct/grid/data-loader, need protocol to extract handle
+      tag = tag
+      enter_loop_handle = {:loop_start, tag}
+      enter_loop_content = %GenAI.Loop{iterator: iterator, options: options}
+      enter_node = GenAI.Node.new(GenAI.LoopBehaviour, enter_loop_content, enter_loop_handle)
+
+      exit_loop_handle = {:loop_close, tag}
+      exit_loop_content = %GenAI.LoopClose{loop_start: enter_node.id}
+      exit_node = GenAI.Node.new(GenAI.LoopCloseBehaviour, exit_loop_content, exit_loop_handle)
+      {:ok, {this, {enter_node, exit_node}}}
+    end
+
+    def enter_loop(this, node) do
       GenAI.ChatNew.append_node(this, node)
     end
 
+    def exit_loop(this, node) do
+      GenAI.ChatNew.append_node(this, node)
+    end
 
     def execute(this, type, options) do
+      # context will have loops/grid search elements.
+      # we can't simply convert a flat path into a list of messages,
+      # we need to traverse up to loop start entries, and collect effective state
+      # up to that point. inside of loops we build messages/settings in parallel.
+
+      #  A -> (B) -> C ->D -> E ->(F) -> G -> H - I* -> J** -> Execute
+      #            \-- (Iteration)-------/
+      # When we enter a loop/grid at B we have an effective list of messages and settings. At B we store this effective list.
+      # Inside of the Loop (B) -> (F) additional settings are set, these may be dynamic so we need to call each entry to pick the effective value.
+      # Future nodes may result in a specific model etc. being used due to feature requirements of a node. We ignore this until we encounter the requirement however.
+      # So we build messages up to that point if inference points are encountered (when chat history needs to be sent) we do with the effective settings up to that point.
+      # User must explictly state if they wish to use a specific model if there are inference points (generated messages) prior to I* and J**. (where J** for exampl emight specify a specific model to use.
+      # If a specific model is specific at a node like J** that is different than the default used up to that point (and inference points were encountered) then we emit a warning event to callback listeners if any.  (console out by default)
+
+      IO.puts """
+      - 1. Get Active Path.
+      - 2. Walk over path, calling protocol method to get effective node state/value for each node.
+      - 3. Inference Events build efefcetive message list, effective state from nodes only prior to that point in chain.
+           Dynamic Prompts, Tune Prompts, Score step, Fitness step, etc.
+           - 3.Tangent* Unlike previous approach if we wish to replay a thread with different models/settings if there are interstitial inference steps
+             we need to inejec those changes into the stop of the tree.  replace(handle/id, node | (context) -> node) inject(handle, node | nodes | (context) -> [nodes])
+             A->(B)->C->D Becomes A->(B')->C->D or A->B->(Injected)->C->D
+      - 4. Behind the scenes when loop start nodes are prepped that grab current context effective node state to allow recall on next iteration.
+      - 5. Loop exit nodes grab global state details store on effective node state for the close tag, loop start and elements inside loop can reference for fitness checks/early stop etc.
+           - 5.a. when loop exit point is a continuation (next iteration) we manipulate the
+             effective state of the loop entry node and reset our global state position to id of the loop entry node while resetting effective node states with cached value.
+             Early stop events may populate context state settings to early exit current loop.
+           - 5.b. When loop exit proceeds on to remaining context we can wipe loop_start state cache and proceed as usual. context state is fed forward so for example after one loop ends,
+             and a second loop picks up effective state on exiting the loop becomes the starting effective state in that context. lookup chackes loop.current_iteration_state(head)[value] || context[state][value]
+           - 5.c. note When those methods (like score, fitness) are run they use protocol to set context state which in turns
+             determines current loop or root context and sets those values into the loop_start node's  current_iteration_state which is referenced to determine when to early exit loop,
+             current_iteration_state is appened to previous_iteration_state during each loop so prior values can be referenced as neeed for more complex logic like early stop checks.
+             A new head iteration state is added at the start of each loop.
+      - 6. Fin. If runing an execute(report) not regular run additional data is retained over each pass, explicitly when score is called, or store() is called the chain of messages leading up to the score
+           is tracked which may be a tree A -> B -> [fan out C1 .. CN of loop] -> D -> E -> Score
+      """
+
       {:error, :nyi}
     end
 

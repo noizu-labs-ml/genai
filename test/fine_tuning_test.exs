@@ -52,9 +52,11 @@ defmodule GenAI.FineTuningTest do
             end
             |> GenAI.early_stopping(good_enough_system_prompt_sentinel) # 11
        end
-    |> IO.inspect()
       # @TODO - to perform grid we need a GenAI.grid method or syntax for specifying parameter grid.
       # GenAI.grid_search(name, params) do - we'll show this in a different test as the purpose is a little different.
+    |> GenAI.with_model(GenAI.Provider.Groq.Models.llama3_8b())
+    |> GenAI.with_setting(:temperature, 0.7)
+    |> IO.inspect()
     |> GenAI.execute(:report) # 12
     |> IO.inspect()
   end

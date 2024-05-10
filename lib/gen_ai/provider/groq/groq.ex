@@ -167,8 +167,25 @@ defmodule GenAI.Provider.Groq do
 
 
   defmodule Models do
+
+
+    def llama3_70b() do
+      %GenAI.Model{
+        model: "llama3-70b-8192",
+        provider: GenAI.Provider.Groq
+      }
+    end
+
+    def llama3_8b() do
+      %GenAI.Model{
+        model: "llama3-8b-8192",
+        provider: GenAI.Provider.Groq
+      }
+    end
+
     @moduledoc """
     Defines some common Groq models.
+    @deprecated use llama3
     """
     def llama2_70b() do
       %GenAI.Model{
