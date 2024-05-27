@@ -1,6 +1,6 @@
-rust 1.77.1
-erlang 26.2.2
-elixir 1.16.1
-nodejs 21.6.2
+rust 1.78.0
+erlang 26.2.4
+elixir 1.16.2-otp-26
+nodejs 20.9.0
 direnv 2.32.2
 yarn 1.21.1
