@@ -170,7 +170,7 @@ defmodule GenAI.Provider.Gemini do
 
     def gemini_pro() do
       %GenAI.Model{
-        model: "gemini-pro",
+        model: "gemini-1.5-pro",
         provider: GenAI.Provider.Gemini
       }
     end
