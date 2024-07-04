@@ -1,3 +1,8 @@
+# Contributing
+Please feel free to submit an feature request/issues/clarification items you ahve under Issues! ^_^. 
+
+-----
+
 GenAI Library
 ====
 GenAI Elixir Library: A Framework for Interacting with Generative AI
