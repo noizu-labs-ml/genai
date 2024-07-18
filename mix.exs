@@ -47,6 +47,12 @@ defmodule GenAI.MixProject do
       local_llama: check_extension(:local_llama, "NZ_LOCAL_LLAMA")
     }
   end
+  defp extension(name, dependency) do
+    if extensions()[name] do
+      dependency
+    end
+  end
+
 
   defp description() do
     "Generative AI Wrapper: access multiple apis through single standardized interface."
@@ -112,7 +118,7 @@ defmodule GenAI.MixProject do
 
   defp extension_deps do
     [
-      extensions()[:local_llama] && {:ex_llama, "~> 0.0.1"} || nil,
+      extension(:local_llama, {:ex_llama, "~> 0.0.1"}),
     ] |> Enum.reject(&is_nil/1)
   end
 

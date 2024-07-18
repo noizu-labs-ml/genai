@@ -6,10 +6,6 @@ defmodule GenAI.Message do
     vsn: @vsn
   ]
 
-  def tune_prompt(context, _) do
-    context
-  end
-
   defimpl GenAI.MessageProtocol do
     def message(message) do
       message

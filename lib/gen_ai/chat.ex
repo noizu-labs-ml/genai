@@ -25,12 +25,6 @@ defmodule GenAI.Settings do
       %{context | model: [model | context.model]}
     end
 
-      def score(context, _, _), do: context
-
-    def early_stopping(context, _, _), do: context
-    def freeze(context, _, _), do: context
-    def fitness(context, _, _), do: context
-
     def with_tool(context, tool) do
       %{context | tools: [tool | context.tools]}
     end
@@ -54,7 +48,6 @@ defmodule GenAI.Settings do
       %{context | hyper_params: [ {:safety_setting, %{category: safety_setting, threshold: threshold}} | context.hyper_params]}
     end
 
-    def tune_prompt(context, _), do: context
 
     # Messages are not stored in settings, so these functions simply return the context unchanged.
     def with_message(context, _message,_), do: context
@@ -64,7 +57,6 @@ defmodule GenAI.Settings do
     def stream(_, _), do: {:error, {:unsupported, GenAI.Settings}}
     def run(_), do: {:error, {:unsupported, GenAI.Settings}}
 
-    def execute(_,_,_), do: {:error, {:unsupported, GenAI.Settings}}
 
 
   end
@@ -133,28 +125,6 @@ defmodule GenAI.Chat do
       {:ok, :nyi}
     end
 
-
-    def freeze(context, _, _) do
-      context
-    end
-
-    def tune_prompt(context, _) do
-      context
-    end
-
-    def score(context, _, _) do
-      context
-    end
-
-    def fitness(context, _, _) do
-      context
-    end
-    def early_stopping(context, _, _) do
-      context
-    end
-    def execute(_context, _, _) do
-      {:ok, :nyi}
-    end
 
 
 
