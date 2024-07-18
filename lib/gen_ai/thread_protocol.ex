@@ -1,4 +1,4 @@
-defprotocol GenAIProtocol do
+defprotocol GenAI.ThreadProtocol do
 
   @doc """
   Specify a specific model or model picker.

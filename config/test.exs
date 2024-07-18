@@ -6,6 +6,9 @@ config :junit_formatter,
 config :genai, :mistral,
    api_key: System.get_env("MISTRAL_API_KEY")
 
+config :genai, :groq,
+       api_key: System.get_env("GROQ_API_KEY")
+
 config :genai, :gemini,
        api_key: System.get_env("GEMINI_API_KEY")
 

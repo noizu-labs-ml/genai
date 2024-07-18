@@ -1,5 +1,10 @@
 Todo
 =====
+
+# Refactoring
+- [ ] Streamline context, move settings into own simple chat specific protocol
+
+# Providers
 - [x] Anthropic
   - [ ] Vision/Embeddings
   - [x] Function Calls

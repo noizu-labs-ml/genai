@@ -2,6 +2,7 @@ if Code.ensure_loaded?(GenAI.Provider.LocalLLama) do
   defmodule GenAI.LocalLLamaTest do
     use ExUnit.Case
     @moduletag provider: :local_llama
+    @moduletag :live
 
     test "inference" do
         thread = GenAI.chat()

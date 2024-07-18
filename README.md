@@ -481,7 +481,7 @@ kino = """
 The GenAI library is designed to be easily extensible with new model providers. Here's how to add support for a new provider:
 
 1. **Create a new provider module:** Create a new module under the `GenAI.Provider` namespace, for example, `GenAI.Provider.NewProvider`.
-2. **Implement the `GenAIProtocol`:** Implement the following functions defined in the `GenAIProtocol` for your new provider module:
+2. **Implement the `GenAI.ThreadProtocol`:** Implement the following functions defined in the `GenAI.ThreadProtocol` for your new provider module:
     * `chat(messages, tools, settings)`
     * `models(settings)`
 3. **Handle provider-specific details:** Implement any provider-specific logic, such as handling authentication, constructing API requests, and parsing responses.

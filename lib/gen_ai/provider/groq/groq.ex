@@ -29,13 +29,30 @@ defmodule GenAI.Provider.Groq do
 
   This function calls the Groq API to retrieve a list of models and returns them as a list of `GenAI.Model` structs.
   """
-  def models(_settings \\ []) do
-    models = [
-      GenAI.Provider.Groq.Models.llama2_70b(),
-      GenAI.Provider.Groq.Models.mixtral_8x7b(),
-      GenAI.Provider.Groq.Models.gemma_7b_it()
-    ]
-    {:ok, models}
+  def models(settings \\ []) do
+    headers = headers(settings)
+    call = api_call(:get, "#{@api_base}/v1/models", headers)
+
+    with {:ok, %Finch.Response{status: 200, body: body}} <- call,
+         {:ok, json} <- Jason.decode(body, keys: :atoms) do
+      case json do
+        %{data: models, object: "list"} ->
+          models = models |> Enum.map(&model_from_json/1)
+          {:ok, models}
+
+        _ ->
+          {:error, {:response, json}}
+      end
+    end
+  end
+
+  # Converts a JSON representation of a Mistral model to a `GenAI.Model` struct.
+  defp model_from_json(json) do
+    %GenAI.Model{
+      model: json[:id],
+      provider: __MODULE__,
+      details: json
+    }
   end
 
   @doc """
@@ -65,7 +82,6 @@ defmodule GenAI.Provider.Groq do
            |> Map.put(:messages, Enum.map(messages, &GenAI.Provider.Groq.MessageProtocol.message/1))
 
     call = GenAI.Provider.api_call(:post, "#{@api_base}/v1/chat/completions", headers, body)
-
     with {:ok, %Finch.Response{status: 200, body: response_body}} <- call,
          {:ok, json} <- Jason.decode(response_body, keys: :atoms),
          {:ok, response} <- chat_completion_from_json(json) do
@@ -170,9 +186,9 @@ defmodule GenAI.Provider.Groq do
     @moduledoc """
     Defines some common Groq models.
     """
-    def llama2_70b() do
+    def llama3_8b() do
       %GenAI.Model{
-        model: "llama2-70b-4096",
+        model: "llama3-8b-8192",
         provider: GenAI.Provider.Groq
       }
     end
