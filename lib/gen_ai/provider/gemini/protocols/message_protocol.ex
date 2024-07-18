@@ -5,7 +5,7 @@ end
 
 defimpl GenAI.Provider.Gemini.MessageProtocol, for: GenAI.Message do
   def message(message) do
-    role = case message.role do
+    case message.role do
       :user -> %{role: :user, parts: [%{text: message.content }] }
       :assistant -> %{role: :model, parts: [%{text: message.content }] }
       :system -> %{role: :user, parts: [%{text: "<|system|>\n" <> message.content <> "</|system|>"}] }

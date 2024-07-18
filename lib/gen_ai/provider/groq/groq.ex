@@ -29,7 +29,7 @@ defmodule GenAI.Provider.Groq do
 
   This function calls the Groq API to retrieve a list of models and returns them as a list of `GenAI.Model` structs.
   """
-  def models(settings \\ []) do
+  def models(_settings \\ []) do
     models = [
       GenAI.Provider.Groq.Models.llama2_70b(),
       GenAI.Provider.Groq.Models.mixtral_8x7b(),

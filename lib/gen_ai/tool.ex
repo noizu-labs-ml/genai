@@ -372,7 +372,6 @@ defmodule GenAI.Tool.Schema.Object do
                  end
                  {:additional_properties, x}
                {"description", value} -> {:description, value}
-               {"type", "object"} -> nil
              end
            )
         |> Enum.reject(&is_nil(&1))

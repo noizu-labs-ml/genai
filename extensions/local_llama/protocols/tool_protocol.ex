@@ -10,7 +10,7 @@ defprotocol GenAI.Provider.LocalLLama.ToolProtocol do
 end
 
 defimpl GenAI.Provider.LocalLLama.ToolProtocol, for: GenAI.Tool.Function do
-  def tool(subject) do
+  def tool(_subject) do
     throw "NYI"
   end
 end

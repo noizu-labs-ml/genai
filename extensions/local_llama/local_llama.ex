@@ -3,15 +3,12 @@ defmodule GenAI.Provider.LocalLLama do
   This module implements the GenAI provider for Local AI.
   """
 
-  import GenAI.Provider
-
-
   @doc """
   Retrieves a list of available Local models.
 
   This function calls the Local API to retrieve a list of models and returns them as a list of `GenAI.Model` structs.
   """
-  def models(settings \\ []) do
+  def models(_settings \\ []) do
     # TODO scan priv/gguf-models/ to get list of models.
     models = [
     ]
@@ -23,7 +20,7 @@ defmodule GenAI.Provider.LocalLLama do
 
   This function constructs the request body based on the provided messages, tools, and settings, sends the request to the Groq API, and returns a `GenAI.ChatCompletion` struct with the response.
   """
-  def chat(messages, tools, settings) do
+  def chat(messages, _tools, settings) do
     messages = Enum.map(messages, &GenAI.Provider.LocalLLama.MessageProtocol.message/1)
 
 
@@ -34,7 +31,7 @@ defmodule GenAI.Provider.LocalLLama do
 
 
     # todo cast completion to GenAI.ChatCompletion
-    with {:ok, %{id: id, model: model, seed: seed, choices: choices, usage: usage}} <- ExLLama.chat_completion(model, messages, settings),
+    with {:ok, %{id: id, model: model, seed: _seed, choices: choices, usage: usage}} <- ExLLama.chat_completion(model, messages, settings),
          %{prompt_tokens: _, total_tokens: _, completion_tokens: _} <- usage do
 
       usage = %GenAI.ChatCompletion.Usage{
@@ -83,7 +80,7 @@ defmodule GenAI.Provider.LocalLLama do
         if File.exists?(p) do
 
           with {:ok, mref} <- ExLLama.load_model(p) do
-            m = %GenAI.Model{
+            %GenAI.Model{
               model: mref,
               provider: GenAI.Provider.LocalLLama,
               details: %{}, # encoding details, formatter, etc.

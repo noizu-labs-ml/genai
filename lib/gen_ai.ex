@@ -82,7 +82,7 @@ end
 defmodule GenAI do
 
 
-  defmacro loop(context, over, count, do: chain) do
+  defmacro loop(context, _over, _count, do: chain) do
         # todo use a process dict hack to track entry/outro so we can repopulate context correctly.
         # rather than passing the |> pip which may break
         quote do
@@ -127,13 +127,13 @@ defmodule GenAI do
     context
   end
 
-  def fitness(context, fitness, options \\ nil) do
+  def fitness(context, _fitness, _options \\ nil) do
     context
   end
   def early_stopping(context, _sentinel, _options \\ nil) do
     context
   end
-  def execute(context, _type, _options \\ nil) do
+  def execute(_context, _type, _options \\ nil) do
     {:ok, :nyi}
   end
 

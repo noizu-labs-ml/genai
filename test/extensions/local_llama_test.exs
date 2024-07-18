@@ -23,7 +23,6 @@ if Code.ensure_loaded?(GenAI.Provider.LocalLLama) do
                  total_tokens: 190,
                  completion_tokens: 114
                }
-        IO.inspect(sut, label: "LocalLLama Response")
       end
   end
 end

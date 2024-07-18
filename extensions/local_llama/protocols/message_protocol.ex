@@ -16,14 +16,14 @@ defimpl GenAI.Provider.LocalLLama.MessageProtocol, for: GenAI.Message do
 end
 
 defimpl GenAI.Provider.LocalLLama.MessageProtocol, for: GenAI.Message.ToolCall do
-  def message(message) do
+  def message(_message) do
     throw "NYI"
   end
 end
 
 
 defimpl GenAI.Provider.LocalLLama.MessageProtocol, for: GenAI.Message.ToolResponse do
-  def message(message) do
+  def message(_message) do
     throw "NYI"
   end
 end
