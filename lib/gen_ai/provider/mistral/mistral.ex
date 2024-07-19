@@ -2,11 +2,68 @@ defmodule GenAI.Provider.Mistral do
   @moduledoc """
   This module implements the GenAI provider for Mistral AI.
   """
-
+  @behaviour GenAI.ProviderBehaviour
   import GenAI.Provider
 
   @api_base "https://api.mistral.ai"
 
+  @impl GenAI.ProviderBehaviour
+  def format_tool(tool, state)
+  def format_tool(tool, state) do
+    {:ok, GenAI.Provider.Mistral.ToolProtocol.tool(tool), state}
+  end
+
+  @impl GenAI.ProviderBehaviour
+  def format_message(message, state)
+  def format_message(message, state) do
+    {:ok, GenAI.Provider.Mistral.MessageProtocol.message(message), state}
+  end
+
+  @impl GenAI.ProviderBehaviour
+  def run(state) do
+    provider = __MODULE__
+    with {:ok, provider_settings, state} <- GenAI.Thread.StateProtocol.provider_settings(state, provider),
+         {:ok, settings, state} <- GenAI.Thread.StateProtocol.settings(state),
+         {:ok, model, state} <- GenAI.Thread.StateProtocol.model(state),
+         {:ok, model_name} <- GenAI.ModelProtocol.model(model),
+         {:ok, tools, state} <- GenAI.Thread.StateProtocol.tools(state, provider),
+         {:ok, messages, state} <- GenAI.Thread.StateProtocol.messages(state, provider) do
+      headers = headers(provider_settings)
+
+      body = %{
+               model: model_name,
+               messages: messages
+             }
+             |> with_setting(:temperature, settings)
+             |> with_setting(:top_p, settings)
+             |> with_setting(:max_tokens, settings)
+             |> with_setting(:safe_prompt, settings)
+             |> with_setting_as(:random_seed, :seed, settings)
+             |> then(
+                  fn
+                    body ->
+                      unless tools == [] do
+                        body
+                        |> with_setting(:tool_choice, settings)
+                        |> Map.put(:tools, tools)
+                      else
+                        body
+                      end
+                  end
+                )
+
+      call = GenAI.Provider.api_call(:post, "#{@api_base}/v1/chat/completions", headers, body)
+
+      with {:ok, %Finch.Response{status: 200, body: response_body}} <- call,
+           {:ok, json} <- Jason.decode(response_body, keys: :atoms),
+           {:ok, response} <- chat_completion_from_json(json) do
+        response = put_in(response, [Access.key(:seed)], body[:random_seed])
+        {:ok, response, state}
+      end
+    else
+      error -> IO.inspect(error, label: "WTF")
+    end
+  end
 
   # Constructs the headers for Mistral API requests.
   #
@@ -17,7 +74,6 @@ defmodule GenAI.Provider.Mistral do
         key = settings[:api_key] -> {"Authorization", "Bearer #{key}"}
         key = Application.get_env(:genai, :mistral)[:api_key] -> {"Authorization", "Bearer #{key}"}
       end
-
     [
       auth,
       {"content-type", "application/json"}

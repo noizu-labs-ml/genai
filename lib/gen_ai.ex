@@ -5,7 +5,7 @@ defmodule GenAI do
   """
   def chat(thread_provider \\ :default)
   def chat(:default), do: %GenAI.Thread.Legacy{}
-  def chat(:vnext), do: %GenAI.Thread.Legacy{}
+  def chat(:standard), do: %GenAI.Thread.Standard{}
 
 
   # Delegate function calls to the GenAI.ThreadProtocol implementation for the current context.

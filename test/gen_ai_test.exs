@@ -5,16 +5,19 @@ defmodule GenAITest do
 
   describe "GenAI Context" do
 
+    @tag :live
+    @tag :advanced
     test "Advanced Context run" do
-      thread = GenAI.chat(:vnext)
-      assert is_struct(thread)
-#               |> GenAI.with_model(GenAI.Provider.Mistral.Models.mistral_small())
-#               |> GenAI.with_setting(:temperature, 0.7)
-#               |> GenAI.with_api_key(GenAI.Provider.Gemini, "invalid")
-#               |> GenAI.with_message(%GenAI.Message{role: :user, content: "Open the pod bay door HAL"})
-#               |> GenAI.with_message(%GenAI.Message{role: :assistant, content: "I'm afraid I can't do that Dave"})
-#               |> GenAI.with_message(%GenAI.Message{role: :user, content: "What is the movie \"2001: A Space Odyssey\" about?"})
-#      {:ok, sut} = GenAI.run(thread)
+      thread = GenAI.chat(:standard)
+               |> GenAI.with_model(GenAI.Provider.Mistral.Models.mistral_small())
+               |> GenAI.with_setting(:temperature, 0.7)
+               |> GenAI.with_api_key(GenAI.Provider.Gemini, "invalid")
+               |> GenAI.with_message(%GenAI.Message{role: :user, content: "Open the pod bay door HAL"})
+               |> GenAI.with_message(%GenAI.Message{role: :assistant, content: "I'm afraid I can't do that Dave"})
+               |> GenAI.with_message(%GenAI.Message{role: :user, content: "What is the movie \"2001: A Space Odyssey\" about and who directed it?"})
+      {:ok, sut, _state} = GenAI.run(thread)
+      response = sut.choices |> hd()
+      assert response.message.content =~ "Stanley Kubrick"
     end
 
     test "Simple inference run" do

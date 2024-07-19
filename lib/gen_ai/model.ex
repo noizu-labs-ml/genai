@@ -7,4 +7,9 @@ defmodule GenAI.Model do
     vsn: @vsn
   ]
 
+  defimpl GenAI.ModelProtocol do
+    def provider(model), do: {:ok, model.provider}
+    def model(model), do: {:ok, model.model}
+  end
+
 end
