@@ -1,6 +1,18 @@
 defmodule GenAI.Provider.OpenAI do
   import GenAI.Provider
   @api_base "https://api.openai.com"
+  @behaviour GenAI.ProviderBehaviour
+
+
+  defp standardize_model(model) when is_atom(model),  do: %GenAI.Model{model: model, provider: __MODULE__}
+  defp standardize_model(model) when is_bitstring(model),  do: %GenAI.Model{model: model, provider: __MODULE__}
+  defp standardize_model(model) do
+    if GenAI.ModelProtocol.protocol_supported?(model) do
+      model
+    else
+      raise GenAI.RequestError, "Unsupported Model"
+    end
+  end
 
   defp headers(settings) do
     auth = cond do
@@ -36,43 +48,98 @@ defmodule GenAI.Provider.OpenAI do
     }
   end
 
-  def chat(messages, tools, settings) do
-    headers = headers(settings)
+  @impl GenAI.ProviderBehaviour
+  def format_tool(tool, state)
+  def format_tool(tool, state) do
+    {:ok, GenAI.Provider.OpenAI.ToolProtocol.tool(tool), state}
+  end
 
-    body = %{}
-           |> with_required_setting(:model, settings)
-           |> with_setting(:frequency_penalty, settings)
-           |> with_setting(:logprobe, settings)
-           |> with_setting(:top_logprobs, settings)
-           |> with_setting(:logit_bias, settings)
-           |> with_setting(:max_tokens, settings)
-           |> with_setting_as(:n, :completion_choices, settings)
-           |> with_setting(:presence_penalty, settings)
-           |> with_setting(:response_format, settings)
-           |> with_setting(:seed, settings)
-           |> with_setting(:stop, settings)
-           |> with_setting(:temperature, settings)
-           |> with_setting(:top_p, settings)
-           |> with_setting(:user, settings)
-           |> then(
-                fn(body) ->
-                  if is_list(tools) and length(tools) > 0 do
-                    body
-                    |> with_setting(:tool_choice, settings)
-                    |> Map.put(:tools, Enum.map(tools, &GenAI.Provider.OpenAI.ToolProtocol.tool/1))
-                  else
-                    body
+  @impl GenAI.ProviderBehaviour
+  def format_message(message, state)
+  def format_message(message, state) do
+    {:ok, GenAI.Provider.OpenAI.MessageProtocol.message(message), state}
+  end
+
+  @impl GenAI.ProviderBehaviour
+  def run(state) do
+    provider = __MODULE__
+    with {:ok, provider_settings, state} <- GenAI.Thread.StateProtocol.provider_settings(state, provider),
+         {:ok, settings, state} <- GenAI.Thread.StateProtocol.settings(state),
+         {:ok, model, state} <- GenAI.Thread.StateProtocol.model(state),
+         {:ok, model_name} <- GenAI.ModelProtocol.model(model),
+         {:ok, tools, state} <- GenAI.Thread.StateProtocol.tools(state, provider),
+         {:ok, messages, state} <- GenAI.Thread.StateProtocol.messages(state, provider) do
+      headers = headers(provider_settings)
+
+      body = %{
+               model: model_name,
+               messages: messages
+             }
+             |> with_setting(:frequency_penalty, settings)
+             |> with_setting(:logprobe, settings)
+             |> with_setting(:top_logprobs, settings)
+             |> with_setting(:logit_bias, settings)
+             |> with_setting(:max_tokens, settings)
+             |> with_setting_as(:n, :completion_choices, settings)
+             |> with_setting(:presence_penalty, settings)
+             |> with_setting(:response_format, settings)
+             |> with_setting(:seed, settings)
+             |> with_setting(:stop, settings)
+             |> with_setting(:temperature, settings)
+             |> with_setting(:top_p, settings)
+             |> with_setting(:user, settings)
+             |> then(
+                  fn
+                    body ->
+                      unless tools == [] do
+                        body
+                        |> with_setting(:tool_choice, settings)
+                        |> Map.put(:tools, tools)
+                      else
+                        body
+                      end
                   end
-                end)
-           |> Map.put(:messages, Enum.map(messages, &GenAI.Provider.OpenAI.MessageProtocol.message/1))
-    call = GenAI.Provider.api_call(:post, "#{@api_base}/v1/chat/completions", headers, body)
-    #IO.inspect(call, limit: :infinity, printable_limit: :infinity)
-    with {:ok, %Finch.Response{status: 200, body: response_body}} <- call,
-         {:ok, json} <- Jason.decode(response_body, keys: :atoms),
-         {:ok, response} <- chat_completion_from_json(json) do
-      response = put_in(response, [Access.key(:seed)], body[:random_seed])
-      {:ok, response}
+                )
+
+      call = GenAI.Provider.api_call(:post, "#{@api_base}/v1/chat/completions", headers, body)
+      with {:ok, %Finch.Response{status: 200, body: response_body}} <- call,
+           {:ok, json} <- Jason.decode(response_body, keys: :atoms),
+           {:ok, response} <- chat_completion_from_json(json) do
+        response = put_in(response, [Access.key(:seed)], body[:random_seed])
+        {:ok, response, state}
+      end
+    else
+      error = {:error, _} -> error
+      error -> {:error, error}
     end
+  end
+
+
+  def chat(model, messages, tools, hyper_parameters, provider_settings \\ []) do
+    with state <-  %GenAI.Thread.State{},
+         {:ok, state} <- GenAI.Thread.StateProtocol.with_model(state, standardize_model(model)),
+         {:ok, state} <- GenAI.Thread.StateProtocol.with_provider_settings(state, __MODULE__, provider_settings),
+         {:ok, state} <- GenAI.Thread.StateProtocol.with_settings(state, hyper_parameters),
+         {:ok, state} <- GenAI.Thread.StateProtocol.with_tools(state, tools),
+         {:ok, state} <- GenAI.Thread.StateProtocol.with_messages(state, messages)
+      do
+      case run(state) do
+        {:ok, response, _} -> {:ok, response}
+        error -> error
+      end
+    end
+  end
+
+
+  @doc """
+  Sends a chat completion request to the Mistral API.
+  This function constructs the request body based on the provided messages, tools, and settings, sends the request to the Mistral API, and returns a `GenAI.ChatCompletion` struct with the response.
+  """
+  # @deprecated "This function is deprecated. Use `GenAI.Thread.chat/5` instead."
+  def chat(messages, tools, settings) do
+    settings = settings |> Enum.reverse()
+    provider_settings = Enum.filter(settings, fn {k,_} -> k in [:api_key, :api_org] end)
+    chat(settings[:model], messages, tools, settings, provider_settings)
   end
 
   defp chat_completion_from_json(json) do

@@ -9,18 +9,35 @@ defmodule GenAI.Provider.LocalLLama do
   This function calls the Local API to retrieve a list of models and returns them as a list of `GenAI.Model` structs.
   """
   def models(_settings \\ []) do
-    # TODO scan priv/gguf-models/ to get list of models.
-    models = [
-    ]
-    {:ok, models}
+    GenAI.Provider.LocalLLamaSupervisor.models()
   end
+#
+#  defp standardize_model(model)
+#  defp standardize_model(model = %ExLLama.Model{})
+#
+#  def chat(model, messages, tools, hyper_parameters, provider_settings \\ []) do
+#    with state <-  %GenAI.Thread.State{},
+#         {:ok, state} <- GenAI.Thread.StateProtocol.with_model(state, standardize_model(model)),
+#         {:ok, state} <- GenAI.Thread.StateProtocol.with_provider_settings(state, __MODULE__, provider_settings),
+#         {:ok, state} <- GenAI.Thread.StateProtocol.with_settings(state, hyper_parameters),
+#         {:ok, state} <- GenAI.Thread.StateProtocol.with_tools(state, tools),
+#         {:ok, state} <- GenAI.Thread.StateProtocol.with_messages(state, messages)
+#      do
+#      case run(state) do
+#        {:ok, response, _} -> {:ok, response}
+#        error -> error
+#      end
+#    end
+#  end
 
   @doc """
-  Sends a chat completion request to the Groq API.
+  Sends a chat completion request to the LocalLlama
 
-  This function constructs the request body based on the provided messages, tools, and settings, sends the request to the Groq API, and returns a `GenAI.ChatCompletion` struct with the response.
+  This function constructs the request body based on the provided messages, tools, and settings, sends the request to the ExLLama instanceI, and returns a `GenAI.ChatCompletion` struct with the response.
   """
   def chat(messages, _tools, settings) do
+    # 1. extend model to track instructions on how to pack/unpack.
+
     messages = Enum.map(messages, &GenAI.Provider.LocalLLama.MessageProtocol.message/1)
 
 

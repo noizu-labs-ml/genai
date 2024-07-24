@@ -1,7 +1,8 @@
 defmodule GenAI.Provider.Anthropic do
   import GenAI.Provider
   @api_base "https://api.anthropic.com"
-
+  @behaviour GenAI.ProviderBehaviour
+  @default_system_prompt nil
 
   defp headers(settings) do
     auth = cond do
@@ -20,15 +21,17 @@ defmodule GenAI.Provider.Anthropic do
     ]
   end
 
+  # @TODO - support tool_choice option
   defp tool_system_prompt(nil), do: nil
   defp tool_system_prompt([]), do: nil
   defp tool_system_prompt(tools) do
-    tools = Enum.map(tools, &GenAI.Provider.Anthropic.ToolProtocol.tool/1)
+    tools = tools
             |> Jason.encode!()
             |> Jason.decode!()
     tools = %{tools: tools}
     with {:ok, yaml} <- Ymlr.document(tools) do
       yaml = String.trim_leading(yaml, "---\n")
+      prompt =
       """
       Tool Usage
       ==============
@@ -46,47 +49,115 @@ defmodule GenAI.Provider.Anthropic do
       #{yaml}
       ```
       """
+      {:ok, prompt}
     end
   end
 
-  def chat(messages, tools, settings) do
-    headers = headers(settings)
-    system_prompt = settings[:system_prompt]
-
-    # todo inject stop sequence </function_calls>
-    tool_usage_prompt = tool_system_prompt(tools)
-
+  defp normalize_system_prompt(messages, tools, settings, model_settings,  provider_settings)
+  defp normalize_system_prompt(_, tools, settings, model_settings,  provider_settings) do
     system_prompt = cond do
-      tool_usage_prompt ->
-        if system_prompt do
-          "#{system_prompt}\n-----\n#{tool_usage_prompt}"
-        else
-          tool_usage_prompt
-        end
-      :else -> system_prompt
+      Keyword.has_key?(settings, :system_prompt) -> settings[:system_prompt]
+      Keyword.has_key?(model_settings, :system_prompt) -> model_settings[:system_prompt]
+      Keyword.has_key?(provider_settings, :system_prompt) -> provider_settings[:system_prompt]
+      :else -> @default_system_prompt
     end
-
-    body = %{}
-           |> with_required_setting(:model, settings)
-           |> with_setting(:max_tokens, settings, 4096)
-           |> with_setting(:metadata, settings)
-           |> with_setting_as(:stop_sequences, :stop, settings)
-           |> with_setting(:temperature, settings)
-           |> with_setting(:top_p, settings)
-           |> with_setting(:top_k, settings)
-           |> optional_field(:system, system_prompt)
-           |> Map.put(:messages,
-                Enum.map(messages, &GenAI.Provider.Anthropic.MessageProtocol.message/1)
-                |> normalize_messages()
-              )
-    call = GenAI.Provider.api_call(:post, "#{@api_base}/v1/messages", headers, body)
-    # |> IO.inspect(limit: :infinity, printable_limit: :infinity)
-    with {:ok, %Finch.Response{status: 200, body: body}} <- call,
-         {:ok, json} <- Jason.decode(body, keys: :atoms) do
-      chat_completion_from_json(json)
+    with {:ok, tool_usage_prompt} <- tool_system_prompt(tools) do
+      if system_prompt do
+        system_prompt <> "\n-----\n" <> tool_usage_prompt
+      else
+        tool_usage_prompt
+      end
+    else
+    nil -> system_prompt
     end
   end
 
+  @impl GenAI.ProviderBehaviour
+  def format_tool(tool, state)
+  def format_tool(tool, state) do
+    {:ok, GenAI.Provider.Anthropic.ToolProtocol.tool(tool), state}
+  end
+
+  @impl GenAI.ProviderBehaviour
+  def format_message(message, state)
+  def format_message(message, state) do
+    {:ok, GenAI.Provider.Anthropic.MessageProtocol.message(message), state}
+  end
+
+  @impl GenAI.ProviderBehaviour
+  def run(state) do
+    provider = __MODULE__
+    with {:ok, provider_settings, state} <- GenAI.Thread.StateProtocol.provider_settings(state, provider),
+         {:ok, settings, state} <- GenAI.Thread.StateProtocol.settings(state),
+         {:ok, model, state} <- GenAI.Thread.StateProtocol.model(state),
+         {:ok, model_settings, state} <- GenAI.Thread.StateProtocol.model_settings(state, model),
+         {:ok, model_name} <- GenAI.ModelProtocol.model(model),
+         {:ok, tools, state} <- GenAI.Thread.StateProtocol.tools(state, provider),
+         {:ok, messages, _state} <- GenAI.Thread.StateProtocol.messages(state, provider) do
+
+      headers = headers(provider_settings)
+      system_prompt = normalize_system_prompt(messages, tools, settings, model_settings, provider_settings)
+      messages = normalize_messages(messages)
+
+      body = %{
+               model: model_name,
+               messages: messages
+             }
+             |> with_setting(:max_tokens, settings, 4096)
+             |> with_setting(:metadata, settings)
+             |> with_setting_as(:stop_sequences, :stop, settings)
+             |> with_setting(:temperature, settings)
+             |> with_setting(:top_p, settings)
+             |> with_setting(:top_k, settings)
+             |> optional_field(:system, system_prompt)
+      call = GenAI.Provider.api_call(:post, "#{@api_base}/v1/messages", headers, body)
+      with {:ok, %Finch.Response{status: 200, body: body}} <- call,
+           {:ok, json} <- Jason.decode(body, keys: :atoms) do
+        chat_completion_from_json(json)
+      end
+    else
+      error = {:error, _} -> error
+      error -> {:error, error}
+    end
+  end
+
+  def chat(model, messages, tools, hyper_parameters, provider_settings \\ []) do
+    with state <-  %GenAI.Thread.State{},
+         {:ok, state} <- GenAI.Thread.StateProtocol.with_model(state, standardize_model(model)),
+         {:ok, state} <- GenAI.Thread.StateProtocol.with_provider_settings(state, __MODULE__, provider_settings),
+         {:ok, state} <- GenAI.Thread.StateProtocol.with_settings(state, hyper_parameters),
+         {:ok, state} <- GenAI.Thread.StateProtocol.with_tools(state, tools),
+         {:ok, state} <- GenAI.Thread.StateProtocol.with_messages(state, messages)
+      do
+      case run(state) do
+        {:ok, response, _} -> {:ok, response}
+        error -> error
+      end
+    end
+  end
+
+
+  @doc """
+  Sends a chat completion request to the Mistral API.
+  This function constructs the request body based on the provided messages, tools, and settings, sends the request to the Mistral API, and returns a `GenAI.ChatCompletion` struct with the response.
+  """
+  # @deprecated "This function is deprecated. Use `GenAI.Thread.chat/5` instead."
+  def chat(messages, tools, settings) do
+    settings = settings |> Enum.reverse()
+    provider_settings = Enum.filter(settings, fn {k,_} -> k in [:anthropic_version, :api_key, :api_org] end)
+    chat(settings[:model], messages, tools, settings, provider_settings)
+  end
+
+
+  defp standardize_model(model) when is_atom(model),  do: %GenAI.Model{model: model, provider: __MODULE__}
+  defp standardize_model(model) when is_bitstring(model),  do: %GenAI.Model{model: model, provider: __MODULE__}
+  defp standardize_model(model) do
+    if GenAI.ModelProtocol.protocol_supported?(model) do
+      model
+    else
+      raise GenAI.RequestError, "Unsupported Model"
+    end
+  end
 
   def normalize_messages(messages, acc \\ [])
 

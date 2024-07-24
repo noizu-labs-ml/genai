@@ -1,5 +1,17 @@
 defmodule GenAI.Provider.Gemini do
   import GenAI.Provider
+  @behaviour GenAI.ProviderBehaviour
+
+
+  defp standardize_model(model) when is_atom(model),  do: %GenAI.Model{model: model, provider: __MODULE__}
+  defp standardize_model(model) when is_bitstring(model),  do: %GenAI.Model{model: model, provider: __MODULE__}
+  defp standardize_model(model) do
+    if GenAI.ModelProtocol.protocol_supported?(model) do
+      model
+    else
+      raise GenAI.RequestError, "Unsupported Model"
+    end
+  end
 
   defp headers(_settings) do
     [
@@ -36,52 +48,128 @@ defmodule GenAI.Provider.Gemini do
     }
   end
 
-  def chat(messages, tools, settings) do
-    api_key = api_key(settings)
-    headers = headers(settings)
-    model = settings[:model] || raise(GenAI.RequestError, "required")
-    url = "https://generativelanguage.googleapis.com/v1beta/models/#{model}:generateContent?key=#{api_key}"
-    messages = Enum.map(messages, &GenAI.Provider.Gemini.MessageProtocol.message/1)
-               |> normalize_messages()
-    generation_config = %{}
-                        |> with_setting_as(:stop_sequences, :stop, settings)
-                        |> with_setting_as(:max_output_tokens, :max_tokens, settings)
-                        |> with_setting(:temperature, settings)
-                        |> with_setting(:top_p, settings)
-                        |> with_setting(:top_k, settings)
-                        |> then(& &1 == %{} && nil || &1)
 
-    safety_settings = Keyword.get_values(settings, :safety_setting)
-                      |> Enum.group_by(& &1[:category])
-                      |> Enum.map(
-                           fn
-                             {_, [h|_]} ->
-                               # @todo inherit/fall through support
-                               h
-                             _ -> nil
-                           end)
-                      |> Enum.reject(&is_nil/1)
-                      |> then(& &1 == [] && nil || &1)
 
-    body = %{contents: messages}
-           |> optional_field(:generation_config, generation_config)
-           |> optional_field(:safety_settings, safety_settings)
+  @impl GenAI.ProviderBehaviour
+  def format_tool(tool, state)
+  def format_tool(tool, state) do
+    {:ok, GenAI.Provider.Gemini.ToolProtocol.tool(tool), state}
+  end
 
-    body = if is_list(tools) and length(tools) > 0 do
-      x = Enum.map(tools, &GenAI.Provider.Gemini.ToolProtocol.tool/1)
-      Map.put(body, :tools, [%{function_declarations: x}])
-    else
-      body
-    end
+  @impl GenAI.ProviderBehaviour
+  def format_message(message, state)
+  def format_message(message, state) do
+    {:ok, GenAI.Provider.Gemini.MessageProtocol.message(message), state}
+  end
 
-    call = api_call(:post, url, headers, body)
-    #|> IO.inspect(limit: :infinity, printable_limit: :infinity)
-    with {:ok, %Finch.Response{status: 200, body: body}} <- call,
-         {:ok, json} <- Jason.decode(body, keys: :atoms) do
-      completion_from_json(model, json)
+  defp completion_url(model, provider_settings) do
+    with {:ok, model_name} <- GenAI.ModelProtocol.model(model) do
+      api_key = api_key(provider_settings)
+      url = "https://generativelanguage.googleapis.com/v1beta/models/#{model_name}:generateContent?key=#{api_key}"
+      {:ok, url}
     end
   end
 
+  defp generation_config(settings)
+  defp generation_config(settings) do
+    config = %{}
+             |> with_setting_as(:stop_sequences, :stop, settings)
+             |> with_setting_as(:max_output_tokens, :max_tokens, settings)
+             |> with_setting(:temperature, settings)
+             |> with_setting(:top_p, settings)
+             |> with_setting(:top_k, settings)
+    unless config == %{}, do: config
+  end
+
+  defp safety_settings(settings)
+  defp safety_settings(settings) do
+    # Hack to handle list passed as array or as nested array of settings
+    config = Keyword.get_values(settings, :safety_setting)
+             |> Enum.group_by(& &1[:category])
+             |> Enum.map(
+                  fn
+                    {_, [h|_]} ->
+                      # @todo inherit/fall through support - should be implemented using a special setting node type, logic here should not be required.
+                      h
+                    _ -> nil
+                  end)
+             |> Enum.reject(&is_nil/1)
+    unless config == [], do: config
+  end
+
+  @impl GenAI.ProviderBehaviour
+  def run(state) do
+    provider = __MODULE__
+    with {:ok, provider_settings, state} <- GenAI.Thread.StateProtocol.provider_settings(state, provider),
+         {:ok, settings, state} <- GenAI.Thread.StateProtocol.settings(state),
+         {:ok, model, state} <- GenAI.Thread.StateProtocol.model(state),
+         {:ok, model_name} <- GenAI.ModelProtocol.model(model),
+         {:ok, tools, state} <- GenAI.Thread.StateProtocol.tools(state, provider),
+         {:ok, messages, state} <- GenAI.Thread.StateProtocol.messages(state, provider),
+         {:ok, completion_url} = completion_url(model, provider_settings) do
+
+      # Headers
+      headers = headers(provider_settings)
+
+      # Normalize Messages
+      messages = messages
+                 |> normalize_messages()
+
+      # Tool Declarations
+      tool_declaration = with [_|_] <- tools do
+        [%{function_declarations: tools}]
+      end
+
+      body = %{contents: messages}
+             |> optional_field(:generation_config, generation_config(settings))
+             |> optional_field(:safety_settings, safety_settings(settings))
+             |> optional_field(:tools, tool_declaration)
+
+      call = api_call(:post, completion_url, headers, body)
+      with {:ok, %Finch.Response{status: 200, body: body}} <- call,
+           {:ok, json} <- Jason.decode(body, keys: :atoms),
+        {:ok, response} <- completion_from_json(model_name, json) do
+          {:ok, response, state}
+      end
+    else
+      error = {:error, _} -> error
+      error -> {:error, error}
+    end
+  end
+
+  def chat(model, messages, tools, hyper_parameters, provider_settings \\ []) do
+    with state <-  %GenAI.Thread.State{},
+         {:ok, state} <- GenAI.Thread.StateProtocol.with_model(state, standardize_model(model)),
+         {:ok, state} <- GenAI.Thread.StateProtocol.with_provider_settings(state, __MODULE__, provider_settings),
+         {:ok, state} <- GenAI.Thread.StateProtocol.with_settings(state, hyper_parameters),
+         {:ok, state} <- GenAI.Thread.StateProtocol.with_tools(state, tools),
+         {:ok, state} <- GenAI.Thread.StateProtocol.with_messages(state, messages)
+      do
+      case run(state) do
+        {:ok, response, _} -> {:ok, response}
+        error -> error
+      end
+    end
+  end
+
+
+  @doc """
+  Sends a chat completion request to the Mistral API.
+  This function constructs the request body based on the provided messages, tools, and settings, sends the request to the Mistral API, and returns a `GenAI.ChatCompletion` struct with the response.
+  """
+  # @deprecated "This function is deprecated. Use `GenAI.Thread.chat/5` instead."
+  def chat(messages, tools, settings) do
+    # hack - translate safety settings to required format:
+    settings = Enum.map(settings,
+      fn
+        {:safety_setting, v} -> {{:__multi__, :safety_setting}, v}
+        {k, v} -> {k, v}
+      end
+    )
+    |> Enum.reverse()
+    provider_settings = Enum.filter(settings, fn {k,_} -> k in [:api_key, :api_org] end)
+    chat(settings[:model], messages, tools, settings, provider_settings)
+  end
 
   def normalize_messages(messages, acc \\ [])
 

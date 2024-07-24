@@ -53,7 +53,6 @@ defmodule GenAI.Provider.Mistral do
                 )
 
       call = GenAI.Provider.api_call(:post, "#{@api_base}/v1/chat/completions", headers, body)
-
       with {:ok, %Finch.Response{status: 200, body: response_body}} <- call,
            {:ok, json} <- Jason.decode(response_body, keys: :atoms),
            {:ok, response} <- chat_completion_from_json(json) do
@@ -61,9 +60,39 @@ defmodule GenAI.Provider.Mistral do
         {:ok, response, state}
       end
     else
-      error -> IO.inspect(error, label: "WTF")
+      error = {:error, _} -> error
+      error -> {:error, error}
     end
   end
+
+
+  def chat(model, messages, tools, hyper_parameters, provider_settings \\ []) do
+    with state <-  %GenAI.Thread.State{},
+         {:ok, state} <- GenAI.Thread.StateProtocol.with_model(state, standardize_model(model)),
+         {:ok, state} <- GenAI.Thread.StateProtocol.with_provider_settings(state, __MODULE__, provider_settings),
+         {:ok, state} <- GenAI.Thread.StateProtocol.with_settings(state, hyper_parameters),
+         {:ok, state} <- GenAI.Thread.StateProtocol.with_tools(state, tools),
+         {:ok, state} <- GenAI.Thread.StateProtocol.with_messages(state, messages)
+      do
+      case run(state) do
+        {:ok, response, _} -> {:ok, response}
+        error -> error
+      end
+    end
+  end
+
+
+  @doc """
+  Sends a chat completion request to the Mistral API.
+  This function constructs the request body based on the provided messages, tools, and settings, sends the request to the Mistral API, and returns a `GenAI.ChatCompletion` struct with the response.
+  """
+  # @deprecated "This function is deprecated. Use `GenAI.Thread.chat/5` instead."
+  def chat(messages, tools, settings) do
+    settings = settings |> Enum.reverse()
+    provider_settings = Enum.filter(settings, fn {k,_} -> k in [:api_key, :api_org] end)
+    chat(settings[:model], messages, tools, settings, provider_settings)
+  end
+
 
   # Constructs the headers for Mistral API requests.
   #
@@ -111,39 +140,14 @@ defmodule GenAI.Provider.Mistral do
     }
   end
 
-  @doc """
-  Sends a chat completion request to the Mistral API.
 
-  This function constructs the request body based on the provided messages, tools, and settings, sends the request to the Mistral API, and returns a `GenAI.ChatCompletion` struct with the response.
-  """
-  def chat(messages, tools, settings) do
-    headers = headers(settings)
-
-    body = %{}
-           |> with_required_setting(:model, settings)
-           |> with_setting(:temperature, settings)
-           |> with_setting(:top_p, settings)
-           |> with_setting(:max_tokens, settings)
-           |> with_setting(:safe_prompt, settings)
-           |> with_setting_as(:random_seed, :seed, settings)
-           |> then(fn body ->
-      if is_list(tools) and length(tools) > 0 do
-        body
-        |> with_setting(:tool_choice, settings)
-        |> Map.put(:tools, Enum.map(tools, &GenAI.Provider.Mistral.ToolProtocol.tool/1))
-      else
-        body
-      end
-    end)
-           |> Map.put(:messages, Enum.map(messages, &GenAI.Provider.Mistral.MessageProtocol.message/1))
-
-    call = GenAI.Provider.api_call(:post, "#{@api_base}/v1/chat/completions", headers, body)
-
-    with {:ok, %Finch.Response{status: 200, body: response_body}} <- call,
-         {:ok, json} <- Jason.decode(response_body, keys: :atoms),
-         {:ok, response} <- chat_completion_from_json(json) do
-      response = put_in(response, [Access.key(:seed)], body[:random_seed])
-      {:ok, response}
+  defp standardize_model(model) when is_atom(model),  do: %GenAI.Model{model: model, provider: __MODULE__}
+  defp standardize_model(model) when is_bitstring(model),  do: %GenAI.Model{model: model, provider: __MODULE__}
+  defp standardize_model(model) do
+    if GenAI.ModelProtocol.protocol_supported?(model) do
+      model
+    else
+      raise GenAI.RequestError, "Unsupported Model"
     end
   end
 

@@ -8,6 +8,7 @@ defmodule GenAI.Model do
   ]
 
   defimpl GenAI.ModelProtocol do
+    def protocol_supported?(_), do: true
     def provider(model), do: {:ok, model.provider}
     def model(model), do: {:ok, model.model}
   end

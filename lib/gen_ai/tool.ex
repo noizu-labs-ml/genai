@@ -35,6 +35,12 @@ defmodule GenAI.Tool.Function do
       }
     }
   end
+
+  defimpl GenAI.ToolProtocol do
+    def protocol_supported?(_), do: true
+    def name(tool), do: {:ok, tool.name}
+  end
+
 end
 
 
