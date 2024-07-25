@@ -35,7 +35,6 @@ defmodule GenAI.Thread.Standard do
       |> append_node(%ModelNode{content: model})
     end
 
-
     def with_tool(context, tool) do
       context
       |> append_node(%ToolNode{content: tool})

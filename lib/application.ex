@@ -9,6 +9,7 @@ defmodule GenAI.Application do
   def start(_type, _args) do
     children = [
       {Finch, name: GenAI.Finch},
+      GenAI.Provider.LocalLLamaSupervisor
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

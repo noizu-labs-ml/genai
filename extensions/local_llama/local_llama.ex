@@ -2,33 +2,73 @@ defmodule GenAI.Provider.LocalLLama do
   @moduledoc """
   This module implements the GenAI provider for Local AI.
   """
+  @behaviour GenAI.ProviderBehaviour
 
   @doc """
   Retrieves a list of available Local models.
 
   This function calls the Local API to retrieve a list of models and returns them as a list of `GenAI.Model` structs.
   """
-  def models(_settings \\ []) do
-    GenAI.Provider.LocalLLamaSupervisor.models()
+  def models(settings \\ [])
+  def models(settings) do
+    GenAI.Provider.LocalLLamaManager.models(settings)
   end
-#
-#  defp standardize_model(model)
-#  defp standardize_model(model = %ExLLama.Model{})
-#
-#  def chat(model, messages, tools, hyper_parameters, provider_settings \\ []) do
-#    with state <-  %GenAI.Thread.State{},
-#         {:ok, state} <- GenAI.Thread.StateProtocol.with_model(state, standardize_model(model)),
-#         {:ok, state} <- GenAI.Thread.StateProtocol.with_provider_settings(state, __MODULE__, provider_settings),
-#         {:ok, state} <- GenAI.Thread.StateProtocol.with_settings(state, hyper_parameters),
-#         {:ok, state} <- GenAI.Thread.StateProtocol.with_tools(state, tools),
-#         {:ok, state} <- GenAI.Thread.StateProtocol.with_messages(state, messages)
-#      do
-#      case run(state) do
-#        {:ok, response, _} -> {:ok, response}
-#        error -> error
-#      end
-#    end
-#  end
+
+
+
+  @impl GenAI.ProviderBehaviour
+  def format_tool(tool, state)
+  def format_tool(tool, state) do
+    {:ok, GenAI.Provider.LocalLLama.ToolProtocol.tool(tool), state}
+  end
+
+  @impl GenAI.ProviderBehaviour
+  def format_message(message, state)
+  def format_message(message, state) do
+    {:ok, GenAI.Provider.LocalLLama.MessageProtocol.message(message), state}
+  end
+
+  @impl GenAI.ProviderBehaviour
+  def run(state) do
+    provider = __MODULE__
+    with {:ok, provider_settings, state} <- GenAI.Thread.StateProtocol.provider_settings(state, provider),
+         {:ok, settings, state} <- GenAI.Thread.StateProtocol.settings(state),
+         {:ok, model = %{external: runner = %ExLLama.Model{}}, state} <- GenAI.Thread.StateProtocol.model(state),
+         {:ok, tools, state} <- GenAI.Thread.StateProtocol.tools(state, provider),
+         {:ok, messages, state} <- GenAI.Thread.StateProtocol.messages(state, provider) do
+      with {:ok, %{id: id, model: model, seed: _seed, choices: choices, usage: usage}} <- ExLLama.chat_completion(runner, messages, settings),
+           %{prompt_tokens: _, total_tokens: _, completion_tokens: _} <- usage do
+
+        usage = %GenAI.ChatCompletion.Usage{
+          prompt_tokens: usage.prompt_tokens,
+          total_tokens: usage.total_tokens,
+          completion_tokens: usage.completion_tokens
+        }
+
+        choices = Enum.map(choices, fn choice ->
+          %GenAI.ChatCompletion.Choice{
+            index: choice.index,
+            message: %GenAI.Message{role: :assistant, content: choice.message},
+            finish_reason: choice.finish_reason
+          }
+        end)
+
+        completion = %GenAI.ChatCompletion{
+          id: id,
+          provider: __MODULE__,
+          model: model,
+          usage: usage,
+          choices: choices
+        }
+        {:ok, completion, state}
+      end
+    else
+      error = {:error, _} -> error
+      error -> {:error, error}
+    end
+  end
+
+
 
   @doc """
   Sends a chat completion request to the LocalLlama
@@ -97,8 +137,10 @@ defmodule GenAI.Provider.LocalLLama do
         if File.exists?(p) do
 
           with {:ok, mref} <- ExLLama.load_model(p) do
-            %GenAI.Model{
-              model: mref,
+            %GenAI.ExternalModel{
+              handle: UUID.uuid4(),
+              manager: GenAI.Provider.LocalLLamaManager,
+              external: mref,
               provider: GenAI.Provider.LocalLLama,
               details: %{}, # encoding details, formatter, etc.
             }

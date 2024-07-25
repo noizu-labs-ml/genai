@@ -15,11 +15,12 @@ defmodule GenAITest do
                |> GenAI.with_message(%GenAI.Message{role: :user, content: "Open the pod bay door HAL"})
                |> GenAI.with_message(%GenAI.Message{role: :assistant, content: "I'm afraid I can't do that Dave"})
                |> GenAI.with_message(%GenAI.Message{role: :user, content: "What is the movie \"2001: A Space Odyssey\" about and who directed it?"})
-      {:ok, sut, _state} = GenAI.run(thread)
+      {:ok, sut} = GenAI.run(thread)
       response = sut.choices |> hd()
       assert response.message.content =~ "Stanley Kubrick"
     end
 
+    @tag :debugme
     test "Simple inference run" do
       Mimic.expect(Finch, :request, fn(_, _, _) ->
         {:ok,

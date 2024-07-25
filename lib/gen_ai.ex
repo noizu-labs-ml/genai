@@ -4,7 +4,7 @@ defmodule GenAI do
   Creates a new chat context.
   """
   def chat(thread_provider \\ :default)
-  def chat(:default), do: %GenAI.Thread.Legacy{}
+  def chat(:default), do: %GenAI.Thread.Standard{}
   def chat(:standard), do: %GenAI.Thread.Standard{}
 
 
@@ -19,7 +19,13 @@ defmodule GenAI do
   defdelegate with_message(context, message, options \\ nil), to: GenAI.ThreadProtocol
   defdelegate with_messages(context, messages, options \\ nil), to: GenAI.ThreadProtocol
   defdelegate stream(context, handler), to: GenAI.ThreadProtocol
-  defdelegate run(context), to: GenAI.ThreadProtocol
+
+  # Temp exception to avoid breaking existing code, add new endpoint to return updated thead with response
+  def run(context) do
+    with {:ok, completion, state} <- GenAI.ThreadProtocol.run(context)  do
+        {:ok, completion}
+    end
+  end
 
 
 

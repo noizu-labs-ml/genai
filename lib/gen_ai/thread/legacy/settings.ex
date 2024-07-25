@@ -44,4 +44,11 @@ defmodule GenAI.Thread.Legacy.Settings do
     end
 
   end
+
+  defimpl GenAI.Thread.StateProtocol do
+      def with_model(state, model) do
+        {:ok, %{state | model: [model | state.model]}}
+      end
+   end
+
 end
