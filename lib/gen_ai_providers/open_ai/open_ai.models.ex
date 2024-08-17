@@ -1,6 +1,13 @@
 defmodule GenAI.Provider.OpenAI.Models do
   import GenAI.Provider
   @api_base "https://api.openai.com"
+  @model_metadata_provider (Application.compile_env(:genai, :openai)[:metadata_provider] || GenAI.ModelMetadata.DefaultProvider)
+  @behaviour GenAI.Provider.ModelsBehaviour
+
+  def load_metadata(options \\ nil)
+  def load_metadata(_) do
+    :ok
+  end
 
   def list(options \\ nil) do
     headers = headers(options)
@@ -98,11 +105,8 @@ defmodule GenAI.Provider.OpenAI.Models do
   # @TODO move into Model module
   #------------------
   defp model_from_json(json) do
-    %GenAI.Model{
-      model: json[:id],
-      provider: GenAI.Provider.OpenAI,
-      details: json
-    }
+    {:ok, entry} = GenAI.ModelMetadata.ProviderBehaviour.get(@model_metadata_provider, GenAI.Provider.OpenAI, json[:id])
+    entry
   end
 
 
