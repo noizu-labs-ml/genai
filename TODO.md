@@ -1,21 +1,17 @@
 Todo
 =====
 
-# Refactoring
-- [x] Streamline context, move settings into own simple chat specific protocol
+# Model Details
+- [ ] Overhaul how model details are loaded to incorporate a model database to fill in model internal details.
+  - [ ] Context Limits
+  - [ ] Function Call Support
+  - [ ] Image Support
+  - [ ] Audio Support
+  - [ ] Video Support
 
 # Providers
-- [x] Anthropic
-  - [x] Vision/Embeddings
-  - [x] Function Calls
-  - [ ] Updated API Function Call Implementation
-- [x] Mistral
-    - [x] Function Calls 
-- [x] Gemini 
-    - [x] Vision/Embeddings
-    - [ ] Function Calls 
-- [x] OpenAI
-    - [x] Vision/Embeddings
-    - [x] Function Calls
-- [ ] HuggingFace
-- [ ] OpenVllm
+- [ ] Add support for HuggingFace
+- [ ] Add support for OpenVllm
+- [ ] Update API Call logic for Anthropic to use updated api format.
+- [ ] Vision Support for Groq models that support it. 
+- [ ] Tool use via api for Groq models that support it.

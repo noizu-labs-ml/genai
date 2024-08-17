@@ -1,65 +1,50 @@
 defmodule GenAI.Provider.OpenAI do
+  @moduledoc """
+  Module for interacting with the OpenAI API.
+  """
   import GenAI.Provider
   @api_base "https://api.openai.com"
   @behaviour GenAI.ProviderBehaviour
 
-
-  defp standardize_model(model) when is_atom(model),  do: %GenAI.Model{model: model, provider: __MODULE__}
-  defp standardize_model(model) when is_bitstring(model),  do: %GenAI.Model{model: model, provider: __MODULE__}
-  defp standardize_model(model) do
-    if GenAI.ModelProtocol.protocol_supported?(model) do
-      model
-    else
-      raise GenAI.RequestError, "Unsupported Model"
-    end
-  end
-
-  defp headers(settings) do
-    auth = cond do
-      key = settings[:api_key] -> {"Authorization", "Bearer #{key}"}
-      key = Application.get_env(:genai, :openai)[:api_key] -> {"Authorization", "Bearer #{key}"}
-    end
-    [
-      auth,
-      {"content-type", "application/json"}
-    ]
-  end
-
-  def models(settings \\ []) do
-    headers = headers(settings)
-    call = api_call(:get, "#{@api_base}/v1/models", headers)
-    with {:ok, %Finch.Response{status: 200, body: body}} <- call,
-         {:ok, json} <- Jason.decode(body, keys: :atoms) do
-
-      with %{data: models, object: "list"} <- json do
-        models = models
-                 |> Enum.map(&model_from_json/1)
-        {:ok, models}
-      else
-        _ -> {:error, {:response, json}}
+  #------------------
+  # chat/5
+  #------------------
+  @doc """
+  Low level inference, pass in model, messages, tools, and various settings to prepare final provider specific API requires.
+  """
+  @impl GenAI.ProviderBehaviour
+  def chat(model, messages, tools, hyper_parameters, provider_settings \\ []) do
+    with state <-  %GenAI.Thread.State{},
+         {:ok, state} <- GenAI.Thread.StateProtocol.with_model(state, standardize_model(model)),
+         {:ok, state} <- GenAI.Thread.StateProtocol.with_provider_settings(state, __MODULE__, provider_settings),
+         {:ok, state} <- GenAI.Thread.StateProtocol.with_settings(state, hyper_parameters),
+         {:ok, state} <- GenAI.Thread.StateProtocol.with_tools(state, tools),
+         {:ok, state} <- GenAI.Thread.StateProtocol.with_messages(state, messages)
+      do
+      case run(state) do
+        {:ok, response, _} -> {:ok, response}
+        error -> error
       end
     end
   end
-  defp model_from_json(json) do
-    %GenAI.Model{
-      model: json[:id],
-      provider: __MODULE__,
-      details: json
-    }
+
+  @doc """
+  Sends a chat completion request to the Mistral API.
+  This function constructs the request body based on the provided messages, tools, and settings, sends the request to the Mistral API, and returns a `GenAI.ChatCompletion` struct with the response.
+  """
+  @deprecated "This function is deprecated. Use `GenAI.Thread.chat/5` instead."
+  def chat(messages, tools, settings) do
+    settings = settings |> Enum.reverse()
+    provider_settings = Enum.filter(settings, fn {k,_} -> k in [:api_key, :api_org] end)
+    chat(settings[:model], messages, tools, settings, provider_settings)
   end
 
-  @impl GenAI.ProviderBehaviour
-  def format_tool(tool, state)
-  def format_tool(tool, state) do
-    {:ok, GenAI.Provider.OpenAI.ToolProtocol.tool(tool), state}
-  end
-
-  @impl GenAI.ProviderBehaviour
-  def format_message(message, state)
-  def format_message(message, state) do
-    {:ok, GenAI.Provider.OpenAI.MessageProtocol.message(message), state}
-  end
-
+  #------------------
+  # run/1
+  #------------------
+  @doc """
+  Sends a chat completion request to the OpenAI API.
+  """
   @impl GenAI.ProviderBehaviour
   def run(state) do
     provider = __MODULE__
@@ -114,34 +99,98 @@ defmodule GenAI.Provider.OpenAI do
     end
   end
 
+  #------------------
+  # format_tool/2
+  #------------------
+  @doc """
+  Formats a tool for use in a chat completion request to the OpenAI API.
+  """
+  @impl GenAI.ProviderBehaviour
+  def format_tool(tool, state)
+  def format_tool(tool, state) do
+    {:ok, GenAI.Provider.OpenAI.ToolProtocol.tool(tool), state}
+  end
 
-  def chat(model, messages, tools, hyper_parameters, provider_settings \\ []) do
-    with state <-  %GenAI.Thread.State{},
-         {:ok, state} <- GenAI.Thread.StateProtocol.with_model(state, standardize_model(model)),
-         {:ok, state} <- GenAI.Thread.StateProtocol.with_provider_settings(state, __MODULE__, provider_settings),
-         {:ok, state} <- GenAI.Thread.StateProtocol.with_settings(state, hyper_parameters),
-         {:ok, state} <- GenAI.Thread.StateProtocol.with_tools(state, tools),
-         {:ok, state} <- GenAI.Thread.StateProtocol.with_messages(state, messages)
-      do
-      case run(state) do
-        {:ok, response, _} -> {:ok, response}
-        error -> error
+  #------------------
+  # format_message/2
+  #------------------
+  @doc """
+  Formats a message for use in a chat completion request to the OpenAI API.
+  """
+  @impl GenAI.ProviderBehaviour
+  def format_message(message, state)
+  def format_message(message, state) do
+    {:ok, GenAI.Provider.OpenAI.MessageProtocol.message(message), state}
+  end
+
+  #------------------
+  # models/0
+  # models/1
+  #------------------
+  @doc """
+  Retrieves a list of models supported by the OpenAI API for given user.
+  """
+  @impl GenAI.ProviderBehaviour
+  def models(settings \\ []) do
+    headers = headers(settings)
+    call = api_call(:get, "#{@api_base}/v1/models", headers)
+    with {:ok, %Finch.Response{status: 200, body: body}} <- call,
+         {:ok, json} <- Jason.decode(body, keys: :atoms) do
+
+      with %{data: models, object: "list"} <- json do
+        models = models
+                 |> Enum.map(&model_from_json/1)
+        {:ok, models}
+      else
+        _ -> {:error, {:response, json}}
       end
     end
   end
 
+  #=============================================
+  # Private Methods
+  #=============================================
 
-  @doc """
-  Sends a chat completion request to the Mistral API.
-  This function constructs the request body based on the provided messages, tools, and settings, sends the request to the Mistral API, and returns a `GenAI.ChatCompletion` struct with the response.
-  """
-  # @deprecated "This function is deprecated. Use `GenAI.Thread.chat/5` instead."
-  def chat(messages, tools, settings) do
-    settings = settings |> Enum.reverse()
-    provider_settings = Enum.filter(settings, fn {k,_} -> k in [:api_key, :api_org] end)
-    chat(settings[:model], messages, tools, settings, provider_settings)
+  #-----------------
+  # Prepare API Request Headers
+  #-----------------
+  defp headers(settings) do
+    auth = cond do
+      key = settings[:api_key] -> {"Authorization", "Bearer #{key}"}
+      key = Application.get_env(:genai, :openai)[:api_key] -> {"Authorization", "Bearer #{key}"}
+    end
+    [auth, {"content-type", "application/json"}]
   end
 
+  #------------------
+  # Insure specified model is in correct format, to allow for calls that pass in model as simple string/atom.
+  #------------------
+  defp standardize_model(model) when is_atom(model),  do: %GenAI.Model{model: model, provider: __MODULE__}
+  defp standardize_model(model) when is_bitstring(model),  do: %GenAI.Model{model: model, provider: __MODULE__}
+  defp standardize_model(model) do
+    if GenAI.ModelProtocol.protocol_supported?(model) do
+      model
+    else
+      raise GenAI.RequestError, "Unsupported Model"
+    end
+  end
+
+
+  #------------------
+  # Extract model from api request response.
+  # @TODO move into Model module
+  #------------------
+  defp model_from_json(json) do
+    %GenAI.Model{
+      model: json[:id],
+      provider: __MODULE__,
+      details: json
+    }
+  end
+
+  #-----------------
+  # cast chat completion response into standardized output.
+  #-----------------
   defp chat_completion_from_json(json) do
     with %{
            id: id,
@@ -171,6 +220,9 @@ defmodule GenAI.Provider.OpenAI do
     end
   end
 
+  #-----------------
+  # cast chat completion response into standardized output.
+  #-----------------
   defp chat_choice_from_json(id, json) do
     with %{
            index: index,
@@ -187,6 +239,10 @@ defmodule GenAI.Provider.OpenAI do
       end
     end
   end
+
+  #-----------------
+  # cast chat completion response into standardized output.
+  #-----------------
   defp chat_choice_message_from_json(_id, json) do
     case json do
       %{
@@ -223,66 +279,4 @@ defmodule GenAI.Provider.OpenAI do
     end
   end
 
-  defmodule Models do
-
-    def gpt_3_5_turbo() do
-     %GenAI.Model{
-       model: "gpt-3.5-turbo",
-       provider: GenAI.Provider.OpenAI
-     }
-    end
-
-
-    def gpt_3_5_turbo_16k() do
-      %GenAI.Model{
-        model: "gpt-3.5-turbo",
-        provider: GenAI.Provider.OpenAI
-      }
-    end
-
-    def gpt_4() do
-      %GenAI.Model{
-        model: "gpt-4",
-        provider: GenAI.Provider.OpenAI
-      }
-    end
-
-    def gpt_4_turbo() do
-      %GenAI.Model{
-        model: "gpt-4-turbo",
-        provider: GenAI.Provider.OpenAI
-      }
-    end
-
-    def gpt_4_turbo_preview() do
-      %GenAI.Model{
-        model: "gpt-4-turbo-preview",
-        provider: GenAI.Provider.OpenAI
-      }
-    end
-
-    def gpt_4_vision() do
-      %GenAI.Model{
-        model: "gpt-4",
-        provider: GenAI.Provider.OpenAI
-      }
-    end
-
-
-    def gpt_4o() do
-      %GenAI.Model{
-        model: "gpt-4o",
-        provider: GenAI.Provider.OpenAI
-      }
-    end
-
-    def gpt_4o_mini() do
-      %GenAI.Model{
-        model: "gpt-4o-mini",
-        provider: GenAI.Provider.OpenAI
-      }
-    end
-
-
-  end
 end

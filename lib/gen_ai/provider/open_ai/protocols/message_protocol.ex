@@ -43,7 +43,6 @@ defimpl GenAI.Provider.OpenAI.MessageProtocol, for: GenAI.Message.ToolCall do
   end
 end
 
-
 defimpl GenAI.Provider.OpenAI.MessageProtocol, for: GenAI.Message.ToolResponse do
   def message(message) do
     %{
