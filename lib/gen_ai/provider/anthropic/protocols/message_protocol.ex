@@ -4,11 +4,44 @@ defprotocol GenAI.Provider.Anthropic.MessageProtocol do
 end
 
 defimpl GenAI.Provider.Anthropic.MessageProtocol, for: GenAI.Message do
+
+  # temp
+  def content(content, options)
+  def content(%GenAI.Message.Content.TextContent{} = content, options) do
+    text = if options[:role] == :system do
+      content = "<|system|>\n" <> content.text <> "</|system|>"
+    else
+      content = content.text
+    end
+    %{type: :text, text: text}
+  end
+  def content(%GenAI.Message.Content.ImageContent{} = content, _options) do
+    {:ok, encoded} = GenAI.Message.Content.ImageContent.base64(content)
+    %{
+      type: :image,
+      source: %{
+        type: :base64,
+        media_type: "image/#{content.type}",
+        data: encoded
+      }
+    }
+  end
+
   def message(message) do
-    case message.role do
-      :user -> %{role: :user, content:  message.content}
-      :assistant ->%{role: :assistant, content:  message.content}
-      :system -> %{role: :user, content:  "<|system|>\n" <> message.content <> "</|system|>"}
+    case GenAI.MessageProtocol.content(message) do
+      content when is_bitstring(content) ->
+        case message.role do
+          :user -> %{role: :user, content:  content}
+          :assistant ->%{role: :assistant, content:  content}
+          :system -> %{role: :user, content:  "<|system|>\n" <> content <> "</|system|>"}
+        end
+      content when is_list(content) ->
+        content_list = Enum.map(content, & content(&1, role: message.role))
+        case message.role do
+          :user -> %{role: :user, content:  content_list}
+          :assistant ->%{role: :assistant, content:  content_list}
+          :system -> %{role: :user, content:  content_list}
+        end
     end
   end
 end

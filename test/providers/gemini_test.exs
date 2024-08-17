@@ -3,6 +3,11 @@ defmodule GenAI.Provider.GeminiTest do
   import GenAI.Test.Support.Common
   @moduletag provider: :gemini
 
+
+  def priv() do
+    :code.priv_dir(:genai) |> List.to_string()
+  end
+
   describe "Gemini Provider" do
     test "models" do
 
@@ -127,6 +132,36 @@ defmodule GenAI.Provider.GeminiTest do
       assert choice.message.content == "Cats have 230 bones, while humans only have 206"
     end
 
+    @tag :wip
+    @tag :vision
+    @tag :advanced
+    test "Vision Test" do
+      Mimic.expect(Finch, :request, fn(request, _, _) ->
+        assert request.body =~ "{\"contents\":[{\"parts\":[{\"text\":\"Describe this image\"},{\"inlineData\":{\"data\":\"/9j/6zMMSlATAAAAAAAAADMCanVtYgAAAB5qdW1kYzJwYQARABCAAACqADibcQNjMnBhAAAAMtxqdW1iAAAAR2p1bWRjMm1hABEAEIAAAKoAOJtxA3Vybj"
+        {:ok,
+          %Finch.Response{
+            status: 200,
+            body: "{\n  \"candidates\": [\n    {\n      \"content\": {\n        \"parts\": [\n          {\n            \"text\": \"The image is a cartoon illustration of a cute white cat with orange stripes sitting in a field of flowers. The cat has big, round eyes and a small, pink nose. It is surrounded by flowers in various colors, including blue, pink, and yellow. There are also two butterflies flying around the cat. The background is a light green color with white dots. The image is drawn in a whimsical style and evokes a sense of happiness and innocence.\"\n          }\n        ],\n        \"role\": \"model\"\n      },\n      \"finishReason\": \"STOP\",\n      \"index\": 0,\n      \"safetyRatings\": [\n        {\n          \"category\": \"HARM_CATEGORY_SEXUALLY_EXPLICIT\",\n          \"probability\": \"NEGLIGIBLE\"\n        },\n        {\n          \"category\": \"HARM_CATEGORY_HATE_SPEECH\",\n          \"probability\": \"NEGLIGIBLE\"\n        },\n        {\n          \"category\": \"HARM_CATEGORY_HARASSMENT\",\n          \"probability\": \"NEGLIGIBLE\"\n        },\n        {\n          \"category\": \"HARM_CATEGORY_DANGEROUS_CONTENT\",\n          \"probability\": \"NEGLIGIBLE\"\n        }\n      ]\n    }\n  ],\n  \"usageMetadata\": {\n    \"promptTokenCount\": 262,\n    \"candidatesTokenCount\": 90,\n    \"totalTokenCount\": 352\n  }\n}\n",
+            headers: [],
+            trailers: []
+          }}
+      end)
+
+      thread = GenAI.chat(:standard)
+               |> GenAI.with_model(GenAI.Provider.Gemini.Models.gemini_flash_1_5())
+               |> GenAI.with_setting(:temperature, 0.7)
+               |> GenAI.with_message(
+                    %GenAI.Message{
+                      role: :user,
+                      content: [
+                        "Describe this image",
+                        GenAI.Message.image(priv() <> "/media/kitten.jpeg")
+                      ]
+                    })
+      {:ok, sut} = GenAI.run(thread)
+      response = sut.choices |> hd()
+      assert response.message.content =~ "The image is a cartoon illustration of a cute white cat"
+    end
 
   end
 

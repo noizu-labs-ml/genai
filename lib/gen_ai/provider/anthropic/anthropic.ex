@@ -148,7 +148,6 @@ defmodule GenAI.Provider.Anthropic do
     chat(settings[:model], messages, tools, settings, provider_settings)
   end
 
-
   defp standardize_model(model) when is_atom(model),  do: %GenAI.Model{model: model, provider: __MODULE__}
   defp standardize_model(model) when is_bitstring(model),  do: %GenAI.Model{model: model, provider: __MODULE__}
   defp standardize_model(model) do
@@ -289,6 +288,12 @@ defmodule GenAI.Provider.Anthropic do
       }
     end
 
+    def claude_sonnet_3_5() do
+      %GenAI.Model{
+        model: "claude-3-5-sonnet-20240620",
+        provider: GenAI.Provider.Anthropic
+      }
+    end
 
     def claude_haiku() do
       %GenAI.Model{
@@ -296,9 +301,6 @@ defmodule GenAI.Provider.Anthropic do
         provider: GenAI.Provider.Anthropic
       }
     end
-
-
-
 
   end
 end

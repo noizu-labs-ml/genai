@@ -3,6 +3,10 @@ defmodule GenAI.Provider.OpenAITest do
   import GenAI.Test.Support.Common
   @moduletag provider: :open_ai
 
+  def priv() do
+    :code.priv_dir(:genai) |> List.to_string()
+  end
+
   describe "OpenAI Provider" do
     test "models" do
       Mimic.expect(Finch, :request, fn(_, _, _) ->
@@ -129,6 +133,37 @@ defmodule GenAI.Provider.OpenAITest do
       assert choice.message.content == "Hello! How can I assist you today?"
       assert choice.finish_reason == :stop
     end
+
+    @tag :vision
+    @tag :advanced
+    test "Vision Test" do
+      Mimic.expect(Finch, :request, fn(request, _, _) ->
+        assert request.body =~ "{\"messages\":[{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"Describe this image\"},{\"type\":\"image_url\",\"image_url\":{\"url\":\"data:image/jpeg;base64,/9j/6zMMSlATAAAAAAAAADMCa"
+        {:ok,
+          %Finch.Response{
+            status: 200,
+            body: "{\n  \"id\": \"chatcmpl-9x9CKRSPYms2YazF2qpf0eZoJd8mE\",\n  \"object\": \"chat.completion\",\n  \"created\": 1723883736,\n  \"model\": \"gpt-4o-mini-2024-07-18\",\n  \"choices\": [\n    {\n      \"index\": 0,\n      \"message\": {\n        \"role\": \"assistant\",\n        \"content\": \"The image features an adorable cartoon-style cat with large, expressive eyes and a playful expression. The cat is predominantly white, with a few orange spots on its head. It is sitting on a patch of green grass surrounded by colorful flowers, including blue and pink blooms. There are also butterflies fluttering around the cat, adding to the whimsical and cheerful atmosphere of the scene. The background has a soft green hue, enhancing the overall cute and friendly vibe.\",\n        \"refusal\": null\n      },\n      \"logprobs\": null,\n      \"finish_reason\": \"stop\"\n    }\n  ],\n  \"usage\": {\n    \"prompt_tokens\": 25511,\n    \"completion_tokens\": 90,\n    \"total_tokens\": 25601\n  },\n  \"system_fingerprint\": \"fp_507c9469a1\"\n}\n",
+            headers: [],
+            trailers: []
+          }}
+      end)
+
+      thread = GenAI.chat(:standard)
+               |> GenAI.with_model(GenAI.Provider.OpenAI.Models.gpt_4o_mini())
+               |> GenAI.with_setting(:temperature, 0.7)
+               |> GenAI.with_message(
+                    %GenAI.Message{
+                      role: :user,
+                      content: [
+                        "Describe this image",
+                        GenAI.Message.image(priv() <> "/media/kitten.jpeg")
+                      ]
+                    })
+      {:ok, sut} = GenAI.run(thread)
+      response = sut.choices |> hd()
+      assert response.message.content =~ "The image features an adorable cartoon-style cat"
+    end
+
   end
 
 end

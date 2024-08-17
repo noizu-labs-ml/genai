@@ -4,8 +4,26 @@ defprotocol GenAI.Provider.OpenAI.MessageProtocol do
 end
 
 defimpl GenAI.Provider.OpenAI.MessageProtocol, for: GenAI.Message do
+
+  # temp
+  def content(content)
+  def content(%GenAI.Message.Content.TextContent{} = content) do
+    %{type: :text, text: content.text}
+  end
+  def content(%GenAI.Message.Content.ImageContent{} = content) do
+    {:ok, encoded} = GenAI.Message.Content.ImageContent.base64(content)
+    base64 = "data:image/#{content.type};base64," <> encoded
+    %{type: :image_url, image_url: %{url:  base64}}
+  end
+
   def message(message) do
-    %{role: message.role, content: message.content}
+    case GenAI.MessageProtocol.content(message) do
+      content when is_bitstring(content) ->
+        %{role: message.role, content: content}
+      content when is_list(content) ->
+        content_list = Enum.map(content, &content/1)
+        %{role: message.role, content: content_list}
+    end
   end
 end
 

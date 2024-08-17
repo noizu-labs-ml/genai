@@ -3,6 +3,11 @@ defmodule GenAI.Provider.AnthropicTest do
   import GenAI.Test.Support.Common
   @moduletag provider: :anthropic
 
+  def priv() do
+    :code.priv_dir(:genai) |> List.to_string()
+  end
+
+
   describe "Anthropic Provider" do
     test "chat - with function calls" do
       Mimic.expect(Finch, :request, fn(_, _, _) ->
@@ -105,6 +110,37 @@ defmodule GenAI.Provider.AnthropicTest do
       assert choice.message.content == "Hello!"
       assert choice.finish_reason == :stop
     end
+
+    @tag :vision
+    @tag :advanced
+    test "Vision Test" do
+      Mimic.expect(Finch, :request, fn(request, _, _) ->
+        assert request.body =~ "{\"messages\":[{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"Describe this image\"},{\"type\":\"image\",\"source\":{\"data\":\"/9j/6zMMSlATAAAAAAAAADMC"
+        {:ok,
+          %Finch.Response{
+            status: 200,
+            body: "{\"id\":\"msg_01H7uiwqdf2SNyP1N5EfnpGV\",\"type\":\"message\",\"role\":\"assistant\",\"model\":\"claude-3-5-sonnet-20240620\",\"content\":[{\"type\":\"text\",\"text\":\"This image shows a cute, cartoon-style illustration of a small cat sitting in a floral setting. The cat is predominantly white with orange patches, has large, expressive eyes, and a small pink nose. It's sitting on a patch of green grass surrounded by colorful flowers in shades of blue, red, and yellow. \\n\\nThe background is a soft mint green circle, giving the impression of a peaceful spring or summer day. There are three butterflies fluttering around the cat - two pink ones and a white silhouette. The overall style is very kawaii or cute, with simplified shapes and a cheerful color palette.\\n\\nThe cat's expression is sweet and content, with closed eyes and a small smile, adding to the overall warm and friendly atmosphere of the illustration. This type of image would be popular for children's books, greeting cards, or as a cute digital sticker or emoji.\"}],\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"usage\":{\"input_tokens\":1383,\"output_tokens\":190}}",
+            headers: [],
+            trailers: []
+          }}
+      end)
+
+      thread = GenAI.chat(:standard)
+               |> GenAI.with_model(GenAI.Provider.Anthropic.Models.claude_sonnet_3_5())
+               |> GenAI.with_setting(:temperature, 0.7)
+               |> GenAI.with_message(
+                    %GenAI.Message{
+                      role: :user,
+                      content: [
+                        "Describe this image",
+                        GenAI.Message.image(priv() <> "/media/kitten.jpeg")
+                      ]
+                    })
+      {:ok, sut} = GenAI.run(thread)
+      response = sut.choices |> hd()
+      assert response.message.content =~ "This image shows a cute, cartoon-style illustration of a small cat"
+    end
+
   end
 
 end
