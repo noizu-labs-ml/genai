@@ -4,7 +4,7 @@ defmodule GenAI.Provider.OpenAI do
   """
   import GenAI.Provider
   @api_base "https://api.openai.com"
-  @behaviour GenAI.ProviderBehaviour
+
 
   #------------------
   # chat/5

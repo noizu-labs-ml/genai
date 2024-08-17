@@ -12,4 +12,12 @@ defmodule GenAI.ProviderBehaviour do
 
   def format_message(%{provider: handler}, message, state), do: format_message(handler, message, state)
   def format_message(handler, message, state), do: apply(handler, :format_message, [message, state])
+
+#  defmacro __using__(_opts \\ []) do
+#    quote do
+#      import GenAI.Provider
+#      @behaviour GenAI.ProviderBehaviour
+#    end
+#  end
+
 end
