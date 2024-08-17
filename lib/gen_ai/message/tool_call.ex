@@ -8,9 +8,8 @@ defmodule GenAI.Message.ToolCall do
   ]
 
   defimpl GenAI.MessageProtocol do
-    def message(message) do
-      message
-    end
+    def message(message), do: message
+    def content(_), do: :unsupported
   end
 
 end

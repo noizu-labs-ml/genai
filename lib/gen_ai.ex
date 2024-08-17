@@ -22,7 +22,7 @@ defmodule GenAI do
 
   # Temp exception to avoid breaking existing code, add new endpoint to return updated thead with response
   def run(context) do
-    with {:ok, completion, state} <- GenAI.ThreadProtocol.run(context)  do
+    with {:ok, completion, _state} <- GenAI.ThreadProtocol.run(context)  do
         {:ok, completion}
     end
   end

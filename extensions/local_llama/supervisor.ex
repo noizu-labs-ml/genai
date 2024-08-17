@@ -54,7 +54,7 @@ end
 
 defmodule GenAI.Provider.LocalLLamaServer do
   use GenServer
-  alias Phoenix.PubSub
+  #alias Phoenix.PubSub
   @vsn 1.0
 
   defstruct [
@@ -73,6 +73,8 @@ defmodule GenAI.Provider.LocalLLamaServer do
     {:ok, state}
   end
 
+  @impl true
+  def handle_call(call, from, state)
   def handle_call({:get_models, settings}, from, state) do
     do_get_models(state, from, settings)
   end
@@ -90,7 +92,7 @@ defmodule GenAI.Provider.LocalLLamaServer do
   end
 
   defp do_get_models(state, from, settings)
-  defp do_get_models(state, _, settings) do
+  defp do_get_models(state, _, _settings) do
     models = Enum.map(state.local_models, fn {_,model} -> model end)
     {:reply, {:ok, models}, state}
   end
@@ -104,7 +106,7 @@ defmodule GenAI.Provider.LocalLLamaServer do
   end
 
   defp do_get_model(state, from, handle, settings)
-  defp do_get_model(state, _, handle, settings) do
+  defp do_get_model(state, _, handle, _settings) do
     response = with {:ok, identifier} <- GenAI.ModelProtocol.identifier(handle) do
       if live_model = state.local_models[identifier] do
         {:ok, live_model}

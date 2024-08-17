@@ -14,8 +14,6 @@ defmodule GenAI.Thread.Standard do
 
   defimpl GenAI.ThreadProtocol do
     @moduledoc """
-    Implements the `GenAI.ThreadProtocol` for `GenAI.Thread.Legacy`.
-
     This allows chat contexts to be used for configuring and running GenAI interactions.
     """
     #alias GenAI.Graph.Node

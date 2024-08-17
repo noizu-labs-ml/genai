@@ -4,6 +4,19 @@ defmodule GenAI.Provider.LocalLLama do
   """
   @behaviour GenAI.ProviderBehaviour
 
+
+  #------------------
+  # chat/5
+  #------------------
+  @doc """
+  Low level inference, pass in model, messages, tools, and various settings to prepare final provider specific API requires.
+  """
+  @impl GenAI.ProviderBehaviour
+  def chat(model, messages, tools, hyper_parameters, provider_settings \\ [])
+  def chat(_model, _messages, _tools, _hyper_parameters, _provider_settings) do
+    throw "NYI"
+  end
+
   @doc """
   Retrieves a list of available Local models.
 
@@ -31,10 +44,10 @@ defmodule GenAI.Provider.LocalLLama do
   @impl GenAI.ProviderBehaviour
   def run(state) do
     provider = __MODULE__
-    with {:ok, provider_settings, state} <- GenAI.Thread.StateProtocol.provider_settings(state, provider),
+    with {:ok, _provider_settings, state} <- GenAI.Thread.StateProtocol.provider_settings(state, provider),
          {:ok, settings, state} <- GenAI.Thread.StateProtocol.settings(state),
-         {:ok, model = %{external: runner = %ExLLama.Model{}}, state} <- GenAI.Thread.StateProtocol.model(state),
-         {:ok, tools, state} <- GenAI.Thread.StateProtocol.tools(state, provider),
+         {:ok, _model = %{external: runner = %ExLLama.Model{}}, state} <- GenAI.Thread.StateProtocol.model(state),
+         {:ok, _tools, state} <- GenAI.Thread.StateProtocol.tools(state, provider),
          {:ok, messages, state} <- GenAI.Thread.StateProtocol.messages(state, provider) do
       with {:ok, %{id: id, model: model, seed: _seed, choices: choices, usage: usage}} <- ExLLama.chat_completion(runner, messages, settings),
            %{prompt_tokens: _, total_tokens: _, completion_tokens: _} <- usage do

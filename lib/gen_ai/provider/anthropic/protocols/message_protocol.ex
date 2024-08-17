@@ -9,9 +9,9 @@ defimpl GenAI.Provider.Anthropic.MessageProtocol, for: GenAI.Message do
   def content(content, options)
   def content(%GenAI.Message.Content.TextContent{} = content, options) do
     text = if options[:role] == :system do
-      content = "<|system|>\n" <> content.text <> "</|system|>"
+      "<|system|>\n" <> content.text <> "</|system|>"
     else
-      content = content.text
+      content.text
     end
     %{type: :text, text: text}
   end

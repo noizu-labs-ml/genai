@@ -24,7 +24,7 @@ defmodule GenAI.Message.Content.ImageContent do
     end
   end
 
-  def resolution(resource), do: :auto
+  def resolution(_), do: :auto
 
   def base64(image, options \\ nil)
   def base64(image, _) do

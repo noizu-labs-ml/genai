@@ -121,6 +121,7 @@ defmodule GenAI.Provider.Anthropic do
     end
   end
 
+  @impl GenAI.ProviderBehaviour
   def chat(model, messages, tools, hyper_parameters, provider_settings \\ []) do
     with state <-  %GenAI.Thread.State{},
          {:ok, state} <- GenAI.Thread.StateProtocol.with_model(state, standardize_model(model)),

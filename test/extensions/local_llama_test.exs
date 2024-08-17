@@ -5,7 +5,7 @@ if Code.ensure_loaded?(GenAI.Provider.LocalLLama) do
     @moduletag :live
 
     test "wip" do
-      models = GenAI.Provider.LocalLLama.models()
+      GenAI.Provider.LocalLLama.models()
     end
 
     test "inference" do

@@ -9,9 +9,9 @@ defimpl GenAI.Provider.Gemini.MessageProtocol, for: GenAI.Message do
   def content(content, options)
   def content(%GenAI.Message.Content.TextContent{} = content, options) do
     text = if options[:role] == :system do
-      content = "<|system|>\n" <> content.text <> "</|system|>"
+      "<|system|>\n" <> content.text <> "</|system|>"
     else
-      content = content.text
+      content.text
     end
     %{text: text}
   end
@@ -40,15 +40,6 @@ defimpl GenAI.Provider.Gemini.MessageProtocol, for: GenAI.Message do
           :assistant ->%{role: :assistant, parts:  content_list}
           :system -> %{role: :user, parts:  content_list}
         end
-    end
-  end
-
-
-  def message(message) do
-    case message.role do
-      :user -> %{role: :user, parts: [%{text: message.content }] }
-      :assistant -> %{role: :model, parts: [%{text: message.content }] }
-      :system -> %{role: :user, parts: [%{text: "<|system|>\n" <> message.content <> "</|system|>"}] }
     end
   end
 end

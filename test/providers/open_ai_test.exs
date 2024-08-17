@@ -8,6 +8,8 @@ defmodule GenAI.Provider.OpenAITest do
   end
 
   describe "OpenAI Provider" do
+
+    @tag :models
     test "models" do
       Mimic.expect(Finch, :request, fn(_, _, _) ->
         {:ok,
@@ -25,6 +27,7 @@ defmodule GenAI.Provider.OpenAITest do
     end
 
 
+    @tag :tool_usage
     test "chat - with function calls" do
 
       Mimic.expect(Finch, :request, fn(_, _, _) ->
@@ -55,6 +58,7 @@ defmodule GenAI.Provider.OpenAITest do
 
 
 
+    @tag :tool_usage
     test "chat - with function call response" do
 
       Mimic.expect(Finch, :request, fn(_, _, _) ->
