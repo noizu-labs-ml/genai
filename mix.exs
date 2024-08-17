@@ -16,6 +16,8 @@ defmodule GenAI.MixProject do
         main: "GenAI",
         extras: [
           "README.md",
+          "CHANGELOG.md",
+          "TODO.md",
           "CONTRIBUTING.md",
           "LICENSE"
         ]
