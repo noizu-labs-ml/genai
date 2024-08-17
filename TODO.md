@@ -8,6 +8,7 @@ Todo
 - [x] Anthropic
   - [x] Vision/Embeddings
   - [x] Function Calls
+  - [ ] Updated API Function Call Implementation
 - [x] Mistral
     - [x] Function Calls 
 - [x] Gemini 
