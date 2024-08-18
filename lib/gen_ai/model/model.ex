@@ -15,9 +15,9 @@ defmodule GenAI.ModelDetail.Capacity do
             tokens_per_minute: integer | nil,
             requests_per_minute: integer | nil,
             tokens_per_day: integer | nil,
-            inference_speed: integer | nil,
-            tokens_per_minute: integer | nil,
-               vsn: float
+            inference_speed: float | nil,
+            vram: integer | nil,
+            vsn: float
           }
   defstruct [
     tokens_per_minute: nil,
