@@ -30,13 +30,20 @@ defmodule GenAI.Provider.OpenAI do
 
   @doc """
   Sends a chat completion request to the Mistral API.
-  This function constructs the request body based on the provided messages, tools, and settings, sends the request to the Mistral API, and returns a `GenAI.ChatCompletion` struct with the response.
+  This function constructs the request body based on the provided messages, tools, and settings, sends the request to the OpenAI API, and returns a `GenAI.ChatCompletion` struct with the response.
   """
   @deprecated "This function is deprecated. Use `GenAI.Thread.chat/5` instead."
   def chat(messages, tools, settings) do
     settings = settings |> Enum.reverse()
     provider_settings = Enum.filter(settings, fn {k,_} -> k in [:api_key, :api_org] end)
     chat(settings[:model], messages, tools, settings, provider_settings)
+  end
+
+  @doc """
+  Massage massages to work with special models like o1-preview (replace system messages with fake user/response messages.
+  """
+  def normalize_messages(_model, messages) do
+    {:ok, messages}
   end
 
   #------------------
@@ -56,29 +63,33 @@ defmodule GenAI.Provider.OpenAI do
          {:ok, messages, state} <- GenAI.Thread.StateProtocol.messages(state, provider) do
       headers = headers(provider_settings)
 
+      {:ok, messages} = normalize_messages(model, messages)
+
       body = %{
                model: model_name,
                messages: messages
              }
-             |> with_setting(:frequency_penalty, settings)
-             |> with_setting(:logprobe, settings)
-             |> with_setting(:top_logprobs, settings)
-             |> with_setting(:logit_bias, settings)
-             |> with_setting(:max_tokens, settings)
-             |> with_setting_as(:n, :completion_choices, settings)
-             |> with_setting(:presence_penalty, settings)
-             |> with_setting(:response_format, settings)
-             |> with_setting(:seed, settings)
-             |> with_setting(:stop, settings)
-             |> with_setting(:temperature, settings)
-             |> with_setting(:top_p, settings)
-             |> with_setting(:user, settings)
+             |> with_dynamic_setting(:logprobe, model, settings)
+             |> with_dynamic_setting(:top_logprobs, model, settings)
+             |> with_dynamic_setting(:logit_bias, model, settings)
+             |> with_dynamic_setting(:max_tokens, model, settings) # not supported on o1 - need some runtime customization logic to switch
+             |> with_dynamic_setting(:max_completion_tokens, model, settings)
+             |> with_dynamic_setting_as(:n, :completion_choices, model, settings)
+             |> with_dynamic_setting(:frequency_penalty, model, settings)
+             |> with_dynamic_setting(:presence_penalty, model, settings)
+             |> with_dynamic_setting(:response_format, model, settings)
+             |> with_dynamic_setting(:seed, model, settings)
+             |> with_dynamic_setting(:stop, model, settings)
+             |> with_dynamic_setting(:temperature, model, settings)
+             |> with_dynamic_setting(:top_p, model, settings)
+             |> with_dynamic_setting(:user, model, settings)
              |> then(
                   fn
                     body ->
-                      unless tools == [] do
+                      unless tools == [] or is_nil(tools) do
+                        # @TODO - tweak if o1 model - protocol method to check tool support type - inject instructions if not native, etc.
                         body
-                        |> with_setting(:tool_choice, settings)
+                        |> with_dynamic_setting(:tool_choice, model, settings)
                         |> Map.put(:tools, tools)
                       else
                         body

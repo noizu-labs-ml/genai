@@ -196,8 +196,14 @@ defmodule GenAI.Provider.Gemini do
 
   defp completion_from_json(model, json) do
     with %{candidates: choices} <- json do
-      choices = Enum.map(choices, &chat_choice_from_json/1)
-                |> Enum.map(fn {:ok, c} -> c end)
+       choices = choices
+                 |> Enum.with_index()
+                 |> Enum.map(&chat_choice_from_json/1)
+                 |> Enum.map(
+                   fn 
+                     {:ok, c} -> c 
+                     _ -> nil
+                  end) |> Enum.reject(&is_nil/1)
       completion = %GenAI.ChatCompletion{
         provider: __MODULE__,
         model: model,
@@ -208,12 +214,12 @@ defmodule GenAI.Provider.Gemini do
       {:ok, completion}
     end
   end
-  defp chat_choice_from_json(json) do
+  defp chat_choice_from_json({json,index}) do
     with %{
-           index: index,
            content: message,
            finishReason: finish_reason
          } <- json do
+      index = get_in(json, [:index]) || json
       with {:ok, message} <- chat_choice_message_from_json(message) do
         choice = %GenAI.ChatCompletion.Choice{
           index: index,
@@ -223,6 +229,9 @@ defmodule GenAI.Provider.Gemini do
         {:ok, choice}
       end
     end
+    else
+    x = %{} ->  {:error, {:malformed_Response, x}}
+    x -> x
   end
   defp chat_choice_message_from_json(json) do
     case json do
@@ -251,6 +260,7 @@ defmodule GenAI.Provider.Gemini do
           type: "function"
         }
         {:ok, %GenAI.Message.ToolCall{role: :assistant, content: "", tool_calls: [call]}}
+      x -> {:error, {:chat_choice_message_from_json, x}}
     end
   end
 

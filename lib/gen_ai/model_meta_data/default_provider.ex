@@ -1,3 +1,6 @@
+
+
+
 defmodule GenAI.ModelMetadata.DefaultProvider do
 
   def get(scope, model, options \\ nil)
@@ -6,7 +9,7 @@ defmodule GenAI.ModelMetadata.DefaultProvider do
       %GenAI.Model{
         provider: scope,
         model: model,
-        details: %GenAI.ModelDetails{}
+        details: %GenAI.Model.Details{}
       }
     }
   end

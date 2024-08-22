@@ -12,7 +12,7 @@ defmodule GenAI.Provider.OpenAITest do
     @tag :wip
     test "Model And Model Database Binding" do
         {:ok, models} = GenAI.Provider.OpenAI.Models.list()
-        IO.inspect(models, label: Models, limit: :infinity)
+        # IO.inspect(models, label: Models, limit: :infinity)
     end
 
     @tag :models
