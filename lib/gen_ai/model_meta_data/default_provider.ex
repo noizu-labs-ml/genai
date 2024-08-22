@@ -6,7 +6,7 @@ defmodule GenAI.ModelMetadata.DefaultProvider do
       %GenAI.Model{
         provider: scope,
         model: model,
-        details: %GenAI.ModelDetails{}
+        details: %GenAI.Model.Details{}
       }
     }
   end

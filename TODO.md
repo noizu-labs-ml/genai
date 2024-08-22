@@ -13,7 +13,7 @@ Todo
 - [ ] Add support for HuggingFace
 - [ ] Add support for OpenVllm
 - [ ] Update API Call logic for Anthropic to use updated api format.
-- [ ] Vision Support for Groq models that support it. 
+- [ ] Vision Support for Groq models that support it.
 - [ ] Tool use via api for Groq models that support it.
 
 # Local Llama
