@@ -6,7 +6,7 @@ defmodule GenAI.Application do
   use Application
 
   # @todo use extension repo for addons like local llama
-  if Application.compile_env(:genai, :local_llama)[:enabled] do
+  if Application.compile_env(:genai, :local_llama)[:enabled] && Code.ensure_loaded?(GenAI.Provider.LocalLLama) do
     @impl true
     def start(_type, _args) do
       children = [

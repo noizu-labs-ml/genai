@@ -1,6 +1,6 @@
 defmodule GenAI.Model.MetaDataTest do
   use ExUnit.Case
-  @moduletag :wip2
+  @moduletag :core
   doctest GenAI.Model.MetaData.Helper
 
   def metadata(scenario \\ :valid)

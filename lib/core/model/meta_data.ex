@@ -1,3 +1,33 @@
+defmodule GenAI.Model.MetaData.Model do
+  import GenAI.Model.MetaData.Helper
+
+  defstruct [
+    version: nil,
+    model: nil,
+  ]
+
+  def extract_segment(segment, options \\ nil)
+  def extract_segment(segment, options) do
+    version = segment["version"] || options[:metadata_version]
+    %__MODULE__{
+      version: version,
+      model: extract_field(segment, ["model"]) |> unpack_outcome(),
+    } |> ok_term()
+  end
+
+
+  def merge(existing, update, options)
+  def merge(nil, update, _), do: {:ok, update}
+  def merge(existing, _, _), do: {:ok, existing}
+  def merge(existing, update, options) when is_struct(existing, __MODULE__) and is_struct(update, __MODULE__) do
+    %__MODULE__{existing|
+      version: max(existing.version, update.version),
+    } |> ok_term()
+  end
+
+
+end
+
 defmodule GenAI.Model.MetaData.Provider do
   import GenAI.Model.MetaData.Helper
 
@@ -10,11 +40,44 @@ defmodule GenAI.Model.MetaData.Provider do
   def extract_segment(segment, options \\ nil)
   def extract_segment(segment, options) do
     version = segment["version"] || options[:metadata_version]
-    models = []
-    %__MODULE__{
-      version: version,
-      name: extract_field(segment, ["name"]) |> unpack_outcome(),
-      models: :pending
+    models = (segment["models"] || [])
+             |> Enum.map(& GenAI.Model.MetaData.Model.extract_segment(&1, options))
+             |> process_outcomes()
+
+    with {:ok, models} <- models do
+
+      models = Enum.reduce(models, %{}, fn model, acc ->
+        with {:ok, merged_model} <- GenAI.Model.MetaData.Model.merge(acc[model.model], model, options) do
+          put_in(acc, [Access.key(model.model)], merged_model)
+        else
+          _ -> acc
+        end
+      end)
+
+      %__MODULE__{
+        version: version,
+        name: extract_field(segment, ["name"]) |> unpack_outcome(),
+        models: models
+      } |> ok_term()
+
+    end
+  end
+
+  def merge(existing, update, options)
+  def merge(nil, update, _), do: {:ok, update}
+  def merge(existing, _, _), do: {:ok, existing}
+  def merge(existing, update, options) when is_struct(existing, __MODULE__) and is_struct(update, __MODULE__) do
+    models = Enum.reduce(update.models, existing.models, fn {k, v}, acc ->
+      with {:ok, model} <- GenAI.Model.MetaData.Model.merge(acc[k], v, options) do
+        put_in(acc, [Access.key(k)], model)
+      else
+        _ -> acc
+      end
+    end)
+
+    %__MODULE__{existing|
+      version: max(existing.version, update.version),
+      models: models
     } |> ok_term()
   end
 end
@@ -36,6 +99,14 @@ defmodule GenAI.Model.MetaData.Entry do
     |> process_outcomes()
     |> case do
          {:ok, providers} ->
+           providers = Enum.reduce(providers, %{}, fn p, acc ->
+             with {:ok, provider} <- GenAI.Model.MetaData.Provider.merge(acc[p.name], p, options) do
+               put_in(acc, [Access.key(p.name)], provider)
+             else
+               _ -> acc
+             end
+           end)
+
            %__MODULE__{
              version: version,
              providers: providers
