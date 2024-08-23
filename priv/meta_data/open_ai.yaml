@@ -1,15 +1,29 @@
 genai_metadata:
   version: 0.1
-  provider:
-    name: openai
-    models:
-      - model: gpt4o
-        description: OpenAI's GPT-4 model
-        capacity:
-          context_window: 128000
-          max_output_tokens: 4096
-      - model: gpt4o-mini
-        description: OpenAI's GPT-4 model
-        capacity:
-          context_window: 128000
-          max_output_tokens: 4096
+  providers:
+    - name: openai
+      models:
+        - model: gpt4o
+          description: OpenAI's GPT-4 model
+          capacity:
+            context_window: 128000
+            max_output_tokens: 4096
+            requests_per_minute:
+                free: 100
+                tier_1: 1000
+                tier_2: 1000
+                tier_3: 1000
+                tier_4: 1000
+                tier_5: 1000
+        - model: gpt4o-mini
+          description: OpenAI's GPT-4 model
+          capacity:
+            context_window: 128000
+            max_output_tokens: 4096
+            requests_per_minute:
+              free: 100
+              tier_1: 1000
+              tier_2: 1000
+              tier_3: 1000
+              tier_4: 1000
+              tier_5: 1000
