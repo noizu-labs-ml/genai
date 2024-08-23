@@ -11,6 +11,7 @@ defmodule GenAI.Application do
     def start(_type, _args) do
       children = [
         {Finch, name: GenAI.Finch},
+        GenAI.Service.Model.MetaDataSupervisor,
         GenAI.Provider.LocalLLamaSupervisor
       ]
 
@@ -23,7 +24,8 @@ defmodule GenAI.Application do
     @impl true
     def start(_type, _args) do
       children = [
-        {Finch, name: GenAI.Finch}
+        {Finch, name: GenAI.Finch},
+        GenAI.Service.Model.MetaDataSupervisor,
       ]
 
       # See https://hexdocs.pm/elixir/Supervisor.html

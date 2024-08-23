@@ -104,7 +104,7 @@ defmodule GenAI.MixProject do
         [
         ]
       },
-      extra_applications: [:logger, :finch, :jason] ++ dev_apps ++ test_apps
+      extra_applications: [:logger, :finch, :jason, :yamerl] ++ dev_apps ++ test_apps
     ]
   end
 

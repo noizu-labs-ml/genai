@@ -1,0 +1,15 @@
+genai_metadata:
+  version: 0.1
+  provider:
+    name: openai
+    models:
+      - model: gpt4o
+        description: OpenAI's GPT-4 model
+        capacity:
+          context_window: 128000
+          max_output_tokens: 4096
+      - model: gpt4o-mini
+        description: OpenAI's GPT-4 model
+        capacity:
+          context_window: 128000
+          max_output_tokens: 4096
