@@ -20,6 +20,22 @@ defmodule GenAITest do
       assert response.message.content =~ "Stanley Kubrick"
     end
 
+
+    @tag :live
+    @tag :advanced
+    @tag :reasoning
+    test "Advanced Context run: o1-preview" do
+      thread = GenAI.chat(:standard)
+               |> GenAI.with_model(GenAI.Provider.OpenAI.Models.o1_preview())
+               |> GenAI.with_setting(:temperature, 0.7)
+               |> GenAI.with_message(%GenAI.Message{role: :user, content: "What is the movie \"2001: A Space Odyssey\" about and who directed it?"})
+      {:ok, sut} = GenAI.run(thread)
+      #IO.inspect(sut)
+      response = sut.choices |> hd()
+      assert response.message.content =~ "Stanley Kubrick"
+    end
+
+
     @tag :debugme
     test "Simple inference run" do
       Mimic.expect(Finch, :request, fn(_, _, _) ->

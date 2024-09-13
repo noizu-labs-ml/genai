@@ -4,5 +4,9 @@ defmodule GenAI.ModelDetail.HyperParamSupport do
   """
   @vsn 1.0
   @type t :: %__MODULE__{vsn: float}
-  defstruct [vsn: @vsn]
+  defstruct [
+    vsn: @vsn,
+    disabled: MapSet.new([]),
+    supported: %{}, # value -> range or list of enums
+  ]
 end

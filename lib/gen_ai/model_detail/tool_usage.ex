@@ -4,5 +4,8 @@ defmodule GenAI.ModelDetail.ToolUsage do
   """
   @vsn 1.0
   @type t :: %__MODULE__{vsn: float}
-  defstruct [vsn: @vsn]
+  defstruct [
+    vsn: @vsn,
+    support: :native
+  ]
 end

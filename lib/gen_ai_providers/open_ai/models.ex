@@ -83,6 +83,31 @@ defmodule GenAI.Provider.OpenAI.Models do
   end
 
 
+  def o1() do
+    o1_preview()
+  end
+
+  def o1_preview() do
+    %GenAI.Model{
+      model: "o1-preview",
+      provider: GenAI.Provider.OpenAI,
+      details: %GenAI.Model.Details{
+        hyper_params: %GenAI.ModelDetail.HyperParamSupport{disabled: MapSet.new([:temperature])},
+        tool_usage: %GenAI.ModelDetail.ToolUsage{support: :disabled}
+      }
+    }
+  end
+
+  def o1_mini() do
+    %GenAI.Model{
+      model: "o1-mini",
+      provider: GenAI.Provider.OpenAI,
+      details: %GenAI.Model.Details{
+        hyper_params: %GenAI.ModelDetail.HyperParamSupport{disabled: MapSet.new([:temperature])},
+        tool_usage: %GenAI.ModelDetail.ToolUsage{support: :disabled}
+      }
+    }
+  end
 
   #=============================================
   # Private Methods

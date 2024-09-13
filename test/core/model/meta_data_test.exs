@@ -55,7 +55,7 @@ defmodule GenAI.Model.MetaDataTest do
       {:ok, sut} = GenAI.Model.MetaData.extract_segment(metadata(:valid))
       %GenAI.Model.MetaData.Entry{version: version} = sut
       assert version == 0.1
-      IO.inspect(sut, label: "SUT")
+      #IO.inspect(sut, label: "SUT")
     end
 
     test "Unsupported Segment" do
