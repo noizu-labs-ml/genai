@@ -219,7 +219,7 @@ defmodule GenAI.Provider.Gemini do
            content: message,
            finishReason: finish_reason
          } <- json do
-      index = get_in(json, [:index], index)
+      index = get_in(json, [:index]) || json
       with {:ok, message} <- chat_choice_message_from_json(message) do
         choice = %GenAI.ChatCompletion.Choice{
           index: index,
