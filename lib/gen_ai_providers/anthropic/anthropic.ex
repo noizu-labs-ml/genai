@@ -93,7 +93,7 @@ defmodule GenAI.Provider.Anthropic do
          {:ok, model_settings, state} <- GenAI.Thread.StateProtocol.model_settings(state, model),
          {:ok, model_name} <- GenAI.ModelProtocol.model(model),
          {:ok, tools, state} <- GenAI.Thread.StateProtocol.tools(state, provider),
-         {:ok, messages, _state} <- GenAI.Thread.StateProtocol.messages(state, provider) do
+         {:ok, messages, state} <- GenAI.Thread.StateProtocol.messages(state, provider) do
 
       headers = headers(provider_settings)
       system_prompt = normalize_system_prompt(messages, tools, settings, model_settings, provider_settings)
@@ -112,8 +112,10 @@ defmodule GenAI.Provider.Anthropic do
              |> optional_field(:system, system_prompt)
       call = GenAI.Provider.api_call(:post, "#{@api_base}/v1/messages", headers, body)
       with {:ok, %Finch.Response{status: 200, body: body}} <- call,
-           {:ok, json} <- Jason.decode(body, keys: :atoms) do
-        chat_completion_from_json(json)
+           {:ok, json} <- Jason.decode(body, keys: :atoms),
+          {:ok, output} <- chat_completion_from_json(json) do
+        {:ok, output, state}
+        
       end
     else
       error = {:error, _} -> error
