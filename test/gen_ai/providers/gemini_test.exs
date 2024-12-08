@@ -137,7 +137,7 @@ defmodule GenAI.Provider.GeminiTest do
     @tag :advanced
     test "Vision Test" do
       Mimic.expect(Finch, :request, fn(request, _, _) ->
-        assert request.body =~ "{\"contents\":[{\"parts\":[{\"text\":\"Describe this image\"},{\"inlineData\":{\"data\":\"/9j/6zMMSlATAAAAAAAAADMCanVtYgAAAB5qdW1kYzJwYQARABCAAACqADibcQNjMnBhAAAAMtxqdW1iAAAAR2p1bWRjMm1hABEAEIAAAKoAOJtxA3Vybj"
+        assert request.body =~ "{\"contents\":[{\"parts\":[{\"text\":\"Describe this image\"},{\"inlineData\":{\"data\":\"/9j/4QBORXhpZgAATU0AKg"
         {:ok,
           %Finch.Response{
             status: 200,

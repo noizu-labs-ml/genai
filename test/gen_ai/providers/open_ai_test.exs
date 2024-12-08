@@ -148,7 +148,7 @@ defmodule GenAI.Provider.OpenAITest do
     @tag :advanced
     test "Vision Test" do
       Mimic.expect(Finch, :request, fn(request, _, _) ->
-        assert request.body =~ "{\"messages\":[{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"Describe this image\"},{\"type\":\"image_url\",\"image_url\":{\"url\":\"data:image/jpeg;base64,/9j/6zMMSlATAAAAAAAAADMCa"
+        assert request.body =~ "{\"messages\":[{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"Describe this image\"},{\"type\":\"image_url\",\"image_url\":{\"url\":\"data:image/jpeg;base64,/9j/4QBORXhpZgAATU0AKg"
         {:ok,
           %Finch.Response{
             status: 200,

@@ -115,7 +115,7 @@ defmodule GenAI.Provider.AnthropicTest do
     @tag :advanced
     test "Vision Test" do
       Mimic.expect(Finch, :request, fn(request, _, _) ->
-        assert request.body =~ "{\"messages\":[{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"Describe this image\"},{\"type\":\"image\",\"source\":{\"data\":\"/9j/6zMMSlATAAAAAAAAADMC"
+        assert request.body =~ "{\"messages\":[{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"Describe this image\"},{\"type\":\"image\",\"source\":{\"data\":\"/9j/4QBORXhpZgAATU0AKg"
         {:ok,
           %Finch.Response{
             status: 200,
