@@ -6,6 +6,7 @@ defmodule GenAITest do
 
 
   defmodule Fixtures do
+    require Logger
     #--------------------------------
     # thread/2
     #--------------------------------

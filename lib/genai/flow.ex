@@ -42,6 +42,7 @@ defmodule GenAI.Flow do
   @type t :: %__MODULE__{
                id: id,
                head: head,
+               last_vertex: id,
                vertices: vertices,
                handles: handles,
                edges: Map.t,
@@ -56,6 +57,7 @@ defmodule GenAI.Flow do
   defstruct [
     id: nil,
     head: nil,
+    last_vertex: nil,
     vertices: %{},
     handles: %{},
     edges: %{},
@@ -154,14 +156,22 @@ defmodule GenAI.Flow do
   ## Add a new node
       iex> flow = GenAI.Flow.new(id: :test_flow)
       ...> flow |> GenAI.Flow.add_vertex(GenAI.Flow.Node.new(:test_node))
-      %GenAI.Flow{id: :test_flow, vertices: %{:test_node => %GenAI.Flow.Node{id: :test_node}}}
+      %GenAI.Flow{id: :test_flow, last_vertex: :test_node, vertices: %{:test_node => %GenAI.Flow.Node{id: :test_node}}}
   """
   @spec add_vertex(flow :: t, node :: any) :: t
   def add_vertex(flow, node) do
     {:ok, id} = GenAI.Flow.Node.id(node)
     unless member?(flow, id) do
-      flow
-      |> put_in([Access.key(:vertices), id], node)
+      unless flow.head do
+        flow
+        |> put_in([Access.key(:vertices), id], node)
+        |> put_in([Access.key(:last_vertex)], id)
+      else
+        flow
+        |> put_in([Access.key(:vertices), id], node)
+        |> put_in([Access.key(:head)], id)
+        |> put_in([Access.key(:last_vertex)], id)
+      end
     else
       raise GenAI.Flow.Exception,
             message: "Node with #{id} already defined in flow"

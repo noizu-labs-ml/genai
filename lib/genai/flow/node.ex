@@ -35,6 +35,7 @@ defmodule GenAI.Flow.Node do
   @spec new(id :: term, content :: any, options :: nil | Map.t) :: GenAI.Flow.Node.t
   def new(id, content \\ nil, options \\ nil)
   def new(id, content, _options) do
+    id = id || GenAI.UUID.new()
     %GenAI.Flow.Node{id: id, content: content}
   end # end of GenAI.Flow.Node.new/2
 
