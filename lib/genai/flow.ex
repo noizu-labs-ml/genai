@@ -3,6 +3,7 @@ defmodule GenAI.Flow do
   @moduledoc """
   Low Level Graph Library used by higher level structures for encoding chat threads and completions.
   """
+  use GenAI.Flow.NodeBehaviour
 
   @typedoc """
   A uuid identifier
@@ -41,6 +42,7 @@ defmodule GenAI.Flow do
 
   @type t :: %__MODULE__{
                id: id,
+               handle: term,
                head: head,
                last_vertex: id,
                vertices: vertices,
@@ -53,9 +55,11 @@ defmodule GenAI.Flow do
              }
 
 
+
   @derive GenAI.Flow.NodeProtocol
   defstruct [
     id: nil,
+    handle: nil,
     head: nil,
     last_vertex: nil,
     vertices: %{},
@@ -146,6 +150,39 @@ defmodule GenAI.Flow do
     end
   end # end of GenAI.Flow.node/2
 
+
+  #========================================
+  # edge/2
+  #========================================
+  @doc """
+  Returns the edge from the flow by id.
+
+  # Examples
+  ## Get existing edge
+      iex> flow = GenAI.Flow.new(id: :test_flow)
+      ...> flow = GenAI.Flow.add_vertex(flow, GenAI.Flow.Node.new(:test_node_a))
+      ...> flow = GenAI.Flow.add_vertex(flow, GenAI.Flow.Node.new(:test_node_b))
+      ...> flow = GenAI.Flow.add_edge(flow, GenAI.Flow.Link.new(:test_node_a, :test_node_b, id: :test_edge))
+      ...> {:ok, edge} = GenAI.Flow.edge(flow, :test_edge)
+      ...> edge
+      %GenAI.Flow.Link{id: :test_edge} = edge
+  """
+  @spec edge(flow :: t, edge_or_id :: GenAI.Flow.Link.t | atom | tuple | bitstring | integer) :: {:ok, edge :: GenAI.Flow.Link.t} | {:error, details :: atom | tuple | String.t}
+  def edge(flow, id) when is_atom(id) or is_integer(id) or is_tuple(id) or is_binary(id) do
+    if edge = flow.edges[id] do
+      {:ok, edge}
+    else
+      {:error, {:edge, :not_found}}
+    end
+  end
+  def edge(flow, %{id: id} = _edge) do
+    if edge = flow.edges[id] do
+      {:ok, edge}
+    else
+      {:error, {:edge, :not_found}}
+    end
+  end # end of GenAI.Flow.node/2
+
   #========================================
   # add_vertex/2
   #========================================
@@ -156,7 +193,7 @@ defmodule GenAI.Flow do
   ## Add a new node
       iex> flow = GenAI.Flow.new(id: :test_flow)
       ...> flow |> GenAI.Flow.add_vertex(GenAI.Flow.Node.new(:test_node))
-      %GenAI.Flow{id: :test_flow, last_vertex: :test_node, vertices: %{:test_node => %GenAI.Flow.Node{id: :test_node}}}
+      %GenAI.Flow{id: :test_flow, head: :test_node, last_vertex: :test_node, vertices: %{:test_node => %GenAI.Flow.Node{id: :test_node}}}
   """
   @spec add_vertex(flow :: t, node :: any) :: t
   def add_vertex(flow, node) do
@@ -165,11 +202,11 @@ defmodule GenAI.Flow do
       unless flow.head do
         flow
         |> put_in([Access.key(:vertices), id], node)
+        |> put_in([Access.key(:head)], id)
         |> put_in([Access.key(:last_vertex)], id)
       else
         flow
         |> put_in([Access.key(:vertices), id], node)
-        |> put_in([Access.key(:head)], id)
         |> put_in([Access.key(:last_vertex)], id)
       end
     else
@@ -221,35 +258,4 @@ defmodule GenAI.Flow do
   end # end of GenAI.Flow.add_link
 
 
-  #========================================
-  # id/1
-  #========================================
-  @impl GenAI.Flow.NodeProtocol
-  def id(node) do
-    if node.id do
-      {:ok, node.id}
-    else
-      {:error, {:id, :blank}}
-    end
-  end # end of GenAI.Flow.NodeProtocol.id/1
-
-  #========================================
-  # add_link/2
-  #========================================
-  @impl GenAI.Flow.NodeProtocol
-  def add_link(node, link) do
-    # determine if we are source or target
-    cond do
-      node.id == link.source ->
-        # add link to outbound edges
-        outlet = link.source_outlet || :default
-        node
-        |> update_in([Access.key(:outbound_edges), outlet], & [link.id | (&1 || [])])
-      node.id == link.target ->
-        # add link to inbound edges
-        inlet = link.target_inlet || :default
-        node
-        |> update_in([Access.key(:inbound_edges), inlet], & [link.id | (&1 || [])])
-    end
-  end # end of GenAI.Flow.NodeProtocol.add_link/2
 end # end of GenAI.Flow

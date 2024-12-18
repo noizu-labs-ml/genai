@@ -4,6 +4,7 @@ defmodule GenAI.Flow.Node do
   @moduledoc """
   Generic Flow Node
   """
+  use GenAI.Flow.NodeBehaviour
 
   @type t :: %GenAI.Flow.Node{
                id: any,
@@ -26,6 +27,8 @@ defmodule GenAI.Flow.Node do
     vsn: @vsn,
   ]
 
+
+
   #========================================
   # new/1
   #========================================
@@ -38,39 +41,5 @@ defmodule GenAI.Flow.Node do
     id = id || GenAI.UUID.new()
     %GenAI.Flow.Node{id: id, content: content}
   end # end of GenAI.Flow.Node.new/2
-
-
-  #========================================
-  # id/1
-  #========================================
-  @impl GenAI.Flow.NodeProtocol
-  def id(node) do
-    if node.id do
-      {:ok, node.id}
-    else
-      {:error, {:id, :blank}}
-    end
-  end # end of GenAI.Flow.NodeProtocol.id/1
-
-  #========================================
-  # add_link/2
-  #========================================
-  @impl GenAI.Flow.NodeProtocol
-  def add_link(node, link) do
-    # determine if we are source or target
-    cond do
-      node.id == link.source ->
-        # add link to outbound edges
-        outlet = link.source_outlet || :default
-        node
-        |> update_in([Access.key(:outbound_edges), outlet], & [link.id | (&1 || [])])
-      node.id == link.target ->
-        # add link to inbound edges
-        inlet = link.target_inlet || :default
-        node
-        |> update_in([Access.key(:inbound_edges), inlet], & [link.id | (&1 || [])])
-    end
-  end # end of GenAI.Flow.NodeProtocol.add_link/2
-
 
 end # end of GenAI.Flow.Node
