@@ -1,8 +1,12 @@
 defmodule GenAI.FlowTest do
   use ExUnit.Case
-  doctest GenAI.Flow
   alias GenAI.Flow
   alias GenAI.Flow.Node
+  require GenAI.Flow.Records
+  alias GenAI.Flow.Records, as: R
+  require GenAI.Flow.Types
+  alias GenAI.Flow.Types, as: T
+  doctest GenAI.Flow
 
 
   def assert_flow(flow, constraints) do
@@ -10,8 +14,8 @@ defmodule GenAI.FlowTest do
       fn
         {:is_flow, true} -> assert_is_flow(flow)
         {:is_flow, type} -> assert_is_flow(flow, type)
-        {:vertices, constraints} -> assert_flow_vertices(flow, constraints)
-        {:edges, constraints} -> assert_flow_edges(flow, constraints)
+        {:nodes, constraints} -> assert_flow_nodes(flow, constraints)
+        {:links, constraints} -> assert_flow_links(flow, constraints)
       end
     )
   end
@@ -20,114 +24,125 @@ defmodule GenAI.FlowTest do
     assert flow.__struct__ == type
   end
 
-  def assert_flow_vertices(flow, constraints) do
+  def assert_flow_nodes(flow, constraints) do
     Enum.map(constraints,
       fn
-        {:count, count} -> assert_flow_vertices_count(flow, count)
-        {:match, match} -> assert_flow_vertices_match(flow, match)
+        {:count, count} -> assert_flow_nodes_count(flow, count)
+        {:match, match} -> assert_flow_nodes_match(flow, match)
       end
     )
   end
 
-  def assert_flow_vertices_count(flow, count) do
-    assert Enum.count(flow.vertices) == count
+  def assert_flow_nodes_count(flow, count) do
+    assert Enum.count(flow.nodes) == count
   end
 
-  def assert_flow_vertices_match(flow, matches) do
-    Enum.with_index(flow.vertices)
+  def assert_flow_nodes_match(flow, matches) do
+    Enum.with_index(flow.nodes)
     |> Enum.map(
          fn  {{_,node}, index} ->
-           assert_flow_vertex(node, get_in(matches, [Access.at(index)]))
+           assert_flow_node(node, get_in(matches, [Access.at(index)]))
          end
        )
   end
 
-  def assert_flow_vertex(node, constraints) do
+  def assert_flow_node(node, constraints) do
     Enum.map(constraints,
       fn
         {:id, value} ->
-          assert_flow_vertex_id(node, value)
-        {:outbound_edges, constraints} -> assert_flow_vertex_outbound_edges(node, constraints)
-        {:inbound_edges, constraints} -> assert_flow_vertex_inbound_edges(node, constraints)
+          assert_flow_node_id(node, value)
+        {:outbound_links, constraints} -> assert_flow_node_outbound_links(node, constraints)
+        {:inbound_links, constraints} -> assert_flow_node_inbound_links(node, constraints)
       end
     )
   end
 
-  def assert_flow_vertex_id(node, value) do
+  def assert_flow_node_id(node, value) do
     {:ok, id} = GenAI.Flow.NodeProtocol.id(node)
     assert id == value
   end
 
 
-  def assert_flow_vertex_inbound_edges(node, constraints) do
+  def assert_flow_node_inbound_links(node, constraints) do
     Enum.map(constraints,
       fn
         {:count, {outlet, count}} ->
-          assert Enum.count(node.inbound_edges[outlet]) == count
+          assert Enum.count(node.inbound_links[outlet]) == count
         {:value, value} ->
-          assert node.inbound_edges == value
+          assert node.inbound_links == value
       end
     )
   end
 
-  def assert_flow_vertex_outbound_edges(node, constraints) do
+  def assert_flow_node_outbound_links(node, constraints) do
     Enum.map(constraints,
       fn
         {:count, {outlet, count}} ->
-          assert Enum.count(node.outbound_edges[outlet]) == count
+          assert Enum.count(node.outbound_links[outlet]) == count
         {:value, value} ->
-          assert node.outbound_edges == value
+          assert node.outbound_links == value
       end
     )
   end
 
 
 
-  def assert_flow_edges(flow, constraints) do
+  def assert_flow_links(flow, constraints) do
     Enum.map(constraints,
       fn
-        {:count, count} -> assert_flow_edges_count(flow, count)
-        {:match, match} -> assert_flow_edges_match(flow, match)
+        {:count, count} -> assert_flow_links_count(flow, count)
+        {:match, match} -> assert_flow_links_match(flow, match)
       end
     )
   end
 
-  def assert_flow_edges_count(flow, count) do
-    assert Enum.count(flow.edges) == count
+  def assert_flow_links_count(flow, count) do
+    assert Enum.count(flow.links) == count
   end
 
-  def assert_flow_edges_match(flow, matches) do
-    Enum.with_index(flow.edges)
+  def assert_flow_links_match(flow, matches) do
+    Enum.with_index(flow.links)
     |> Enum.map(
          fn  {{_,node}, index} ->
-           assert_flow_edge(node, get_in(matches, [Access.at(index)]))
+           assert_flow_link(node, get_in(matches, [Access.at(index)]))
          end
        )
   end
 
-  def assert_flow_edge(edge, constraints) do
+  def assert_flow_link(link, constraints) do
     Enum.map(constraints,
       fn
         {:id, value} ->
-          assert_flow_edge_id(edge, value)
+          assert_flow_link_id(link, value)
         {:target, value} ->
-          assert_flow_edge_target(edge, value)
+          assert_flow_link_target(link, value)
         {:source, value} ->
-          assert_flow_edge_source(edge, value)
+          assert_flow_link_source(link, value)
       end
     )
   end
 
-  def assert_flow_edge_source(edge, value) do
-    assert edge.source == value
+  def assert_flow_link_source(link, value)
+  def assert_flow_link_source(link, R.link_source() = value) do
+    assert link.source == value
+  end
+  def assert_flow_link_source(link, value) when T.is_node_id(value) do
+    {:ok, R.link_source(id: expected)} = GenAI.Flow.LinkProtocol.source(link)
+    assert expected == value
   end
 
-  def assert_flow_edge_target(edge, value) do
-    assert edge.target == value
+  def assert_flow_link_target(link, value)
+  def assert_flow_link_target(link, R.link_target() = value) do
+    assert link.target == value
+  end
+  def assert_flow_link_target(link, value) when T.is_node_id(value) do
+    {:ok, R.link_target(id: expected)} = GenAI.Flow.LinkProtocol.target(link)
+    assert expected == value
   end
 
-  def assert_flow_edge_id(edge, value) do
-    assert edge.id == value
+
+  def assert_flow_link_id(link, value) do
+    assert link.id == value
   end
 
 
@@ -136,13 +151,13 @@ defmodule GenAI.FlowTest do
 
     test "add multiple nodes to flow" do
       flow = Flow.new()
-             |> Flow.add_vertex(Node.new(:node_1))
-             |> Flow.add_vertex(Node.new(:node_2))
+             |> Flow.add_node(Node.new(:node_1))
+             |> Flow.add_node(Node.new(:node_2))
 
       assert_flow(flow,
         %{
           is_flow: true,
-          vertices: [
+          nodes: [
             count: 2,
             match: [
               %{id: :node_1},
@@ -154,62 +169,61 @@ defmodule GenAI.FlowTest do
     end
 
 
-    test "add edges" do
+    test "add links" do
       sut = GenAI.Flow.new(id: :test_flow)
-            |> GenAI.Flow.add_vertex(GenAI.Flow.Node.new(:test_node_a))
-            |> GenAI.Flow.add_vertex(GenAI.Flow.Node.new(:test_node_b))
-            |> GenAI.Flow.add_vertex(GenAI.Flow.Node.new(:test_node_c))
-            |> GenAI.Flow.add_vertex(GenAI.Flow.Node.new(:test_node_d))
-            |> GenAI.Flow.add_edge(GenAI.Flow.Link.new(:test_node_a, :test_node_b, id: :test_edge_ab))
-            |> GenAI.Flow.add_edge(GenAI.Flow.Link.new(:test_node_a, :test_node_c, id: :test_edge_ac))
-            |> GenAI.Flow.add_edge(GenAI.Flow.Link.new(:test_node_c, :test_node_d, id: :test_edge_cd))
-
+            |> GenAI.Flow.add_node(GenAI.Flow.Node.new(:test_node_a))
+            |> GenAI.Flow.add_node(GenAI.Flow.Node.new(:test_node_b))
+            |> GenAI.Flow.add_node(GenAI.Flow.Node.new(:test_node_c))
+            |> GenAI.Flow.add_node(GenAI.Flow.Node.new(:test_node_d))
+            |> GenAI.Flow.add_link(GenAI.Flow.Link.new(:test_node_a, :test_node_b, id: :test_link_ab))
+            |> GenAI.Flow.add_link(GenAI.Flow.Link.new(:test_node_a, :test_node_c, id: :test_link_ac))
+            |> GenAI.Flow.add_link(GenAI.Flow.Link.new(:test_node_c, :test_node_d, id: :test_link_cd))
       assert_flow(sut,
         %{
           is_flow: true,
-          vertices: [
+          nodes: [
             count: 4,
             match: [
               %{
                 id: :test_node_a,
-                outbound_edges: %{
+                outbound_links: %{
                   count: {:default, 2},
-                  value: %{default: [:test_edge_ac, :test_edge_ab]}
+                  value: %{default: [:test_link_ac, :test_link_ab]}
                 }
               },
               %{
                 id: :test_node_b,
-                inbound_edges: %{
+                inbound_links: %{
                   count: {:default, 1},
-                  value: %{default: [:test_edge_ab]}
+                  value: %{default: [:test_link_ab]}
                 }
               },
               %{
                 id: :test_node_c,
-                inbound_edges: %{
+                inbound_links: %{
                   count: {:default, 1},
-                  value: %{default: [:test_edge_ac]}
+                  value: %{default: [:test_link_ac]}
                 },
-                outbound_edges: %{
+                outbound_links: %{
                   count: {:default, 1},
-                  value: %{default: [:test_edge_cd]}
+                  value: %{default: [:test_link_cd]}
                 }
               },
               %{
                 id: :test_node_d,
-                inbound_edges: %{
+                inbound_links: %{
                   count: {:default, 1},
-                  value: %{default: [:test_edge_cd]}
+                  value: %{default: [:test_link_cd]}
                 }
               }
             ]
           ],
-          edges: [
+          links: [
             count: 3,
             match: [
-              %{id: :test_edge_ab, source: :test_node_a, target: :test_node_b},
-              %{id: :test_edge_ac, source: :test_node_a, target: :test_node_c},
-              %{id: :test_edge_cd, source: :test_node_c, target: :test_node_d}
+              %{id: :test_link_ab, source: :test_node_a, target: :test_node_b},
+              %{id: :test_link_ac, source: :test_node_a, target: :test_node_c},
+              %{id: :test_link_cd, source: :test_node_c, target: :test_node_d}
             ]
           ]
         }

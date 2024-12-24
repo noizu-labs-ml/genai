@@ -1,32 +1,37 @@
+#===============================================================================
+# Copyright (c) 2024, Noizu Labs, Inc.
+#===============================================================================
+
 defmodule GenAI.Flow.Link do
   @vsn 1.0
   @doc """
   A link between two nodes in a flow.
   """
+  require GenAI.Flow.Records
+  alias GenAI.Flow.Types, as: T
+  alias GenAI.Flow.Records, as: R
 
-  @type id :: term
-  @type t :: %GenAI.Flow.Link{
-               id: id,
-               source: id,
-               source_outlet: term,
-               target: id,
-               target_inlet: term,
-               arrow: term,
-               label: String.t,
-               type: atom | tuple,
-               color: atom,
-               vsn: float,
+  use GenAI.Flow.LinkBehaviour
+
+  @derive GenAI.Flow.LinkProtocol
+  @type t :: %__MODULE__{
+               id: T.link_id,
+               type: T.link_type,
+               arrow: T.link_arrow,
+               source: R.link_source,
+               target: R.link_target,
+               label: T.link_label,
+               color: T.link_color,
+               vsn: T.vsn,
              }
 
   defstruct [
     id: nil,
+    type: nil,
+    arrow: nil,
     source: nil,
-    source_outlet: :default,
     target: nil,
-    target_inlet: :default,
-    arrow: :"->",
     label: nil,
-    type: :flow,
     color: nil,
     vsn: @vsn,
   ]
@@ -34,33 +39,32 @@ defmodule GenAI.Flow.Link do
   @doc """
   Create a new flow link
   """
-  @spec new(source :: id, target :: id, options :: nil | Map.t) :: t
-  def new(source, target, options \\ nil) do
-    id = options[:id] || GenAI.UUID.new()
+  @spec new(GenAI.Flow.Records.link_source, GenAI.Flow.Records.link_target, T.opts) :: t
+  def new(source, target, opts \\ nil)
+  def new(R.link_source() = source, R.link_target() = target, opts) do
+    id = opts[:id] || UUID.uuid4()
     %GenAI.Flow.Link{
       id: id,
       source: source,
-      source_outlet: options[:source_outlet] || :default,
       target: target,
-      target_inlet: options[:target_inlet] || :default,
-      arrow: options[:arrow] || :"->",
-      label: options[:label],
-      type: options[:type] || :flow,
-      color: options[:color]
+      arrow: opts[:arrow] || :"-->",
+      label: opts[:label],
+      type: opts[:type] || :flow,
+      color: opts[:color] || :default
     }
   end # end of GenAI.Flow.Link.new/2
+  def new(source, target, opts) do
+    source = case source do
+      R.link_source() -> source
+      _ -> R.link_source(id: source)
+    end
+    target = case target do
+      R.link_target() -> target
+      _ -> R.link_target(id: target)
+    end
+    new(source, target, opts)
+  end
 
-  def new_note_link(source, target, options \\ nil) do
-    id = options[:id] || GenAI.UUID.new()
-    %GenAI.Flow.Link{
-      id: id,
-      source: source,
-      target: target,
-      arrow: options[:arrow] || :"-",
-      label: options[:label],
-      type: options[:type] || :note,
-      color: options[:color]
-    }
-  end # end of GenAI.Flow.Link.new/2
+
 
 end # end of GenAI.Flow.Link

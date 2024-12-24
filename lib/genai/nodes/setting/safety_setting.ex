@@ -1,4 +1,4 @@
-defmodule GenAI.Setting do
+defmodule GenAI.Setting.SafetySetting do
   @vsn 1.0
 
   use GenAI.Flow.NodeBehaviour
@@ -6,15 +6,15 @@ defmodule GenAI.Setting do
 
   @derive GenAI.Flow.NodeProtocol
   defnode [
-    setting: nil,
-    value: nil
+    category: nil,
+    threshold: nil
   ]
   defnodetype [
-    setting: any,
-    value: any
+    category: any,
+    threshold: any
   ]
 end
 
-defimpl GenAI.SettingProtocol, for: GenAI.Setting do
+defimpl GenAI.SettingProtocol, for: GenAI.Setting.SafetySetting do
   def stub(_), do: :ok
 end

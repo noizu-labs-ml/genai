@@ -1,48 +1,49 @@
+#===============================================================================
+# Copyright (c) 2024, Noizu Labs, Inc.
+#===============================================================================
+
 defmodule GenAI.Message do
   @vsn 1.0
   @moduledoc """
   Struct for representing a chat message.
   """
 
-  defstruct [
+  use GenAI.Flow.NodeBehaviour
+  alias GenAI.Flow.Types, as: T
+
+  @derive GenAI.Flow.NodeProtocol
+  defnode [
     role: nil,
     content: nil,
-    vsn: @vsn
+  ]
+  defnodetype [
+    role: any,
+    content: any,
   ]
 
-  @type t :: %__MODULE__{
-               role: :user | :assistant | :system | any,
-               content: String.t() | list(),
-               vsn: float
-             }
-
-
   def new(role, message) do
+    id = UUID.uuid4()
     %__MODULE__{
+      id: id,
       role: role,
       content: message
     }
   end
 
   def user(message) do
-    %__MODULE__{
-      role: :user,
-      content: message
-    }
+    new(:user, message)
   end
 
   def system(message) do
-    %__MODULE__{
-      role: :system,
-      content: message
-    }
+    new(:system, message)
   end
 
   def assistant(message) do
-    %__MODULE__{
-      role: :assistant,
-      content: message
-    }
+    new(:assistant, message)
   end
+end
 
+
+defimpl GenAI.MessageProtocol, for: GenAI.Message do
+  def stub(_), do: :ok
 end

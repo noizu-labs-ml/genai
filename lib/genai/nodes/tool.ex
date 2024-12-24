@@ -1,9 +1,23 @@
 defmodule GenAI.Tool do
   @vsn 1.0
-  defstruct [
+
+
+  use GenAI.Flow.NodeBehaviour
+  alias GenAI.Flow.Types, as: T
+
+  @derive GenAI.Flow.NodeProtocol
+  defnode [
     name: nil,
     description: nil,
     parameters: %{},
-    vsn: @vsn
   ]
+  defnodetype [
+    name: any,
+    description: any,
+    parameters: any,
+  ]
+end
+
+defimpl GenAI.ToolProtocol, for: GenAI.Tool do
+  def stub(_), do: :ok
 end

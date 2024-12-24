@@ -70,7 +70,7 @@ defmodule GenAI.MixProject do
         [
         ]
       },
-      extra_applications: [:logger, :finch, :jason, :yamerl| env_applications()]
+      extra_applications: [:logger, :finch, :jason | env_applications()]
     ]
   end
 
@@ -79,19 +79,37 @@ defmodule GenAI.MixProject do
 
   # Run "mix help deps" to learn about dependencies.
   defp deps do
-    [
-      {:floki, ">= 0.30.0"},
-      {:elixir_uuid, "~> 1.2"},
-      {:shortuuid, "~> 3.0"},
+
+    test_deps = [
       {:junit_formatter, "~> 3.3", only: [:test]},
-      {:ex_doc, "~> 0.28.3", only: [:dev, :test], optional: true, runtime: false}, # Documentation Provider
-      {:finch, "~> 0.15"},
-      {:jason, "~> 1.2"},
-      {:ymlr, "~> 4.0"},
-      {:yaml_elixir, "~> 2.9.0"},
       {:mimic, "~> 1.0.0", only: :test},
-      {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
-      {:sweet_xml, "~> 0.7", only: :test}
     ]
+
+    hex_deps = [
+      # Documentation Provider
+      {:ex_doc, "~> 0.28.3", only: [:dev, :test], optional: true, runtime: false},
+
+      # Static Analysis: Type Checking
+      {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
+    ]
+
+    common = [
+      # html parser and api client
+      {:floki, ">= 0.30.0"},
+      {:finch, "~> 0.15"},
+
+      # UUID Library
+      {:elixir_uuid, "~> 1.2"},
+      #{:shortuuid, "~> 3.0"},
+
+
+      # JSON/YAML
+      {:jason, "~> 1.2"},
+      #{:ymlr, "~> 4.0"},
+      #{:yaml_elixir, "~> 2.9.0"},
+      #{:sweet_xml, "~> 0.7", only: :test}
+    ]
+
+    common ++ test_deps ++ hex_deps
   end
 end

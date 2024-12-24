@@ -1,75 +1,56 @@
+#===============================================================================
+# Copyright (c) 2024, Noizu Labs, Inc.
+#===============================================================================
+
 defmodule GenAI.Flow do
   @vsn 1.0
   @moduledoc """
   Low Level Graph Library used by higher level structures for encoding chat threads and completions.
   """
+  #use GenAI.Flow.NodeBehaviour
+  require GenAI.Flow.Types
+  require GenAI.Flow.Records
+  alias GenAI.Flow.Types, as: T
+  alias GenAI.Flow.Records, as: R
   use GenAI.Flow.NodeBehaviour
 
-  @typedoc """
-  A uuid identifier
-  """
-  @type uuid :: bitstring
-
-  @typedoc """
-  Flow identifier (as flow can be nested this id follows the same conventions as a node id)
-  """
-  @type id :: atom | uuid | tuple | integer | bitstring
 
   @typedoc """
   Entry point of flow.
   """
-  @type head :: id
+  @type head :: T.node_id | nil
 
   @typedoc """
   Map of vertices by id.
   """
-  @type vertices :: %{id => any}
-
-  @typedoc """
-  A vertix alias/handle
-  """
-  @type handle :: id
+  @type nodes :: %{T.node_id => T.flow_node}
 
   @typedoc """
   Map of handles by id.
   """
-  @type handles :: %{handle => id}
+  @type handles :: %{T.node_handle => T.node_id}
 
   @typedoc """
-  Flow struct version number
+  Map of links by id.
   """
-  @type vsn :: float
-
-  @type t :: %__MODULE__{
-               id: id,
-               handle: term,
-               head: head,
-               last_vertex: id,
-               vertices: vertices,
-               handles: handles,
-               edges: Map.t,
-               vertex_edges: Map.t,
-               outbound_edges: %{any => any},
-               inbound_edges: %{any => any},
-               vsn: vsn
-             }
-
-
+  @type links :: %{T.link_id => T.flow_link}
 
   @derive GenAI.Flow.NodeProtocol
-  defstruct [
-    id: nil,
-    handle: nil,
+  defnode [
     head: nil,
-    last_vertex: nil,
-    vertices: %{},
+    last_node: nil,
+    nodes: %{},
     handles: %{},
-    edges: %{},
-    vertex_edges: %{},
-    outbound_edges: %{}, # edge ids grouped by outlet
-    inbound_edges: %{}, # edge ids grouped by inlet
-    vsn: @vsn
+    links: %{},
   ]
+  defnodetype [
+    head: T.node_id | nil,
+    last_node: T.node_id | nil,
+    nodes: nodes,
+    handles: handles,
+    links: links,
+  ]
+
 
   #========================================
   # new/1
@@ -83,13 +64,13 @@ defmodule GenAI.Flow do
       %GenAI.Flow{id: flow.id}
 
   ## Create a new flow with specified id
-      iex> GenAI.Flow.new(id: :flow_1)
+      iex> GenAI.Flow.new(:flow_1)
       %GenAI.Flow{id: :flow_1}
   """
-  @spec new(options :: nil | Map.t) :: t
-  def new(options \\ nil)
-  def new(options) do
-    id = options[:id] || GenAI.UUID.new()
+  @spec new(T.node_id, T.options) :: t
+  def new(id \\ :auto, options \\ nil)
+  def new(id, _options) do
+    id = if id == :auto, do: UUID.uuid4(), else: id
     %GenAI.Flow{
       id: id
     }
@@ -103,22 +84,26 @@ defmodule GenAI.Flow do
 
   # Examples
   ## Check existing node
-      iex> flow = GenAI.Flow.new(id: :test_flow) |> GenAI.Flow.add_vertex(GenAI.Flow.Node.new(:test_node))
-      ...> GenAI.Flow.member?(flow, :test_node)
+      iex> GenAI.Flow.new(:test_flow)
+      ...> |> GenAI.Flow.add_node(GenAI.Flow.Node.new(:test_node))
+      ...> |> GenAI.Flow.member?(:test_node)
       true
 
   ## Check non-existing node
-      iex> flow = GenAI.Flow.new(id: :test_flow) |> GenAI.Flow.add_vertex(GenAI.Flow.Node.new(:test_node))
-      ...> GenAI.Flow.member?(flow, :non_existing_node)
+      iex> GenAI.Flow.new(:test_flow)
+      ...> |> GenAI.Flow.add_node(GenAI.Flow.Node.new(:test_node))
+      ...> |> GenAI.Flow.member?(:non_existing_node)
       false
   """
-  @spec member?(flow :: t, node_or_id :: any) :: boolean
-  def member?(flow, node) when is_atom(node) or is_integer(node) or is_tuple(node) or is_binary(node) do
-    Map.has_key?(flow.vertices, node)
+  @spec member?(flow :: t, node_or_id :: T.flow_node | T.node_id) :: boolean
+  def member?(flow, node)
+  def member?(flow, node) when T.is_node_id(node) do
+    Map.has_key?(flow.nodes, node)
   end
   def member?(flow, node) when is_struct(node) do
-    {:ok, id} = GenAI.Flow.Node.id(node)
-    Map.has_key?(flow.vertices, id)
+    with {:ok, id} <- GenAI.Flow.NodeProtocol.id(node) do
+      member?(flow, id)
+    end
   end # end of GenAI.Flow.member?/2
 
   #========================================
@@ -129,133 +114,127 @@ defmodule GenAI.Flow do
 
   # Examples
   ## Get existing node
-      iex> flow = GenAI.Flow.new(id: :test_flow) |> GenAI.Flow.add_vertex(GenAI.Flow.Node.new(:test_node))
-      ...> GenAI.Flow.node(flow, :test_node)
+      iex> GenAI.Flow.new(:test_flow)
+      ...> |> GenAI.Flow.add_node(GenAI.Flow.Node.new(:test_node))
+      ...> |> GenAI.Flow.node(:test_node)
       {:ok, %GenAI.Flow.Node{id: :test_node}}
   """
-  @spec node(flow :: t, id :: any) :: any | nil
-  def node(flow, id) when is_atom(id) or is_integer(id) or is_tuple(id) or is_binary(id) do
-    if node = flow.vertices[id] do
+  @spec node(flow :: t, id :: any) :: T.result(T.flow_node, {:node, :not_found})
+  def node(flow, node) when T.is_node_id(node) do
+    if node = flow.nodes[node] do
       {:ok, node}
     else
       {:error, {:node, :not_found}}
     end
   end
   def node(flow, node) when is_struct(node) do
-    {:ok, id} = GenAI.Flow.Node.id(node)
-    if node = flow.vertices[id] do
-      {:ok, node}
-    else
-      {:error, {:node, :not_found}}
+    with {:ok, id} <- GenAI.Flow.NodeProtocol.id(node) do
+      node(flow, id)
     end
   end # end of GenAI.Flow.node/2
 
-
   #========================================
-  # edge/2
+  # link/2
   #========================================
   @doc """
-  Returns the edge from the flow by id.
+  Returns the link from the flow by id.
 
   # Examples
-  ## Get existing edge
-      iex> flow = GenAI.Flow.new(id: :test_flow)
-      ...> flow = GenAI.Flow.add_vertex(flow, GenAI.Flow.Node.new(:test_node_a))
-      ...> flow = GenAI.Flow.add_vertex(flow, GenAI.Flow.Node.new(:test_node_b))
-      ...> flow = GenAI.Flow.add_edge(flow, GenAI.Flow.Link.new(:test_node_a, :test_node_b, id: :test_edge))
-      ...> {:ok, edge} = GenAI.Flow.edge(flow, :test_edge)
-      ...> edge
-      %GenAI.Flow.Link{id: :test_edge} = edge
+  ## Get existing link
+      iex> {:ok, link} = GenAI.Flow.new(:test_flow)
+      ...> |> GenAI.Flow.add_node(GenAI.Flow.Node.new(:test_node_a))
+      ...> |> GenAI.Flow.add_node(GenAI.Flow.Node.new(:test_node_b))
+      ...> |> GenAI.Flow.add_link(GenAI.Flow.Link.new(:test_node_a, :test_node_b, id: :test_link))
+      ...> |> GenAI.Flow.link(:test_link)
+      ...> link
+      %GenAI.Flow.Link{id: :test_link} = link
   """
-  @spec edge(flow :: t, edge_or_id :: GenAI.Flow.Link.t | atom | tuple | bitstring | integer) :: {:ok, edge :: GenAI.Flow.Link.t} | {:error, details :: atom | tuple | String.t}
-  def edge(flow, id) when is_atom(id) or is_integer(id) or is_tuple(id) or is_binary(id) do
-    if edge = flow.edges[id] do
-      {:ok, edge}
+  @spec link(flow :: t, link_or_id :: T.flow_link | T.link_id) :: T.result(T.flow_link, T.details)
+  def link(flow, link) when T.is_link_id(link) do
+    if link = flow.links[link] do
+      {:ok, link}
     else
-      {:error, {:edge, :not_found}}
+      {:error, {:link, :not_found}}
     end
   end
-  def edge(flow, %{id: id} = _edge) do
-    if edge = flow.edges[id] do
-      {:ok, edge}
-    else
-      {:error, {:edge, :not_found}}
+  def link(flow, link) when is_struct(link) do
+    with {:ok, id} <- GenAI.Flow.LinkProtocol.id(link) do
+      link(flow, id)
     end
   end # end of GenAI.Flow.node/2
 
   #========================================
-  # add_vertex/2
+  # add_node/2
   #========================================
   @doc """
   Adds a node to the flow.
 
   # Examples
   ## Add a new node
-      iex> flow = GenAI.Flow.new(id: :test_flow)
-      ...> flow |> GenAI.Flow.add_vertex(GenAI.Flow.Node.new(:test_node))
-      %GenAI.Flow{id: :test_flow, head: :test_node, last_vertex: :test_node, vertices: %{:test_node => %GenAI.Flow.Node{id: :test_node}}}
+      iex> GenAI.Flow.new(:test_flow)
+      ...> |> GenAI.Flow.add_node(GenAI.Flow.Node.new(:test_node))
+      %GenAI.Flow{id: :test_flow, head: :test_node, last_node: :test_node, nodes: %{:test_node => %GenAI.Flow.Node{id: :test_node}}}
   """
-  @spec add_vertex(flow :: t, node :: any) :: t
-  def add_vertex(flow, node) do
-    {:ok, id} = GenAI.Flow.Node.id(node)
-    unless member?(flow, id) do
-      unless flow.head do
-        flow
-        |> put_in([Access.key(:vertices), id], node)
-        |> put_in([Access.key(:head)], id)
-        |> put_in([Access.key(:last_vertex)], id)
+  @spec add_node(flow :: t, node :: T.flow_node) :: t
+  def add_node(flow, node) do
+    with {:ok, id} <- GenAI.Flow.Node.id(node) do
+      unless member?(flow, id) do
+        unless flow.head do
+          flow
+          |> put_in([Access.key(:nodes), id], node)
+          |> put_in([Access.key(:head)], id)
+          |> put_in([Access.key(:last_node)], id)
+        else
+          flow
+          |> put_in([Access.key(:nodes), id], node)
+          |> put_in([Access.key(:last_node)], id)
+        end
       else
-        flow
-        |> put_in([Access.key(:vertices), id], node)
-        |> put_in([Access.key(:last_vertex)], id)
+        raise GenAI.Flow.Exception,
+              message: "Node with #{id} already defined in flow"
       end
-    else
-      raise GenAI.Flow.Exception,
-            message: "Node with #{id} already defined in flow"
     end
-  end # end of GenAI.Flow.add_vertex
+  end # end of GenAI.Flow.add_node
 
   #========================================
-  # add_edge/2
+  # add_link/2
   #========================================
   @doc """
   Adds a link to the flow.
 
   # Examples
   ## Add a new link
-      iex> flow = GenAI.Flow.new(id: :test_flow)
-      ...> flow = GenAI.Flow.add_vertex(flow, GenAI.Flow.Node.new(:test_node_a))
-      ...> flow = GenAI.Flow.add_vertex(flow, GenAI.Flow.Node.new(:test_node_b))
-      ...> flow = GenAI.Flow.add_edge(flow, GenAI.Flow.Link.new(:test_node_a, :test_node_b))
+      iex> require GenAI.Flow.Records
+      ...> flow = GenAI.Flow.new(:test_flow)
+      ...> |> GenAI.Flow.add_node(GenAI.Flow.Node.new(:test_node_a))
+      ...> |> GenAI.Flow.add_node(GenAI.Flow.Node.new(:test_node_b))
+      ...> |> GenAI.Flow.add_link(GenAI.Flow.Link.new(:test_node_a, :test_node_b))
       %GenAI.Flow{} = flow
   """
-  @spec add_edge(flow :: t, link :: any) :: t
-  def add_edge(flow, link) do
-    # Guard
-    unless member?(flow, link.source) do
-      raise GenAI.Flow.Exception,
-            message: "Source node #{link.source} not defined in flow"
-    end
-    unless member?(flow, link.target) do
-      raise GenAI.Flow.Exception,
-            message: "Target node #{link.target} not defined in flow"
-    end
-    if Map.has_key?(flow.edges, link.id) do
-      raise GenAI.Flow.Exception,
-            message: "Link with #{link.id} already defined in flow"
-    end
+  @spec add_link(flow :: t, link :: any) :: t
+  def add_link(flow, link) do
+    with {:ok, link_id} <- GenAI.Flow.LinkProtocol.id(link),
+         {:ok, R.link_source(id: source)} <- GenAI.Flow.LinkProtocol.source(link),
+         {:ok, R.link_target(id: target)} <- GenAI.Flow.LinkProtocol.target(link),
+         true <- member?(flow, source) || {:error, "Source node #{source} not defined in flow"},
+         true <- member?(flow, source) || {:error, "Target node #{target} not defined in flow"},
+         true <- not(Map.has_key?(flow.links, link_id)) || {:error, "Link with #{link_id} already defined in flow"},
+         {:ok, updated_source} <- get_in(flow, [Access.key(:nodes), source])
+                                  |> GenAI.Flow.NodeProtocol.register_link(link),
+         {:ok, updated_target} <- get_in(flow, [Access.key(:nodes), target])
+                                  |> GenAI.Flow.NodeProtocol.register_link(link) do
 
-    # Add link to list of edges.
-    flow
-    |> put_in([Access.key(:edges), link.id], link)
-    # Update source node
-    |> update_in([Access.key(:vertices), link.source], &GenAI.Flow.NodeProtocol.add_link(&1, link))
-    |> update_in([Access.key(:vertices), link.target], &GenAI.Flow.NodeProtocol.add_link(&1, link))
-    # Update vertex_edges lookup table
-    |> update_in([Access.key(:vertex_edges), Access.key(link.source, %{}), link.target], &([link.id | (&1 || [])]))
-    |> update_in([Access.key(:vertex_edges), Access.key(link.target, %{}), link.source], &([link.id | (&1 || [])]))
-
+      # Add link to list of edges.
+      flow
+      |> put_in([Access.key(:links), link_id], link)
+        # Update source node
+      |> put_in([Access.key(:nodes), source], updated_source)
+      |> put_in([Access.key(:nodes), target], updated_target)
+    else
+      {:error, e} ->
+        raise GenAI.Flow.Exception,
+              message: "Link Error: #{inspect e}"
+    end
   end # end of GenAI.Flow.add_link
-
 
 end # end of GenAI.Flow
