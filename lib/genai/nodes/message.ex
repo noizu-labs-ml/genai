@@ -47,3 +47,26 @@ end
 defimpl GenAI.MessageProtocol, for: GenAI.Message do
   def stub(_), do: :ok
 end
+
+
+
+defimpl GenAI.Thread.NodeProtocol, for: GenAI.Message do
+  require GenAI.Flow.Records
+  alias GenAI.Flow.Records, as: R
+
+  @doc """
+  Process node in flow (update state/effective settings, run any interstitial inference, etc.).
+  """
+  def process_node(node, link, container, state, options)
+  def process_node(node, link, container, state, options) do
+    IO.inspect(%{role: node.role, content: node.content}, label: "Process Node")
+    with {:ok, links} <- GenAI.Flow.NodeProtocol.outbound_links(node, container) do
+      links = Enum.map(links, fn {_,l} -> Enum.map(l, fn {_,link} -> link end)   |> List.flatten() end) |> List.flatten()
+      unless links == [] do
+        {:ok, R.flow_advance(links: links, update: R.flow_update())}
+      else
+        {:ok, R.flow_end(exit_point: [node.id], update: R.flow_update())}
+      end
+    end
+  end
+end

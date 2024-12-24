@@ -22,6 +22,7 @@ defmodule GenAI.Flow.Link do
                target: R.link_target,
                label: T.link_label,
                color: T.link_color,
+               settings: any,
                vsn: T.vsn,
              }
 
@@ -33,6 +34,7 @@ defmodule GenAI.Flow.Link do
     target: nil,
     label: nil,
     color: nil,
+    settings: nil,
     vsn: @vsn,
   ]
 

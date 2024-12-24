@@ -5,3 +5,5 @@
 defprotocol GenAI.ModelProtocol do
   def stub(message)
 end
+
+

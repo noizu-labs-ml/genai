@@ -373,18 +373,46 @@ defimpl GenAI.Thread.NodeProtocol, for: GenAI.Flow do
   require GenAI.Flow.Records
   alias GenAI.Flow.Records, as: R
 
-  defp entry_point(node, link, container, state, options) do
-    # @todo support incoming external links from container into specific flow.node
-    # todo deal with nesting/incoming link/entry point
-    # {:ok, R.flow_advance(node: node)}
-
+  # Determine starting node and update state and container appropriatly.
+  defp entry_point(flow, link, container, state, options)
+  defp entry_point(flow, nil, _container, _state, _options) do
+    # if no input link specified grab the head node.
+    with {:ok, head} <- GenAI.Flow.head(flow) do
+      {:ok, head, nil, R.flow_update()}
+    else
+      _ -> {:error, R.flow_error(details: "No head node defined in flow")}
+    end
+  end
+  defp entry_point(flow, link, container, state, options) do
+    # determine in inbound link specifies a alternative entry point.
+    cond do
+      # @todo extend link protocol
+      alt_id = link.settings[:head] ->
+        with {:ok, alternative_head} <- GenAI.Flow.node(flow, alt_id) do
+          {:ok, alternative_head, link, R.flow_update()}
+        else
+          _ -> {:error, R.flow_error(details: "No head node defined in flow or specified in inbound link")}
+        end
+      :else ->
+        with {:ok, head} <- GenAI.Flow.head(flow) do
+          {:ok, head, nil, R.flow_update()}
+        else
+          _ -> {:error, R.flow_error(details: "No head node defined in flow or specified in inbound link")}
+        end
+    end
   end
 
   @doc """
   Process node in flow (update state/effective settings, run any interstitial inference, etc.).
   """
-  def process_node(node, link, container, state, options)
-  def process_node(node, link, container, state, options) do
-    {:error, R.flow_error(details: "Not yet implemented")}
+  def process_node(flow, link, container, state, options)
+  def process_node(flow, link, container, state, options) do
+    with {:ok, flow_node, link, update} <- entry_point(flow, link, container, state, options) do
+      {:ok, {flow_node, container, state}} = GenAI.Thread.NodeProtocol.Runner.update_state(update, flow_node, flow, state, options)
+      GenAI.Thread.NodeProtocol.Runner.process_nodes(flow_node, link, container, state, options)
+      # process response, return advance if nested.
+    else
+      _ -> {:error, R.flow_error(details: "Unhandled")}
+    end
   end
 end

@@ -282,7 +282,7 @@ defimpl GenAI.ThreadProtocol, for: [GenAI.Thread] do
 #           |> label(:effective_model) do
 #      GenAI.ProviderBehaviour.run(model, state)
 #    end
-    {:ok, :pending}
+    GenAI.Thread.NodeProtocol.process_node(context.flow, nil, nil, context.state, options)
   end
 
   #-------------------------------------
