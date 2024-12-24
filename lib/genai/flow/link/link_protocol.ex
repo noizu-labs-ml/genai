@@ -29,6 +29,18 @@ defprotocol GenAI.Flow.LinkProtocol do
   @spec target(T.flow_link) :: T.result(R.link_target, T.details)
   def target(flow_link)
 
+  @spec bind_source(T.flow_link, R.link_source | R.link_id) :: T.result(T.flow_link, T.details)
+  def bind_source(link, value)
+
+  @spec bind_target(T.flow_link, R.link_source | R.link_id) :: T.result(T.flow_link, T.details)
+  def bind_target(link, value)
+
+
+  @doc """
+  Populate id if not already set.
+  """
+  @spec with_id(T.flow_link) :: T.result(T.flow_link, T.details)
+  def with_id(link)
 
 end
 
@@ -67,6 +79,34 @@ defimpl GenAI.Flow.LinkProtocol, for: Any do
           message: "#{inspect(flow_link)} does not implement GenAI.Flow.NodeProtocol. Use @derive GenAI.Flow.NodeProtocol"
   end
 
+  def bind_source(flow_link, value)
+  def bind_source(flow_link, _value) when is_struct(flow_link) do
+    raise GenAI.Flow.Exception,
+          message: "#{flow_link.__struct__} does not implement GenAI.Flow.NodeProtocol. Use @derive GenAI.Flow.NodeProtocol"
+  end
+  def bind_source(flow_link, _value) do
+    raise GenAI.Flow.Exception,
+          message: "#{inspect(flow_link)} does not implement GenAI.Flow.NodeProtocol. Use @derive GenAI.Flow.NodeProtocol"
+  end
+
+  def bind_target(flow_link, value)
+  def bind_target(flow_link, _value) when is_struct(flow_link) do
+    raise GenAI.Flow.Exception,
+          message: "#{flow_link.__struct__} does not implement GenAI.Flow.NodeProtocol. Use @derive GenAI.Flow.NodeProtocol"
+  end
+  def bind_target(flow_link, _value) do
+    raise GenAI.Flow.Exception,
+          message: "#{inspect(flow_link)} does not implement GenAI.Flow.NodeProtocol. Use @derive GenAI.Flow.NodeProtocol"
+  end
+
+  def with_id(flow_link) when is_struct(flow_link) do
+    raise GenAI.Flow.Exception,
+          message: "#{flow_link.__struct__} does not implement GenAI.Flow.NodeProtocol. Use @derive GenAI.Flow.NodeProtocol"
+  end
+  def with_id(flow_link) do
+    raise GenAI.Flow.Exception,
+          message: "#{inspect(flow_link)} does not implement GenAI.Flow.NodeProtocol. Use @derive GenAI.Flow.NodeProtocol"
+  end
 
 
   defmacro __deriving__(module, _struct, _opts) do
@@ -82,6 +122,18 @@ defimpl GenAI.Flow.LinkProtocol, for: Any do
 
         def source(flow_link) do
           apply(unquote(module), :source, [flow_link])
+        end
+
+        def bind_source(flow_link, value) do
+          apply(unquote(module), :bind_source, [flow_link, value])
+        end
+
+        def bind_target(flow_link, value) do
+          apply(unquote(module), :bind_target, [flow_link, value])
+        end
+
+        def with_id(flow_link) do
+          apply(unquote(module), :with_id, [flow_link])
         end
 
       end

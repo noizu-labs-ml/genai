@@ -10,6 +10,25 @@ defmodule GenAI.Thread do
     flow: %GenAI.Flow{},
     vsn: @vsn
   ]
+
+  @default_options [
+    auto_head: true,
+    auto_link: true
+  ]
+
+  def new(options \\ nil)
+  def new(options) do
+    options = Keyword.merge(@default_options, options || [])
+    flow_id = options[:id] || :auto
+    flow = GenAI.Flow.new(flow_id, options)
+
+    %__MODULE__{
+      state: %GenAI.Thread.State{flow: flow.id},
+      flow: flow,
+      vsn: @vsn
+    }
+  end
+
 end
 
 defimpl GenAI.ThreadProtocol, for: [GenAI.Thread] do
@@ -23,8 +42,8 @@ defimpl GenAI.ThreadProtocol, for: [GenAI.Thread] do
   #  alias GenAI.Graph.ProviderSettingNode
   #  alias GenAI.Graph.ToolNode
   require Logger
-  defp add_node(context, node) do
-    update_in(context, [Access.key(:flow)], & GenAI.Flow.add_node(&1, node))
+  defp add_node(context, node, options \\ nil) do
+    update_in(context, [Access.key(:flow)], & GenAI.Flow.add_node(&1, node, options))
   end
   defp add_link(context, link) do
     update_in(context, [Access.key(:flow)], & GenAI.Flow.add_link(&1, link))
@@ -36,21 +55,8 @@ defimpl GenAI.ThreadProtocol, for: [GenAI.Thread] do
 
   defp append_node(context, node, options \\ nil)
   defp append_node(context, node, options) do
-    source_node = context.flow.last_node
-    cond do
-      auto_link?(context, options) == false ->
-        context = context
-                  |> add_node(node)
-      is_struct(options[:link]) ->
-        context = context
-                  |> add_node(node)
-                  |> add_link(options.link)
-      :else ->
-        {:ok, target_node} = GenAI.Flow.NodeProtocol.id(node)
-        context = context
-                  |> add_node(node)
-                  |> add_link(GenAI.Flow.Link.new(source_node, target_node))
-    end
+    context = context
+              |> add_node(node, options)
   end
 
   #-------------------------------------

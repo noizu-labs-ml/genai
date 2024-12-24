@@ -12,6 +12,11 @@ defmodule GenAI.Flow.LinkBehaviour do
   @callback source(T.flow_link) :: T.result(R.link_source, T.details)
   @callback target(T.flow_link) :: T.result(R.link_target, T.details)
 
+  @callback bind_source(T.flow_link, R.link_source | R.link_id) :: T.result(T.flow_link, T.details)
+  @callback bind_target(T.flow_link, R.link_target | R.link_id) :: T.result(T.flow_link, T.details)
+
+  @callback with_id(T.flow_node) :: T.result(T.flow_node, T.details)
+
   #========================================
   # Using Macro
   #========================================
@@ -29,10 +34,21 @@ defmodule GenAI.Flow.LinkBehaviour do
       @impl GenAI.Flow.LinkBehaviour
       defdelegate target(node), to: @link_implementation
 
+      @impl GenAI.Flow.LinkBehaviour
+      defdelegate bind_source(link, value), to: @link_implementation
+      @impl GenAI.Flow.LinkBehaviour
+      defdelegate bind_target(link, value), to: @link_implementation
+
+      @impl GenAI.Flow.LinkBehaviour
+      defdelegate with_id(link), to: @link_implementation
+
       defoverridable [
         id: 1,
         source: 1,
         target: 1,
+        bind_source: 2,
+        bind_target: 2,
+        with_id: 1
       ]
     end
   end # end of GenAI.Flow.LinkBehaviour.__using__/1

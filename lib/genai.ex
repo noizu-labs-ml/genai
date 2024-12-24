@@ -3,9 +3,9 @@ defmodule GenAI do
   @doc """
   Creates a new chat context.
   """
-  def chat(context_type \\ :default)
-  def chat(:default), do: %GenAI.Thread{}
-  def chat(:standard), do: %GenAI.Thread{}
+  def chat(context_type \\ :default, options \\ nil)
+  def chat(:default, options), do: GenAI.Thread.new(options)
+  def chat(:standard, options), do: GenAI.Thread.new(options)
 
   # Delegate function calls to the GenAI.ThreadProtocol implementation for the current context.
   defdelegate with_model(context, model), to: GenAI.ThreadProtocol
