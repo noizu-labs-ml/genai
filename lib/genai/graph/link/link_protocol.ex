@@ -4,6 +4,7 @@ defprotocol GenAI.Graph.LinkProtocol do
   """
   alias GenAI.Types, as: T
   alias GenAI.Graph.Types, as: G
+  alias GenAI.Graph.Link.Records, as: R
 
   @doc """
   Obtain the id of a graph link.
