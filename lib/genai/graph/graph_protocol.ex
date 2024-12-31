@@ -10,8 +10,11 @@ defprotocol GenAI.GraphProtocol do
   def id(graph)
 
   def handle(graph)
+  def handle(graph, default)
   def name(graph)
+  def name(graph, default)
   def description(graph)
+  def description(graph, default)
 
   @doc """
   Obtain node by id.
@@ -25,8 +28,15 @@ defprotocol GenAI.GraphProtocol do
   @spec link(graph :: G.graph, id :: G.graph_link_id) :: T.result(G.graph_link, T.details)
   def link(graph, id)
 
+  def member?(graph, id)
+
+  def by_handle(graph, handle)
+  def link_by_handle(graph, handle)
+
   def add_node(graph, node, options)
 
   def add_link(graph, link, options)
+
+  def with_id(graph)
 
 end

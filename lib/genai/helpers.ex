@@ -75,4 +75,8 @@ defmodule GenAI.Helpers do
   def on_nil({:ok, nil}, :label, label), do: {:error, {label, :is_nil}}
   def on_nil(response, _, _), do: response
 
+
+
+
+
 end

@@ -13,5 +13,10 @@ defprotocol GenAI.Graph.NodeProtocol do
   def name(graph_node)
   def description(graph_node)
 
+  def with_id(graph_node)
+
+  def register_link(graph_node, graph, link, options)
+
+
 
 end
