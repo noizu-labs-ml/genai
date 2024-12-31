@@ -36,7 +36,7 @@ defmodule GenAI.Graph.Node do
   @doc """
   Create a new node.
   """
-  def new(options) do
+  def new(options \\ nil) do
     %__MODULE__{
       id: options[:id] || nil,
       handle: options[:handle] || nil,
