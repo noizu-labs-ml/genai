@@ -1,6 +1,8 @@
 defmodule GenAI.Graph do
   @vsn 1.0
-  @moduledoc false
+  @moduledoc """
+  A graph data structure for representing AI graphs, threads, conversations, uml, etc. Utility Class
+  """
 
   alias GenAI.Types, as: T
   alias GenAI.Graph.Types, as: G
@@ -48,6 +50,24 @@ defmodule GenAI.Graph do
     vsn: @vsn
   ]
 
+  def new(options \\ nil)
+  def new(options) do
+    %__MODULE__{
+      id: options[:id] || UUID.uuid4(),
+      handle: options[:handle] || nil,
+      name: options[:name] || nil,
+      description: options[:description] || nil,
+      nodes: %{},
+      node_handles: %{},
+      links: %{},
+      link_handles: %{},
+      head: nil,
+      last_node: nil,
+      last_link: nil,
+      settings: options[:settings] || %{},
+    }
+  end
+
   def setting(%__MODULE__{settings: settings}, setting, options, default \\ nil) do
     x = options[setting]
     cond do
@@ -61,10 +81,9 @@ defmodule GenAI.Graph do
     end
   end
 
-end
-
-
-defimpl GenAI.GraphProtocol, for: GenAI.Graph do
+  #=============================================================================
+  # Graph Protocol
+  #=============================================================================
   require GenAI.Graph.Types
   alias GenAI.Graph.Types, as: G
   require GenAI.Graph.Link.Records
@@ -74,51 +93,51 @@ defimpl GenAI.GraphProtocol, for: GenAI.Graph do
   # id/1
   #-------------------------
   def id(graph)
-  def id(%GenAI.Graph{id: nil}), do: {:error, {:id, :is_nil}}
-  def id(%GenAI.Graph{id: id}), do: {:ok, id}
+  def id(%__MODULE__{id: nil}), do: {:error, {:id, :is_nil}}
+  def id(%__MODULE__{id: id}), do: {:ok, id}
 
   #-------------------------
   # handle/1
   #-------------------------
   def handle(graph)
-  def handle(%GenAI.Graph{handle: nil}), do: {:error, {:handle, :is_nil}}
-  def handle(%GenAI.Graph{handle: handle}), do: {:ok, handle}
+  def handle(%__MODULE__{handle: nil}), do: {:error, {:handle, :is_nil}}
+  def handle(%__MODULE__{handle: handle}), do: {:ok, handle}
 
   #-------------------------
   # handle/2
   #-------------------------
   def handle(graph, default)
-  def handle(%GenAI.Graph{handle: nil}, default), do: {:ok, default}
-  def handle(%GenAI.Graph{handle: handle}, _), do: {:ok, handle}
+  def handle(%__MODULE__{handle: nil}, default), do: {:ok, default}
+  def handle(%__MODULE__{handle: handle}, _), do: {:ok, handle}
 
   #-------------------------
   # name/1
   #-------------------------
   def name(graph)
-  def name(%GenAI.Graph{name: nil}), do: {:error, {:name, :is_nil}}
-  def name(%GenAI.Graph{name: name}), do: {:ok, name}
+  def name(%__MODULE__{name: nil}), do: {:error, {:name, :is_nil}}
+  def name(%__MODULE__{name: name}), do: {:ok, name}
 
   #-------------------------
   # name/2
   #-------------------------
   def name(graph, default)
-  def name(%GenAI.Graph{name: nil}, default), do: {:ok, default}
-  def name(%GenAI.Graph{name: name}, _), do: {:ok, name}
+  def name(%__MODULE__{name: nil}, default), do: {:ok, default}
+  def name(%__MODULE__{name: name}, _), do: {:ok, name}
 
 
   #-------------------------
   # description/1
   #-------------------------
   def description(graph)
-  def description(%GenAI.Graph{description: nil}), do: {:error, {:description, :is_nil}}
-  def description(%GenAI.Graph{description: description}), do: {:ok, description}
+  def description(%__MODULE__{description: nil}), do: {:error, {:description, :is_nil}}
+  def description(%__MODULE__{description: description}), do: {:ok, description}
 
   #-------------------------
   # description/2
   #-------------------------
   def description(graph, default)
-  def description(%GenAI.Graph{description: nil}, default), do: {:ok, default}
-  def description(%GenAI.Graph{description: description}, _), do: {:ok, description}
+  def description(%__MODULE__{description: nil}, default), do: {:ok, default}
+  def description(%__MODULE__{description: description}, _), do: {:ok, description}
 
   #-------------------------
   # node/2
@@ -195,22 +214,22 @@ defimpl GenAI.GraphProtocol, for: GenAI.Graph do
   # head/1
   #-------------------------
   def head(graph)
-  def head(%GenAI.Graph{head: nil}), do: {:error, {:head, :is_nil}}
-  def head(%GenAI.Graph{head: x} = graph), do: node(graph, x)
+  def head(%__MODULE__{head: nil}), do: {:error, {:head, :is_nil}}
+  def head(%__MODULE__{head: x} = graph), do: node(graph, x)
 
   #-------------------------
   # last_node/1
   #-------------------------
   def last_node(graph)
-  def last_node(%GenAI.Graph{last_node: nil}), do: {:error, {:last_node, :is_nil}}
-  def last_node(%GenAI.Graph{last_node: x} = graph), do: node(graph, x)
+  def last_node(%__MODULE__{last_node: nil}), do: {:error, {:last_node, :is_nil}}
+  def last_node(%__MODULE__{last_node: x} = graph), do: node(graph, x)
 
   #-------------------------
   # last_link/1
   #-------------------------
   def last_link(graph)
-  def last_link(%GenAI.Graph{last_link: nil}), do: {:error, {:last_link, :is_nil}}
-  def last_link(%GenAI.Graph{last_link: x} = graph), do: link(graph, x)
+  def last_link(%__MODULE__{last_link: nil}), do: {:error, {:last_link, :is_nil}}
+  def last_link(%__MODULE__{last_link: x} = graph), do: link(graph, x)
 
 
   defp attempt_set_handle(graph, id, node) do
@@ -228,7 +247,7 @@ defimpl GenAI.GraphProtocol, for: GenAI.Graph do
   end
 
   defp attempt_set_head(graph, id, _node, options) do
-    if GenAI.Graph.setting(graph, :auto_head, options, false) do
+    if setting(graph, :auto_head, options, false) do
       graph
       |> update_in([Access.key(:head)], & &1 || id)
     else
@@ -237,7 +256,7 @@ defimpl GenAI.GraphProtocol, for: GenAI.Graph do
   end
 
   defp attempt_set_last_node(graph, id, _node, options) do
-    if GenAI.Graph.setting(graph, :update_last, options, false) do
+    if setting(graph, :update_last, options, false) do
       graph
       |> put_in([Access.key(:last_node)], id)
     else
@@ -285,11 +304,11 @@ defimpl GenAI.GraphProtocol, for: GenAI.Graph do
                   message: "Auto Link Failed",
                   details: details
         end
-    not(is_struct(auto_link)) and (is_map(auto_link) or is_list(auto_link)) ->
-      auto_link_options = auto_link
-      link = GenAI.Graph.Link.new(from_node, node_id, auto_link_options)
-      graph
-      |> GenAI.GraphProtocol.add_link(link, options)
+      not(is_struct(auto_link)) and (is_map(auto_link) or is_list(auto_link)) ->
+        auto_link_options = auto_link
+        link = GenAI.Graph.Link.new(from_node, node_id, auto_link_options)
+        graph
+        |> GenAI.GraphProtocol.add_link(link, options)
     end
   end
 
@@ -297,10 +316,10 @@ defimpl GenAI.GraphProtocol, for: GenAI.Graph do
     unless member?(graph, node_id) do
       graph
       |> put_in([Access.key(:nodes), node_id], graph_node)
-      else
-        raise GenAI.Graph.Exception,
-              message: "Node with #{node_id} already defined in graph",
-              details: {:node_exists, node_id}
+    else
+      raise GenAI.Graph.Exception,
+            message: "Node with #{node_id} already defined in graph",
+            details: {:node_exists, node_id}
     end
   end
 
@@ -370,19 +389,28 @@ defimpl GenAI.GraphProtocol, for: GenAI.Graph do
       |> attempt_set_last_link(link_id, graph_link, options)
       |> attempt_register_link(source, graph_link, options)
       |> attempt_register_link(target, graph_link, options)
-      else
-        {:error, details} ->
-          raise GenAI.Graph.Exception,
-                message: "Link Failure - #{inspect details}",
-                details: details
+    else
+      {:error, details} ->
+        raise GenAI.Graph.Exception,
+              message: "Link Failure - #{inspect details}",
+              details: details
     end
   end
 
 
   defp attempt_set_link(graph, link_id, graph_link, _options) do
     unless Map.has_key?(graph.links, link_id) do
-      graph
-      |> put_in([Access.key(:links), link_id], graph_link)
+
+      with {:ok, handle} <- GenAI.Graph.LinkProtocol.handle(graph_link) do
+        graph
+        |> put_in([Access.key(:link_handles), handle], link_id)
+        |> put_in([Access.key(:links), link_id], graph_link)
+      else
+        _ ->
+          graph
+          |> put_in([Access.key(:links), link_id], graph_link)
+      end
+
     else
       raise GenAI.Graph.Exception,
             message: "Link with #{link_id} already defined in graph",
@@ -391,7 +419,7 @@ defimpl GenAI.GraphProtocol, for: GenAI.Graph do
   end
 
   defp attempt_set_last_link(graph, link_id, _graph_link, options) do
-    if GenAI.Graph.setting(graph, :update_last_link, options, false) do
+    if setting(graph, :update_last_link, options, false) do
       graph
       |> put_in([Access.key(:last_link)], link_id)
     else
@@ -415,5 +443,26 @@ defimpl GenAI.GraphProtocol, for: GenAI.Graph do
     end
   end
 
+
+end
+
+
+defimpl GenAI.GraphProtocol, for: GenAI.Graph do
+  @handler GenAI.Graph
+  defdelegate id(graph), to: @handler
+  defdelegate handle(graph), to: @handler
+  defdelegate handle(graph, default), to: @handler
+  defdelegate name(graph), to: @handler
+  defdelegate name(graph, default), to: @handler
+  defdelegate description(graph), to: @handler
+  defdelegate description(graph, default), to: @handler
+  defdelegate node(graph, id), to: @handler
+  defdelegate link(graph, id), to: @handler
+  defdelegate member?(graph, id), to: @handler
+  defdelegate by_handle(graph, handle), to: @handler
+  defdelegate link_by_handle(graph, handle), to: @handler
+  defdelegate add_node(graph, graph_node, options \\ nil), to: @handler
+  defdelegate add_link(graph, graph_link, options \\ nil), to: @handler
+  defdelegate with_id(graph), to: @handler
 
 end

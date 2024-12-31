@@ -14,11 +14,18 @@ defmodule GenAI.Graph.Link do
   @type t :: %__MODULE__{
                id: G.graph_id,
                handle: T.handle,
+
                name: T.name,
                description: T.description,
 
+               type: G.link_type,
+               label: G.link_label,
+               # @todo specifier like count, trait, direction, etc. o(5)-->1 etc. for uml.
+
                source: R.connector,
                target: R.connector,
+
+               meta: nil,
 
                vsn: float()
              }
@@ -28,8 +35,15 @@ defmodule GenAI.Graph.Link do
     handle: nil,
     name: nil,
     description: nil,
+
+    type: nil,
+    label: nil,
+
     source: nil,
     target: nil,
+
+    meta: nil,
+
     vsn: @vsn
   ]
 
@@ -83,6 +97,8 @@ defmodule GenAI.Graph.Link do
       handle: options[:handle],
       name: options[:name],
       description: options[:description],
+      type: options[:type] || :link,
+      label: options[:label],
       source: source,
       target: target,
       vsn: @vsn
@@ -145,6 +161,36 @@ defmodule GenAI.Graph.Link do
   def description(graph_link, default)
   def description(%__MODULE__{description: nil}, default), do: {:ok, default}
   def description(%__MODULE__{description: description}, _), do: {:ok, description}
+
+
+  #-------------------------
+  # type/1
+  #-------------------------
+  def type(graph_link)
+  def type(%__MODULE__{type: nil}), do: {:error, {:type, :is_nil}}
+  def type(%__MODULE__{type: type}), do: {:ok, type}
+
+  #-------------------------
+  # type/2
+  #-------------------------
+  def type(graph_link, default)
+  def type(%__MODULE__{type: nil}, default), do: {:ok, default}
+  def type(%__MODULE__{type: type}, _), do: {:ok, type}
+
+  #-------------------------
+  # label/1
+  #-------------------------
+  def label(graph_link)
+  def label(%__MODULE__{label: nil}), do: {:error, {:label, :is_nil}}
+  def label(%__MODULE__{label: label}), do: {:ok, label}
+
+  #-------------------------
+  # label/2
+  #-------------------------
+  def label(graph_link, default)
+  def label(%__MODULE__{label: nil}, default), do: {:ok, default}
+  def label(%__MODULE__{label: label}, _), do: {:ok, label}
+
 
 
   #-------------------------
@@ -306,6 +352,12 @@ defimpl GenAI.Graph.LinkProtocol, for: GenAI.Graph.Link do
 
   defdelegate description(graph_link), to: @handler
   defdelegate description(graph_link, default), to: @handler
+
+  defdelegate type(graph_link), to: @handler
+  defdelegate type(graph_link, default), to: @handler
+
+  defdelegate label(graph_link), to: @handler
+  defdelegate label(graph_link, default), to: @handler
 
   defdelegate with_id(graph_link), to: @handler
 
