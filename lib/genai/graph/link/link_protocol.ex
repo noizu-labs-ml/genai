@@ -1,4 +1,7 @@
 defprotocol GenAI.Graph.LinkProtocol do
+  @moduledoc """
+  Protocol for managing Graph Links.
+  """
   alias GenAI.Types, as: T
   alias GenAI.Graph.Types, as: G
 
@@ -247,7 +250,7 @@ defprotocol GenAI.Graph.LinkProtocol do
       iex> node1_id = UUID.uuid5(:oid, "node-1")
       ...> node2_id = UUID.uuid5(:oid, "node-2")
       ...> l = GenAI.Graph.Link.new(node1_id, nil)
-      ...> |> GenAI.Graph.LinkProtocol.putnew_target(R.connector(node: node2_id, plug: :foo, external: false))
+      ...> |> GenAI.Graph.LinkProtocol.putnew_target(R.connector(node: node2_id, socket: :foo, external: false))
       %GenAI.Graph.Link{target: R.connector(node: ^node2_id, external: false)} = l
 
   ## When Set. By ID
@@ -263,7 +266,7 @@ defprotocol GenAI.Graph.LinkProtocol do
       ...> node2_id = UUID.uuid5(:oid, "node-2")
       ...> node3_id = UUID.uuid5(:oid, "node-3")
       ...> l = GenAI.Graph.Link.new(node1_id, node2_id)
-      ...> |> GenAI.Graph.LinkProtocol.putnew_target(R.connector(node: node3_id, plug: :foo, external: false))
+      ...> |> GenAI.Graph.LinkProtocol.putnew_target(R.connector(node: node3_id, socket: :foo, external: false))
       %GenAI.Graph.Link{target: R.connector(node: ^node2_id, external: false)} = l
 
   """
@@ -286,8 +289,8 @@ defprotocol GenAI.Graph.LinkProtocol do
       iex> node1_id = UUID.uuid5(:oid, "node-1")
       ...> node2_id = UUID.uuid5(:oid, "node-2")
       ...> l = GenAI.Graph.Link.new(nil, node2_id)
-      ...> |> GenAI.Graph.LinkProtocol.putnew_source(R.connector(node: node1_id, plug: :foo, external: false))
-      %GenAI.Graph.Link{source: R.connector(node: ^node1_id, plug: :foo, external: false)} = l
+      ...> |> GenAI.Graph.LinkProtocol.putnew_source(R.connector(node: node1_id, socket: :foo, external: false))
+      %GenAI.Graph.Link{source: R.connector(node: ^node1_id, socket: :foo, external: false)} = l
 
   ## When Set. By ID
       iex> node1_id = UUID.uuid5(:oid, "node-1")
@@ -302,7 +305,7 @@ defprotocol GenAI.Graph.LinkProtocol do
       ...> node2_id = UUID.uuid5(:oid, "node-2")
       ...> node3_id = UUID.uuid5(:oid, "node-3")
       ...> l = GenAI.Graph.Link.new(node1_id, node2_id)
-      ...> |> GenAI.Graph.LinkProtocol.putnew_source(R.connector(node: node3_id, plug: :foo, external: false))
+      ...> |> GenAI.Graph.LinkProtocol.putnew_source(R.connector(node: node3_id, socket: :foo, external: false))
       %GenAI.Graph.Link{source: R.connector(node: ^node1_id, external: false)} = l
 
   """

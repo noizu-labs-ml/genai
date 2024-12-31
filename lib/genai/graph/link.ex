@@ -1,6 +1,8 @@
 defmodule GenAI.Graph.Link do
   @vsn 1.0
-  @moduledoc false
+  @moduledoc """
+  Represent a link between two nodes in a graph.
+  """
 
   require GenAI.Graph.Link.Records
   require GenAI.Graph.Types
@@ -44,27 +46,27 @@ defmodule GenAI.Graph.Link do
         handle: nil,
         name: "Hello",
         description: nil,
-        source: R.connector(node: ^node1_id, plug: :default, external: false),
-        target: R.connector(node: ^node2_id, plug: :default, external: false),
+        source: R.connector(node: ^node1_id, socket: :default, external: false),
+        target: R.connector(node: ^node2_id, socket: :default, external: false),
         vsn: 1.0
       } = l
 
       iex> node1_id = UUID.uuid5(:oid, "node-1")
       iex> node2_id = UUID.uuid5(:oid, "node-2")
-      iex> l = GenAI.Graph.Link.new(R.connector(node: node1_id, plug: :default, external: false), node2_id, handle: :andy)
+      iex> l = GenAI.Graph.Link.new(R.connector(node: node1_id, socket: :default, external: false), node2_id, handle: :andy)
       %GenAI.Graph.Link{
         handle: :andy,
-        source: R.connector(node: ^node1_id, plug: :default, external: false),
-        target: R.connector(node: ^node2_id, plug: :default, external: false),
+        source: R.connector(node: ^node1_id, socket: :default, external: false),
+        target: R.connector(node: ^node2_id, socket: :default, external: false),
         vsn: 1.0
       } = l
 
       iex> node1_id = UUID.uuid5(:oid, "node-1")
-      iex> l = GenAI.Graph.Link.new(R.connector(node: node1_id, plug: :default, external: false), nil, description: "A Node")
+      iex> l = GenAI.Graph.Link.new(R.connector(node: node1_id, socket: :default, external: false), nil, description: "A Node")
       %GenAI.Graph.Link{
         description: "A Node",
-        source: R.connector(node: ^node1_id, plug: :default, external: false),
-        target: R.connector(node: nil, plug: :default, external: true),
+        source: R.connector(node: ^node1_id, socket: :default, external: false),
+        target: R.connector(node: nil, socket: :default, external: true),
         vsn: 1.0
       } = l
 
@@ -176,15 +178,15 @@ defmodule GenAI.Graph.Link do
   #-------------------------
   # putnew_target/2
   #-------------------------
-  def putnew_target(graph_link, R.connector(node: connector_node, plug: connector_plug, external: connector_external)) do
-    x = graph_link.target || R.connector(node: nil, plug: nil, external: false)
+  def putnew_target(graph_link, R.connector(node: connector_node, socket: connector_socket, external: connector_external)) do
+    x = graph_link.target || R.connector(node: nil, socket: nil, external: false)
     if (is_nil(R.connector(x, :node))) do
       %__MODULE__{
         graph_link|
         target: R.connector(
           x,
           node: connector_node,
-          plug: connector_plug,
+          socket: connector_socket,
           external: connector_external
         )
       }
@@ -193,14 +195,14 @@ defmodule GenAI.Graph.Link do
     end
   end
   def putnew_target(graph_link, target) when G.is_node_id(target) do
-    x = graph_link.target || R.connector(node: nil, plug: nil, external: nil)
+    x = graph_link.target || R.connector(node: nil, socket: nil, external: nil)
     if (is_nil(R.connector(x, :node))) do
       %__MODULE__{
         graph_link|
         target: R.connector(
           x,
           node: R.connector(x, :node) || target,
-          plug: R.connector(x, :plug) || :default,
+          socket: R.connector(x, :socket) || :default,
           external: false # wip
         )
       }
@@ -210,14 +212,14 @@ defmodule GenAI.Graph.Link do
   end
   def putnew_target(graph_link, target) when is_struct(target) do
     {:ok, connector_id} = GenAI.Graph.NodeProtocol.id(target)
-    x = graph_link.target || R.connector(node: nil, plug: nil, external: false)
+    x = graph_link.target || R.connector(node: nil, socket: nil, external: false)
     if (is_nil(R.connector(x, :node))) do
       %__MODULE__{
         graph_link|
         target: R.connector(
           x,
           node: R.connector(x, :node) || connector_id,
-          plug: R.connector(x, :plug) || :default,
+          socket: R.connector(x, :socket) || :default,
           external: false # wip
         )
       }
@@ -229,15 +231,15 @@ defmodule GenAI.Graph.Link do
   #-------------------------
   # putnew_source/2
   #-------------------------
-  def putnew_source(graph_link, R.connector(node: connector_node, plug: connector_plug, external: connector_external)) do
-    x = graph_link.source || R.connector(node: nil, plug: nil, external: false)
+  def putnew_source(graph_link, R.connector(node: connector_node, socket: connector_socket, external: connector_external)) do
+    x = graph_link.source || R.connector(node: nil, socket: nil, external: false)
     if (is_nil(R.connector(x, :node))) do
       %__MODULE__{
         graph_link|
         source: R.connector(
           x,
           node: connector_node,
-          plug: connector_plug,
+          socket: connector_socket,
           external: connector_external
         )
       }
@@ -246,14 +248,14 @@ defmodule GenAI.Graph.Link do
     end
   end
   def putnew_source(graph_link, source) when G.is_node_id(source) do
-    x = graph_link.source || R.connector(node: nil, plug: nil, external: false)
+    x = graph_link.source || R.connector(node: nil, socket: nil, external: false)
     if (is_nil(R.connector(x, :node))) do
       %__MODULE__{
         graph_link|
         source: R.connector(
           x,
           node: R.connector(x, :node) || source,
-          plug: R.connector(x, :plug) || :default,
+          socket: R.connector(x, :socket) || :default,
           external: false # wip
         )
       }
@@ -263,14 +265,14 @@ defmodule GenAI.Graph.Link do
   end
   def putnew_source(graph_link, source) when is_struct(source) do
     {:ok, connector_id} = GenAI.Graph.NodeProtocol.id(source)
-    x = graph_link.source || R.connector(node: nil, plug: nil, external: false)
+    x = graph_link.source || R.connector(node: nil, socket: nil, external: false)
     if (is_nil(R.connector(x, :node))) do
       %__MODULE__{
         graph_link|
         source: R.connector(
           x,
           node: R.connector(x, :node) || connector_id,
-          plug: R.connector(x, :plug) || :default,
+          socket: R.connector(x, :socket) || :default,
           external: false # wip
         )
       }
@@ -284,11 +286,11 @@ defmodule GenAI.Graph.Link do
   #=============================================================================
 
   defp to_connector(R.connector() = value), do: value
-  defp to_connector(nil), do: R.connector(node: nil, plug: :default, external: true)
-  defp to_connector(value) when G.is_node_id(value), do: R.connector(node: value, plug: :default, external: false)
+  defp to_connector(nil), do: R.connector(node: nil, socket: :default, external: true)
+  defp to_connector(value) when G.is_node_id(value), do: R.connector(node: value, socket: :default, external: false)
   defp to_connector(value) do
     {:ok, x} = GenAI.Graph.NodeProtocol.id(value)
-    R.connector(node: x, plug: :default, external: false)
+    R.connector(node: x, socket: :default, external: false)
   end
 end
 
