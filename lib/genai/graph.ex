@@ -155,6 +155,24 @@ defmodule GenAI.Graph do
       node(graph, id)
     end
   end
+  
+  #-------------------------
+  # node/2
+  #-------------------------
+  def nodes(graph, options \\ nil)
+  def nodes(graph, _) do
+    nodes = Map.values(graph.nodes)
+    {:ok, nodes}
+  end
+  
+  #-------------------------
+  # node!/2
+  #-------------------------
+  def nodes!(graph, options \\ nil)
+  def nodes!(graph, _) do
+      Map.values(graph.nodes)
+  end
+  
 
   #-------------------------
   # link/2
@@ -457,6 +475,8 @@ defimpl GenAI.GraphProtocol, for: GenAI.Graph do
   defdelegate description(graph), to: @handler
   defdelegate description(graph, default), to: @handler
   defdelegate node(graph, id), to: @handler
+  defdelegate nodes(graph, options \\ nil), to: @handler
+  defdelegate nodes!(graph, options \\ nil), to: @handler
   defdelegate link(graph, id), to: @handler
   defdelegate member?(graph, id), to: @handler
   defdelegate by_handle(graph, handle), to: @handler

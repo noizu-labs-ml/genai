@@ -158,6 +158,10 @@ defprotocol GenAI.GraphProtocol do
   @spec node(graph :: G.graph, id :: G.graph_node_id) :: T.result(G.graph_node, T.details)
   def node(graph, id)
 
+  def nodes(graph)
+  def nodes(graph, options)
+  def nodes!(graph)
+  def nodes!(graph, options)
 
   @doc """
   Obtain link by id.

@@ -38,7 +38,7 @@ defmodule GenAI.Graph.Node do
   """
   def new(options \\ nil) do
     %__MODULE__{
-      id: options[:id] || nil,
+      id: options[:id] || UUID.uuid4(),
       handle: options[:handle] || nil,
       name: options[:name] || nil,
       description: options[:description] || nil,
