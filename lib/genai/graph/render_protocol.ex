@@ -19,8 +19,16 @@ defmodule GenAI.Graph.Mermaid.Helpers do
   def indent(string, depth) when depth in [0, nil], do: string
   def indent(string, depth) do
     padding = String.duplicate("  ", depth)
-    String.split(string, "\n")
-    |> Enum.map(& padding <> &1)
+    string
+    |> String.replace("\r\n", "\n")
+    |> String.replace("\r", "\n")
+    |> String.split("\n")
+    |> Enum.map(
+         fn
+           "" -> ""
+           line -> padding <> line
+         end
+       )
     |> Enum.join("\n")
   end
 

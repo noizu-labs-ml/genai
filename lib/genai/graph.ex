@@ -538,9 +538,18 @@ defimpl GenAI.Graph.Mermaid, for: GenAI.Graph do
         ""
       end
 
+      # We need expanded nodes with link details
+      state = update_in(state, [:container], & [graph_element | (&1 || [])])
+      contents = Enum.map(graph_element.nodes,
+                   fn {_, n} ->
+                     GenAI.Graph.Mermaid.encode(n, options, state)
+                   end)
+                 |> Enum.map(fn {:ok, x} -> x end)
+                 |> Enum.join("\n")
 
-      body = entry_point
+      body = (entry_point <> contents)
              |> GenAI.Graph.Mermaid.Helpers.indent()
+
       graph = headline <> body
         {:ok, graph}
 
@@ -554,31 +563,5 @@ defimpl GenAI.Graph.Mermaid, for: GenAI.Graph do
       :state_diagram_v2 -> state_diagram_v2(graph_element, options, state)
       x -> {:error, {:unsupported_diagram, x}}
     end
-
-    #
-
-    #
-    #    suffix = suffix(graph_element)
-    #    if graph_element.nodes == %{} do
-    #      graph = """
-    #      stateDiagram-v2
-    #        [*] --> Blank_#{suffix}
-    #        state "Empty Graph" as Blank_#{suffix}
-    #      """
-    #      {:ok, graph}
-    #    else
-    #      entry_point = if graph_element.head do
-    #        """
-    #        [*] --> #{patch_id(graph_element.head)}
-    #        """
-    #      else
-    #        ""
-    #      end
-    #
-    #      graph = """
-    #      stateDiagram-v2
-    #        #{entry_point}
-    #      """
-    #      {:ok, graph}
   end
 end
