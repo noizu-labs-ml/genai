@@ -52,6 +52,16 @@ defmodule GenAI.Graph do
 
   def new(options \\ nil)
   def new(options) do
+    settings = Keyword.merge(
+      [
+        auto_head: false,
+        update_last: true,
+        update_last_link: false,
+        auto_link: false,
+      ],
+      options[:settings] || []
+    )
+
     %__MODULE__{
       id: options[:id] || UUID.uuid4(),
       handle: options[:handle] || nil,
@@ -64,7 +74,7 @@ defmodule GenAI.Graph do
       head: nil,
       last_node: nil,
       last_link: nil,
-      settings: options[:settings] || %{},
+      settings: settings,
     }
   end
 
@@ -155,7 +165,7 @@ defmodule GenAI.Graph do
       node(graph, id)
     end
   end
-  
+
   #-------------------------
   # node/2
   #-------------------------
@@ -164,15 +174,15 @@ defmodule GenAI.Graph do
     nodes = Map.values(graph.nodes)
     {:ok, nodes}
   end
-  
+
   #-------------------------
   # node!/2
   #-------------------------
   def nodes!(graph, options \\ nil)
   def nodes!(graph, _) do
-      Map.values(graph.nodes)
+    Map.values(graph.nodes)
   end
-  
+
 
   #-------------------------
   # link/2
@@ -265,7 +275,7 @@ defmodule GenAI.Graph do
   end
 
   defp attempt_set_head(graph, id, _node, options) do
-    if setting(graph, :auto_head, options, false) do
+    if setting(graph, :auto_head, options, false) || options[:head] == true  do
       graph
       |> update_in([Access.key(:head)], & &1 || id)
     else
@@ -358,9 +368,25 @@ defmodule GenAI.Graph do
     |> then(& {:ok, &1})
   end
 
+
   #-------------------------
-  # add_link/2
-  #-----
+  # attach_node/2
+  #-------------------------
+  def attach_node(graph, graph_node), do: attach_node(graph, graph_node, nil)
+
+  #-------------------------
+  # attach_node/3
+  #-------------------------
+  @doc """
+  Attach a node to a graph using add_node method with auto_head, update_last, update_last_link and auto_link enabled.
+  """
+  def attach_node(graph, graph_node, options) do
+    options = Keyword.merge(
+      [auto_head: true, update_last: true, update_last_link: true, auto_link: true],
+      options || []
+    )
+    add_node(graph, graph_node, options)
+  end
 
   #-------------------------
   # add_node/2
@@ -482,7 +508,77 @@ defimpl GenAI.GraphProtocol, for: GenAI.Graph do
   defdelegate by_handle(graph, handle), to: @handler
   defdelegate link_by_handle(graph, handle), to: @handler
   defdelegate add_node(graph, graph_node, options \\ nil), to: @handler
+  defdelegate attach_node(graph, graph_node, options \\ nil), to: @handler
   defdelegate add_link(graph, graph_link, options \\ nil), to: @handler
   defdelegate with_id(graph), to: @handler
 
+end
+
+defimpl GenAI.Graph.Mermaid, for: GenAI.Graph do
+
+  def state_diagram_v2(graph_element, options, state) do
+    identifier = GenAI.Graph.Mermaid.Helpers.mermaid_id(graph_element.id)
+    headline = """
+    stateDiagram-v2
+    """
+
+    if graph_element.nodes == %{} do
+      body = """
+             [*] --> #{identifier}
+             state "Empty Graph" as #{identifier}
+             """ |> GenAI.Graph.Mermaid.Helpers.indent()
+      graph = headline <> body
+      {:ok, graph}
+    else
+      entry_point = if head = graph_element.head do
+        """
+        [*] --> #{GenAI.Graph.Mermaid.Helpers.mermaid_id(head)}
+        """
+      else
+        ""
+      end
+
+
+      body = entry_point
+             |> GenAI.Graph.Mermaid.Helpers.indent()
+      graph = headline <> body
+        {:ok, graph}
+
+    end
+  end
+
+  def encode(graph_element), do: encode(graph_element, [])
+  def encode(graph_element, options), do: encode(graph_element, options, %{})
+  def encode(graph_element, options, state) do
+    case GenAI.Graph.Mermaid.Helpers.diagram_type(options) do
+      :state_diagram_v2 -> state_diagram_v2(graph_element, options, state)
+      x -> {:error, {:unsupported_diagram, x}}
+    end
+
+    #
+
+    #
+    #    suffix = suffix(graph_element)
+    #    if graph_element.nodes == %{} do
+    #      graph = """
+    #      stateDiagram-v2
+    #        [*] --> Blank_#{suffix}
+    #        state "Empty Graph" as Blank_#{suffix}
+    #      """
+    #      {:ok, graph}
+    #    else
+    #      entry_point = if graph_element.head do
+    #        """
+    #        [*] --> #{patch_id(graph_element.head)}
+    #        """
+    #      else
+    #        ""
+    #      end
+    #
+    #      graph = """
+    #      stateDiagram-v2
+    #        #{entry_point}
+    #      """
+    #      {:ok, graph}
+  end
 end

@@ -267,6 +267,23 @@ defprotocol GenAI.GraphProtocol do
   def add_node(graph, node)
 
   @doc """
+  Attach a node to the graph linked to last inserted item.
+
+  ## Examples
+
+      iex> graph = GenAI.Graph.new()
+      ...> node = GenAI.Graph.Node.new(id: UUID.uuid4())
+      ...> graph = GenAI.GraphProtocol.attach_node(graph, node)
+      ...> GenAI.GraphProtocol.member?(graph, node.id)
+      true
+  """
+  @spec attach_node(graph :: G.graph, node :: G.graph_node, options :: map) :: T.result(G.graph, T.details)
+  def attach_node(graph, node, options)
+  def attach_node(graph, node)
+
+
+
+  @doc """
   Add a link to the graph.
 
   ## Examples
