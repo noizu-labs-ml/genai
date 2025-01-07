@@ -167,32 +167,40 @@ defprotocol GenAI.Graph.NodeProtocol do
   """
   @spec register_link(graph_node :: G.graph_node, graph :: G.graph, link :: G.graph_link, options :: map) :: T.result(G.graph_node, T.details)
   def register_link(graph_node, graph, link, options)
+
+  def outbound_links(graph_node, graph, options)
+  def inbound_links(graph_node, graph, options)
+
 end
 
 defimpl GenAI.Graph.NodeProtocol, for: Any do
-    def id(_), do: {:error, :unsupported}
-    def handle(_), do: {:error, :unsupported}
-    def handle(_,_), do: {:error, :unsupported}
-    def name(_), do: {:error, :unsupported}
-    def name(_,_), do: {:error, :unsupported}
-    def description(_), do: {:error, :unsupported}
-    def description(_,_), do: {:error, :unsupported}
-    def with_id(_), do: {:error, :unsupported}
-    def register_link(_,_,_,_), do: {:error, :unsupported}
-    
-    defmacro __deriving__(module, _struct, _opts) do
-        quote do
-            defimpl GenAI.Graph.NodeProtocol, for: unquote(module) do
-               defdelegate id(subject), to: unquote(module)
-               defdelegate handle(subject), to: unquote(module)
-               defdelegate handle(subject, default), to: unquote(module)
-               defdelegate name(subject), to: unquote(module)
-               defdelegate name(subject, default), to: unquote(module)
-               defdelegate description(subject), to: unquote(module)
-               defdelegate description(subject, default), to: unquote(module)
-               defdelegate with_id(subject), to: unquote(module)
-               defdelegate register_link(subject, graph, link, options), to: unquote(module)
-            end
-        end
+  def id(_), do: {:error, :unsupported}
+  def handle(_), do: {:error, :unsupported}
+  def handle(_,_), do: {:error, :unsupported}
+  def name(_), do: {:error, :unsupported}
+  def name(_,_), do: {:error, :unsupported}
+  def description(_), do: {:error, :unsupported}
+  def description(_,_), do: {:error, :unsupported}
+  def with_id(_), do: {:error, :unsupported}
+  def register_link(_,_,_,_), do: {:error, :unsupported}
+  def outbound_links(_,_,_), do: {:error, :unsupported}
+  def inbound_links(_,_,_), do: {:error, :unsupported}
+
+  defmacro __deriving__(module, _struct, _opts) do
+    quote do
+      defimpl GenAI.Graph.NodeProtocol, for: unquote(module) do
+        defdelegate id(subject), to: unquote(module)
+        defdelegate handle(subject), to: unquote(module)
+        defdelegate handle(subject, default), to: unquote(module)
+        defdelegate name(subject), to: unquote(module)
+        defdelegate name(subject, default), to: unquote(module)
+        defdelegate description(subject), to: unquote(module)
+        defdelegate description(subject, default), to: unquote(module)
+        defdelegate with_id(subject), to: unquote(module)
+        defdelegate register_link(subject, graph, link, options), to: unquote(module)
+        defdelegate outbound_links(subject, graph, options), to: unquote(module)
+        defdelegate inbound_links(subject, graph, options), to: unquote(module)
+      end
     end
+  end
 end

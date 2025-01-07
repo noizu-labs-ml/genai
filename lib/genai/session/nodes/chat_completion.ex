@@ -42,3 +42,5 @@ defmodule GenAI.ChatCompletion do
         ]
     end
 end
+
+

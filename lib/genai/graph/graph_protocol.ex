@@ -1,4 +1,5 @@
 defprotocol GenAI.GraphProtocol do
+  # @TODO support stack of/nested graph list to allow linking from inner to outer or sibling graph element.
   @moduledoc """
     Protocol for managing Generic Graphs.
   """

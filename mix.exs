@@ -102,6 +102,8 @@ defmodule GenAI.MixProject do
       {:elixir_uuid, "~> 1.2"},
       #{:shortuuid, "~> 3.0"},
 
+      # Core Libraries
+      {:noizu_labs_core, "~> 0.1"},
 
       # JSON/YAML
       {:jason, "~> 1.2"},

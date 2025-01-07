@@ -51,6 +51,58 @@ defmodule GenAI.Graph.Node.DefaultImplementation do
             {:ok, graph_node}
         end
     end
+
+
+    def outbound_links(graph_node, graph, options)
+    def outbound_links(graph_node, graph, options) do
+
+     if options[:expand] do
+       links = Enum.map(
+         graph_node.outbound_links,
+         fn {socket, link_ids} ->
+           links = Enum.map(link_ids,
+             fn
+               link_id ->
+                 {:ok, link} = GenAI.GraphProtocol.link(graph, link_id)
+                 link
+             end
+           )
+           {socket, links}
+         end
+       )
+       |> Map.new()
+       {:ok, links}
+     else
+       {:ok, graph_node.outbound_links}
+     end
+
+    end
+
+
+    def inbound_links(graph_node, graph, options)
+    def inbound_links(graph_node, graph, options) do
+
+      if options[:expand] do
+        links = Enum.map(
+          graph_node.inbound_links,
+          fn {socket, link_ids} ->
+            links = Enum.map(link_ids,
+              fn
+                link_id ->
+                  {:ok, link} = GenAI.GraphProtocol.link(graph, link_id)
+                  link
+              end
+            )
+            {socket, links}
+          end
+        )
+        |> Map.new()
+        {:ok, links}
+      else
+        {:ok, graph_node.inbound_links}
+      end
+    end
+
 end
 
 defmodule GenAI.Graph.NodeBehaviour do
@@ -109,7 +161,9 @@ defmodule GenAI.Graph.NodeBehaviour do
     #-------------------------
     @callback register_link(G.graph_node, G.graph, G.link, G.options) :: T.result(G.graph_node, T.details)
     
-    
+    @callback outbound_links(G.graph_node, G.graph, G.options) :: T.result(G.link_map, T.details)
+    @callback inbound_links(G.graph_node, G.graph, G.options) :: T.result(G.link_map, T.details)
+
     #==================================
     # Support Macros
     #==================================
@@ -232,7 +286,20 @@ defmodule GenAI.Graph.NodeBehaviour do
             #-------------------------
             @impl GenAI.Graph.NodeBehaviour
             defdelegate register_link(graph_node, graph, link, options), to: @handler
-            
+
+            #-------------------------
+            # outbound_links/3
+            #-------------------------
+            @impl GenAI.Graph.NodeBehaviour
+            defdelegate outbound_links(graph_node, graph, options), to: @handler
+
+            #-------------------------
+            # inbound_links/3
+            #-------------------------
+            @impl GenAI.Graph.NodeBehaviour
+            defdelegate inbound_links(graph_node, graph, options), to: @handler
+
+
             #======================================
             # Overridable
             #======================================

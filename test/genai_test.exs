@@ -3,8 +3,11 @@ defmodule GenAITest do
     use ExUnit.Case
     require Logger
     doctest GenAI
-    
-    
+
+    def context() do
+      Noizu.Context.system()
+    end
+
     defmodule Fixtures do
         require Logger
         #--------------------------------
@@ -77,9 +80,33 @@ defmodule GenAITest do
         end
     end
     
-    
+    # State Module
+    # - apply
+    # - effective settings
+    # - effective model
+    # Apply Node
+    describe "Session Graph API" do
+      @describetag :wip
+      setup do
+        GenAI.Config.reset(:global)
+        :ok
+      end
+
+      test "Apply Setting" do
+        setting = %GenAI.Setting{
+          id: UUID.uuid4(),
+          setting: :max_tokens,
+          value: 4096
+        }
+
+        sut = GenAI.chat()
+              |> GenAI.with_setting(setting)
+      end
+    end
+
+
+
     describe "Session Configuration" do
-        @describetag :wip
         setup do
             GenAI.Config.reset(:global)
             :ok
@@ -94,11 +121,26 @@ defmodule GenAITest do
         test "Static Setting" do
             sut = GenAI.chat()
                   |> GenAI.with_setting(:max_tokens, 4096)
-                  |> GenAI.execute(:report)
+                  |> GenAI.execute(:report, context())
             
         end
-        
-        
+
+
+        @tag :wip2
+        test "Simple Flow - With Tool Usage" do
+          scenario = :tool_usage
+          session = GenAI.chat()
+                    |> Fixtures.session(scenario)
+                    |> Fixtures.settings(scenario)
+                    |> Fixtures.model_selector(scenario)
+                    |> Fixtures.tools(scenario)
+          Process.sleep(400)
+          IO.puts "--------------"
+          {:ok, sut} = GenAI.execute(session, :report, context())
+          assert sut == :pending2
+        end
+
+
     end
     
     
@@ -114,7 +156,7 @@ defmodule GenAITest do
                      |> Fixtures.session(scenario)
                      |> Fixtures.settings(scenario)
                      |> Fixtures.model_selector(scenario)
-            {:ok, sut} = GenAI.run(session)
+            {:ok, sut} = GenAI.run(session, context())
             assert sut == :pending
         end
         
@@ -129,7 +171,7 @@ defmodule GenAITest do
                      |> GenAI.with_api_key(GenAI.Provider.TestProvider, "test-api-key")
                      |> GenAI.with_setting(:top_p, 0.9)
                      |> GenAI.with_message(GenAI.Message.user("What is the movie \"2001: A Space Odyssey\" about and who directed it?"))
-            {:ok, sut} = GenAI.run(session)
+            {:ok, sut} = GenAI.run(session, context())
             assert sut == :pending
         end
         
@@ -139,7 +181,7 @@ defmodule GenAITest do
                      |> Fixtures.session(scenario)
                      |> Fixtures.settings(scenario)
                      |> Fixtures.model_selector(scenario)
-            {:ok, sut} = GenAI.run(session)
+            {:ok, sut} = GenAI.run(session, context())
             assert sut == :pending
         end
         
@@ -149,7 +191,7 @@ defmodule GenAITest do
                      |> Fixtures.session(scenario)
                      |> Fixtures.settings(scenario)
                      |> Fixtures.model_selector(scenario)
-            {:ok, sut} = GenAI.stream(session)
+            {:ok, sut} = GenAI.stream(session, context())
             assert sut == :pending
         end
         
@@ -160,7 +202,7 @@ defmodule GenAITest do
                      |> Fixtures.settings(scenario)
                      |> Fixtures.model_selector(scenario)
                      |> GenAI.with_stream_handler(GenAI.StreamHandler.TestHandler)
-            {:ok, sut} = GenAI.stream(session)
+            {:ok, sut} = GenAI.stream(session, context())
             assert sut == :pending
         end
         
@@ -170,10 +212,12 @@ defmodule GenAITest do
                      |> Fixtures.session(scenario)
                      |> Fixtures.settings(scenario)
                      |> Fixtures.model_selector(scenario)
-            {:ok, sut} = GenAI.execute(session, :report)
-            assert sut == :pending
+            {:ok, sut} = GenAI.execute(session, :report, context())
+            assert sut == :pending2
         end
-    
+
+
+
     end
     
     describe "Flow Setting Options" do
@@ -197,7 +241,7 @@ defmodule GenAITest do
                      |> Fixtures.settings(scenario)
                      |> Fixtures.model_selector(scenario)
                      |> Fixtures.tools(scenario)
-            {:ok, sut} = GenAI.run(session)
+            {:ok, sut} = GenAI.run(session, context())
             assert sut == :pending
         end
         
@@ -208,7 +252,7 @@ defmodule GenAITest do
                      |> Fixtures.settings(scenario)
                      |> Fixtures.model_selector(scenario)
                      |> Fixtures.tools(scenario)
-            {:ok, sut} = GenAI.run(session)
+            {:ok, sut} = GenAI.run(session, context())
             assert sut == :pending
         end
     
@@ -227,7 +271,7 @@ defmodule GenAITest do
                      |> Fixtures.session(scenario)
                      |> Fixtures.settings(scenario)
                      |> Fixtures.model_selector(scenario)
-            {:ok, sut} = GenAI.run(session)
+            {:ok, sut} = GenAI.run(session, context())
             assert sut == :pending
         end
         
@@ -237,7 +281,7 @@ defmodule GenAITest do
                      |> Fixtures.session(scenario)
                      |> Fixtures.settings(scenario)
                      |> Fixtures.model_selector(scenario)
-            {:ok, sut} = GenAI.run(session)
+            {:ok, sut} = GenAI.run(session, context())
             assert sut == :pending
         end
         
@@ -247,7 +291,7 @@ defmodule GenAITest do
                      |> Fixtures.session(scenario)
                      |> Fixtures.settings(scenario)
                      |> Fixtures.model_selector(scenario)
-            {:ok, sut} = GenAI.run(session)
+            {:ok, sut} = GenAI.run(session, context())
             assert sut == :pending
         end
         
@@ -257,7 +301,7 @@ defmodule GenAITest do
                      |> Fixtures.session(scenario)
                      |> Fixtures.settings(scenario)
                      |> Fixtures.model_selector(scenario)
-            {:ok, sut} = GenAI.run(session)
+            {:ok, sut} = GenAI.run(session, context())
             assert sut == :pending
         end
     

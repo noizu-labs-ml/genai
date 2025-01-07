@@ -67,7 +67,7 @@ defprotocol GenAI.SessionProtocol do
     
     If the selected model does not support streaming, the handler will be called with the final inference result.
     """
-    def stream(context, options)
+    def stream(session, context, options)
     
     @doc """
     Run inference.
@@ -78,13 +78,13 @@ defprotocol GenAI.SessionProtocol do
     * Runs inference on the selected model with the prepared input.
     * Returns the inference result.
     """
-    def run(context, options)
-    
+    def run(session, context, options)
+
     @doc """
     Execute a command, such as run prompt fine tuner, dynamic prompt etc.
     # Options
     - report: return a report of the command execution (entire effective conversation with extended timing/loop details.
     - thread: return full thread along with most recent reply, useful for investigating exact dynamic messages generated in flow
     """
-    def execute(context, command, options)
+    def execute(session, context, command, options)
 end

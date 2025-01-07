@@ -1,21 +1,71 @@
 #===============================================================================
 # Copyright (c) 2025, Noizu Labs, Inc.
 #===============================================================================
+defmodule GenAI.Session.Runtime do
+  @moduledoc false
+  @vsn 1.0
+  defstruct [
+      command: :default,
+      config: [],
+      data: %{},
+      monitors: %{},
+      meta: %{},
+      vsn: @vsn
+  ]
+
+  def new(options \\ nil)
+  def new(options) do
+      %__MODULE__{
+        command: options[:command] || :default,
+      }
+  end
+
+
+  defp prepare_command(command, context, options)
+  defp prepare_command(command, _context, _options) when is_atom(command), do: {command, []}
+  defp prepare_command({command, config}, _, _) when is_atom(command), do: {command, config}
+
+  def command(runtime, command, context, options \\ nil)
+  def command(runtime, command, context, options) when is_atom(command) do
+    command(runtime, prepare_command(command, context, options), context, options)
+  end
+  def command(runtime, {command, config}, context, options) do
+    {command, config} = prepare_command({command, config}, context, options)
+    # deal with merging config
+    x = %__MODULE__{runtime|
+      command: command,
+      config: config,
+      monitors: %{},
+      data: %{},
+      meta: %{}
+    }
+    {:ok, x}
+  end
+
+end
+
 defmodule GenAI.Session do
     @moduledoc false
-    
+    @vsn 1.0
+
     defstruct [
         state: nil,
         graph: nil,
+        runtime: nil,
+        vsn: @vsn
     ]
     
     def new(options \\ nil)
-    def new(_) do
-        graph = GenAI.Graph.new()
-        state = GenAI.Session.State.new()
+    def new(options) do
+        graph = GenAI.Graph.new(options[:graph])
+        state = GenAI.Session.State.new(options[:state])
+        runtime = GenAI.Session.Runtime.new(options[:runtime])
+
         %__MODULE__{
          state: state,
          graph: graph,
+         runtime: runtime,
+         vsn: @vsn
         }
     end
     
@@ -241,8 +291,8 @@ defimpl GenAI.SessionProtocol, for: [GenAI.Session] do
     #-------------------------------------
     #
     #-------------------------------------
-    def stream(context, options)
-    def stream(_context, _options) do
+    def stream(session, context, options)
+    def stream(_,_,_) do
         {:ok, :pending}
     end
     
@@ -254,8 +304,11 @@ defimpl GenAI.SessionProtocol, for: [GenAI.Session] do
     
     This function determines the final settings and model, prepares the messages, and then delegates the actual inference execution to the selected provider's `chat/3` function.
     """
-    def run(context, options)
-    def run(_context, _options) do
+    def run(session, context, options)
+    def run(_,_,_) do
+
+
+
       #    with {:prepare_state, {:ok, state}} <-
       #           GenAi.Graph.NodeProtocol.apply(context.graph, context.state)
       #           |> label(:prepare_state),
@@ -271,8 +324,29 @@ defimpl GenAI.SessionProtocol, for: [GenAI.Session] do
     #-------------------------------------
     #
     #-------------------------------------
-    def execute(_context, _command, _options) do
-        {:ok, :pending}
+    def execute(session, command, context, options) do
+      context = context || Noizu.Context.system()
+      with {:ok, runtime} <-
+             # Set Runtime Mode
+             GenAI.Session.Runtime.command(session.runtime, command, context, options),
+           {:ok, session_state} <-
+             # Refresh state (clear any ephemeral values, etc. for rerun as specified by runtime object
+             # set seeds, clear monitor cache, etc.
+             GenAI.Session.State.initialize(session.state, runtime, context, options),
+           {:ok, {session_state, runtime}} <-
+             # Setup telemetry agents, etc.
+             GenAI.Session.State.monitor(session_state, runtime, context, options) do
+        with x <- GenAI.Session.NodeProtocol.process_node(session.graph, nil, nil, session_state, runtime, context, options) do
+          # TODO apply updates, return completion (if any) and session and generated report from monitor agent
+          {:ok, :pending2}
+        end
+      end
+
+      # Spawn Monitor Agent
+      # Register Callbacks to Monitor Agent
+      # Process session
+      # Strip runtime flags from execute
+      # Get metrics from monitor
+
     end
-   
 end

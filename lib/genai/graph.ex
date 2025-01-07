@@ -6,7 +6,13 @@ defmodule GenAI.Graph do
 
   alias GenAI.Types, as: T
   alias GenAI.Graph.Types, as: G
-  
+
+  require GenAI.Session.Node.Records
+  alias GenAI.Session.Node.Records, as: Node
+  require GenAI.Graph.Link.Records
+  alias GenAI.Graph.Link.Records, as: Link
+
+
   use GenAI.Graph.NodeBehaviour
   @derive GenAI.Graph.NodeProtocol
   defnodetype [
@@ -137,6 +143,9 @@ defmodule GenAI.Graph do
   # node/2
   #-------------------------
   def node(graph, graph_node)
+  def node(graph, Link.connector(node: id)) do
+    node(graph, id)
+  end
   def node(graph, graph_node) when G.is_node_id(graph_node) do
     if x = graph.nodes[graph_node] do
       {:ok, x}
@@ -295,14 +304,19 @@ defmodule GenAI.Graph do
   end
 
   defp attempt_auto_link(graph, from_node, node_id, _node, options) do
-    auto_link = auto_link_setting(graph, options)
+    auto_link = auto_link_setting(graph, options) |> IO.inspect(label: "auto_link?")
     cond do
       auto_link == false ->
         graph
       auto_link == true ->
         link = GenAI.Graph.Link.new(from_node, node_id)
-        graph
+        x = graph
         |> GenAI.GraphProtocol.add_link(link, options)
+
+        IO.inspect(link, label: "NEW LINK")
+        x
+
+
       GenAI.Graph.LinkProtocol.impl_for(auto_link) ->
         link = auto_link
         with {:ok, link} <- GenAI.Graph.LinkProtocol.putnew_source(link, from_node),
@@ -366,7 +380,7 @@ defmodule GenAI.Graph do
   """
   def attach_node(graph, graph_node, options) do
     options = Keyword.merge(
-      [auto_head: true, update_last: true, update_last_link: true, auto_link: true],
+      [auto_head: true, update_last: true, update_last_link: true, link: true],
       options || []
     )
     add_node(graph, graph_node, options)
@@ -472,6 +486,23 @@ defmodule GenAI.Graph do
   end
 
 
+end
+
+
+defimpl GenAI.Session.NodeProtocol, for: GenAI.Graph do
+  @doc """
+  Process node and proceed to next step.
+  """
+  def process_node(graph_node, graph_link, container, state, runtime, context, options)
+  def process_node(graph_node, graph_link, container, state, runtime, context, options) do
+    IO.inspect("EXECUTE GRAPH_NODE #{graph_node.id}")
+    with {:ok, head} <- GenAI.Graph.head(graph_node) do
+          # Run graph and then pass back to parent container if set based on end state.
+      with x <- GenAI.Session.NodeProtocol.Runner.do_process_node(head, nil, graph_node, state, runtime, context, options) do
+        x
+      end
+    end
+  end
 end
 
 

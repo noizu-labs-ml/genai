@@ -42,6 +42,7 @@ defmodule GenAI do
     
     @doc """
     Set Inference setting.
+    `GenAI.Session`
     """
     defdelegate with_setting(context, setting, value), to: GenAI.SessionProtocol
     
@@ -87,12 +88,12 @@ defmodule GenAI do
     @doc """
     Run inference. Returning update chat completion and updated thread state.
     """
-    defdelegate run(context, options \\ nil), to: GenAI.SessionProtocol
+    defdelegate run(session, context \\ nil, options \\ nil), to: GenAI.SessionProtocol
     
     @doc """
     Run inference in streaming mode, interstitial messages (dynamics) if any will sent to the stream handler using the interstitial handle
     """
-    defdelegate stream(context, options \\ nil), to: GenAI.SessionProtocol
+    defdelegate stream(session, context \\ nil, options \\ nil), to: GenAI.SessionProtocol
     
     @doc """
     Execute command.
@@ -101,6 +102,6 @@ defmodule GenAI do
     Used, for example, to retrieve full report of a thread with an optimization loop or data loop command.
     Under usual processing not final/accepted grid search loops are not returned in response and a linear thread is returned. Execute mode however will return a graph of all runs, or meta data based on options, and grid search configuration.
     """
-    defdelegate execute(context, command \\ :thread, options \\ nil), to: GenAI.SessionProtocol
+    defdelegate execute(session, command \\ :report, context \\ nil, options \\ nil), to: GenAI.SessionProtocol
 
 end
