@@ -3,34 +3,15 @@ defmodule GenAI.Graph.Node do
   @moduledoc """
   Represent a node on graph (generic type).
   """
-
-  require GenAI.Graph.Link.Records
-  require GenAI.Graph.Types
-  alias GenAI.Types, as: T
-  alias GenAI.Graph.Types, as: G
-  alias GenAI.Graph.Link.Records, as: R
-
-
-  @type t :: %__MODULE__{
-               id: G.graph_id,
-               handle: T.handle,
-               name: T.name,
-               description: T.description,
-               inbound_links: map(),
-               outbound_links: map(),
-               vsn: float()
-             }
-
-  defstruct [
-    id: nil,
-    handle: nil,
-    name: nil,
-    description: nil,
-    inbound_links: %{},
-    outbound_links: %{},
-
-
-    vsn: @vsn
+  
+  use GenAI.Graph.NodeBehaviour
+  @derive GenAI.Graph.NodeProtocol
+  defnodetype [
+      value: term
+  ]
+  
+  defnodestruct [
+      value: nil,
   ]
 
   @doc """
@@ -47,124 +28,8 @@ defmodule GenAI.Graph.Node do
     }
   end
 
-  #=============================================================================
-  # Node Protocol
-  #=============================================================================
-
-  #-------------------------
-  # id/1
-  #-------------------------
-  def id(graph_node)
-  def id(%__MODULE__{id: nil}), do: {:error, {:id, :is_nil}}
-  def id(%__MODULE__{id: id}), do: {:ok, id}
-
-  #-------------------------
-  # handle/1
-  #-------------------------
-  def handle(graph_node)
-  def handle(%__MODULE__{handle: nil}), do: {:error, {:handle, :is_nil}}
-  def handle(%__MODULE__{handle: handle}), do: {:ok, handle}
-
-  #-------------------------
-  # handle/2
-  #-------------------------
-  def handle(graph_node, default)
-  def handle(%__MODULE__{handle: nil}, default), do: {:ok, default}
-  def handle(%__MODULE__{handle: handle}, _), do: {:ok, handle}
-
-  #-------------------------
-  # name/1
-  #-------------------------
-  def name(graph_node)
-  def name(%__MODULE__{name: nil}), do: {:error, {:name, :is_nil}}
-  def name(%__MODULE__{name: name}), do: {:ok, name}
-
-  #-------------------------
-  # name/2
-  #-------------------------
-  def name(graph_node, default)
-  def name(%__MODULE__{name: nil}, default), do: {:ok, default}
-  def name(%__MODULE__{name: name}, _), do: {:ok, name}
-
-
-  #-------------------------
-  # description/1
-  #-------------------------
-  def description(graph_node)
-  def description(%__MODULE__{description: nil}), do: {:error, {:description, :is_nil}}
-  def description(%__MODULE__{description: description}), do: {:ok, description}
-
-  #-------------------------
-  # description/2
-  #-------------------------
-  def description(graph_node, default)
-  def description(%__MODULE__{description: nil}, default), do: {:ok, default}
-  def description(%__MODULE__{description: description}, _), do: {:ok, description}
-
-
-  #-------------------------
-  # with_id/1
-  #-------------------------
-  def with_id(graph_node) do
-    cond do
-      graph_node.id == nil ->
-        graph_node
-        |> put_in([Access.key(:id)], UUID.uuid4())
-      graph_node.id == :auto ->
-        graph_node
-        |> put_in([Access.key(:id)], UUID.uuid4())
-      :else -> graph_node
-    end
-    |> then(& {:ok, &1})
-  end
-
-  #-------------------------
-  # register_link/4
-  #-------------------------
-  def register_link(graph_node, _graph, link, _options)
-  def register_link(graph_node, _graph, link, _options) do
-    with {:ok, link_id} <- GenAI.Graph.LinkProtocol.id(link),
-         {:ok, source} <- GenAI.Graph.LinkProtocol.source_connector(link),
-         {:ok, target} <- GenAI.Graph.LinkProtocol.target_connector(link) do
-
-      # 1. For Source Node
-      graph_node = if (R.connector(source, :node) == graph_node.id) do
-        update_in(graph_node, [Access.key(:outbound_links), R.connector(source, :socket)], &([link_id | (&1 || [])] |> Enum.uniq()))
-      else
-        graph_node
-      end
-
-      # 2. For Target Node
-      graph_node = if (R.connector(target, :node) == graph_node.id) do
-        update_in(graph_node, [Access.key(:inbound_links), R.connector(target, :socket)], &([link_id | (&1 || [])] |> Enum.uniq()))
-      else
-        graph_node
-      end
-
-      {:ok, graph_node}
-    end
-  end
 end
 
-
-
-defimpl GenAI.Graph.NodeProtocol, for: GenAI.Graph.Node do
-  @handler GenAI.Graph.Node
-  defdelegate id(graph_link), to: @handler
-
-  defdelegate handle(graph_link), to: @handler
-  defdelegate handle(graph_link, default), to: @handler
-
-  defdelegate name(graph_link), to: @handler
-  defdelegate name(graph_link, default), to: @handler
-
-  defdelegate description(graph_link), to: @handler
-  defdelegate description(graph_link, default), to: @handler
-
-  defdelegate with_id(graph_link), to: @handler
-
-  defdelegate register_link(graph_node, graph, link, options), to: @handler
-end
 
 
 defimpl GenAI.Graph.Mermaid, for: GenAI.Graph.Node do
@@ -172,47 +37,9 @@ defimpl GenAI.Graph.Mermaid, for: GenAI.Graph.Node do
   alias GenAI.Graph.Link.Records, as: R
 
 
-
-  def state_diagram_v2(graph_node, options, state) do
-    identifier = GenAI.Graph.Mermaid.Helpers.mermaid_id(graph_node.id)
-    container = List.first(state[:container])
-    n = cond do
-      graph_node.name ->
-      """
-      state "#{graph_node.name}" as #{identifier}
-      """
-
-      graph_node.handle ->
-      """
-      state "#{graph_node.handle}" as #{identifier}
-      """
-
-      :else ->
-      """
-      state "A Node" as #{identifier}
-      """
-    end
-
-    transitions = Enum.map(graph_node.outbound_links,
-                    fn {_, links} ->
-                      Enum.map(links,
-                        fn link_id ->
-                          # TODO - Node protocol needs to return a get_link method that accepts node, container
-                          {:ok, link} = GenAI.GraphProtocol.link(container, link_id)
-                          {:ok, R.connector(node: n)} = GenAI.Graph.LinkProtocol.target_connector(link)
-                          "#{identifier} --> #{GenAI.Graph.Mermaid.Helpers.mermaid_id(n)}"
-                        end)
-                    end)
-                  |> List.flatten()
-                  |> Enum.join("\n")
-
-    if transitions != "" do
-      graph = n <> transitions <> "\n"
-      {:ok, graph}
-    else
-      graph = n <> transitions
-      {:ok, graph}
-    end
+  
+  def mermaid_id(subject) do
+      GenAI.Graph.Mermaid.Helpers.mermaid_id(subject.id)
   end
 
   def encode(graph_element), do: encode(graph_element, [])
@@ -222,5 +49,49 @@ defimpl GenAI.Graph.Mermaid, for: GenAI.Graph.Node do
       :state_diagram_v2 -> state_diagram_v2(graph_element, options, state)
       x -> {:error, {:unsupported_diagram, x}}
     end
+  end
+  
+  
+  
+  def state_diagram_v2(graph_node, _options, state) do
+      identifier = GenAI.Graph.Mermaid.Helpers.mermaid_id(graph_node.id)
+      container = List.first(state[:container])
+      n = cond do
+          graph_node.name ->
+              """
+              state "#{graph_node.name}" as #{identifier}
+              """
+          
+          graph_node.handle ->
+              """
+              state "#{graph_node.handle}" as #{identifier}
+              """
+          
+          :else ->
+              """
+              state "A Node" as #{identifier}
+              """
+      end
+      
+      transitions = Enum.map(graph_node.outbound_links,
+                        fn {_, links} ->
+                          Enum.map(links,
+                              fn link_id ->
+                                # TODO - Node protocol needs to return a get_link method that accepts node, container
+                                {:ok, link} = GenAI.GraphProtocol.link(container, link_id)
+                                {:ok, R.connector(node: n)} = GenAI.Graph.LinkProtocol.target_connector(link)
+                                "#{identifier} --> #{GenAI.Graph.Mermaid.Helpers.mermaid_id(n)}"
+                              end)
+                        end)
+                    |> List.flatten()
+                    |> Enum.join("\n")
+      
+      if transitions != "" do
+          graph = n <> transitions <> "\n"
+          {:ok, graph}
+      else
+          graph = n <> transitions
+          {:ok, graph}
+      end
   end
 end

@@ -14,7 +14,7 @@ defprotocol GenAI.GraphProtocol do
 
   ### When Set
       iex> graph = GenAI.Graph.new()
-      ...> {:ok, id} = GenAI.GraphProtocol.id(graph)
+      ...> GenAI.GraphProtocol.id(graph)
       {:ok, graph.id}
 
   ### When Not Set
