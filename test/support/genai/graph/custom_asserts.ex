@@ -2,11 +2,11 @@ defmodule GenAI.Graph.Asserts do
     
     
     defmacro is_graph(graph) do
-        quote(do: GenAI.GraphProtocol.impl_for(unquote(graph)))
+        quote(do: is_struct(unquote(graph), GenAI.Graph))
     end
     
     defmacro is_link(graph) do
-        quote(do: GenAI.Graph.LinkProtocol.impl_for(unquote(graph)))
+        quote(do: is_struct(unquote(graph), GenAI.Graph.Link))
     end
     
     defmacro is_node(graph) do
@@ -16,7 +16,7 @@ defmodule GenAI.Graph.Asserts do
     defmacro graph_size(graph) do
         quote do
             (
-                nodes = GenAI.GraphProtocol.nodes!(unquote(graph))
+                nodes = GenAI.Graph.nodes!(unquote(graph))
                 length(nodes)
             )
         end
@@ -40,7 +40,7 @@ defmodule GenAI.Graph.Asserts do
     defmacro graph_node(graph, constraints) do
         quote do
             (
-                gn_nodes = GenAI.GraphProtocol.nodes!(unquote(graph))
+                gn_nodes = GenAI.Graph.nodes!(unquote(graph))
                 Enum.find(gn_nodes,
                     fn gn ->
                         Enum.all?(unquote(constraints),

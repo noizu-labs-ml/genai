@@ -8,6 +8,7 @@ defmodule GenAI.ChatCompletion do
     
     use GenAI.Graph.NodeBehaviour
     @derive GenAI.Graph.NodeProtocol
+    @derive GenAI.Session.NodeProtocol
     defnodetype [
         model: term,
         provider: term,
@@ -41,6 +42,8 @@ defmodule GenAI.ChatCompletion do
             completion_tokens: nil,
         ]
     end
+    
+    def node_type(%__MODULE__{}), do: GenAI.ChatCompletion
 end
 
 

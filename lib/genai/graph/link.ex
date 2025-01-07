@@ -115,6 +115,28 @@ defmodule GenAI.Graph.Link do
   #-------------------------
   # id/1
   #-------------------------
+  
+  @doc """
+  Obtain the id of a graph link.
+  
+  # Examples
+  
+  ## when set
+      iex> node1_id = UUID.uuid5(:oid, "node-1")
+      ...> node2_id = UUID.uuid5(:oid, "node-2")
+      ...> l = GenAI.Graph.Link.new(node1_id, node2_id, handle: :foo, name: "A", description: "B")
+      ...> GenAI.Graph.Link.id(l)
+      {:ok, l.id}
+  
+  ## when not set
+      iex> node1_id = UUID.uuid5(:oid, "node-1")
+      ...> node2_id = UUID.uuid5(:oid, "node-2")
+      ...> l = GenAI.Graph.Link.new(node1_id, node2_id, handle: :foo, name: "A", description: "B") |> put_in([Access.key(:id)], nil)
+      ...> GenAI.Graph.Link.id(l)
+      {:error, {:id, :is_nil}}
+  
+  """
+  @spec id(graph_link :: G.graph_link) :: T.result(G.graph_link_id, T.details)
   def id(graph_link)
   def id(%__MODULE__{id: nil}), do: {:error, {:id, :is_nil}}
   def id(%__MODULE__{id: id}), do: {:ok, id}
@@ -122,6 +144,28 @@ defmodule GenAI.Graph.Link do
   #-------------------------
   # handle/1
   #-------------------------
+  
+  @doc """
+  Obtain the handle of a graph link.
+  
+  # Examples
+  
+  ## When Set
+      iex> node1_id = UUID.uuid5(:oid, "node-1")
+      ...> node2_id = UUID.uuid5(:oid, "node-2")
+      ...> l = GenAI.Graph.Link.new(node1_id, node2_id, handle: :foo)
+      ...> GenAI.Graph.Link.handle(l)
+      {:ok, :foo}
+  
+  ## When Not Set
+      iex> node1_id = UUID.uuid5(:oid, "node-1")
+      ...> node2_id = UUID.uuid5(:oid, "node-2")
+      ...> l = GenAI.Graph.Link.new(node1_id, node2_id)
+      ...> GenAI.Graph.Link.handle(l)
+      {:error, {:handle, :is_nil}}
+  
+  """
+  @spec handle(graph_link :: G.graph_link) :: T.result(T.handle, T.details)
   def handle(graph_link)
   def handle(%__MODULE__{handle: nil}), do: {:error, {:handle, :is_nil}}
   def handle(%__MODULE__{handle: handle}), do: {:ok, handle}
@@ -129,6 +173,29 @@ defmodule GenAI.Graph.Link do
   #-------------------------
   # handle/2
   #-------------------------
+  
+  @doc """
+  Obtain the handle of a graph link, or return a default value if the handle is nil.
+  
+  # Examples
+  
+  ## When Set
+  
+      iex> node1_id = UUID.uuid5(:oid, "node-1")
+      ...> node2_id = UUID.uuid5(:oid, "node-2")
+      ...> l = GenAI.Graph.Link.new(node1_id, node2_id, handle: :foo)
+      ...> GenAI.Graph.Link.handle(l, :default)
+      {:ok, :foo}
+  
+  ## When Not Set
+      iex> node1_id = UUID.uuid5(:oid, "node-1")
+      ...> node2_id = UUID.uuid5(:oid, "node-2")
+      ...> l = GenAI.Graph.Link.new(node1_id, node2_id)
+      ...> GenAI.Graph.Link.handle(l, :default)
+      {:ok, :default}
+  
+  """
+  @spec handle(graph_link :: G.graph_link, default :: T.handle) :: T.result(T.handle, T.details)
   def handle(graph_link, default)
   def handle(%__MODULE__{handle: nil}, default), do: {:ok, default}
   def handle(%__MODULE__{handle: handle}, _), do: {:ok, handle}
@@ -136,6 +203,28 @@ defmodule GenAI.Graph.Link do
   #-------------------------
   # name/1
   #-------------------------
+  
+  @doc """
+  Obtain the name of a graph link.
+  
+  # Examples
+  
+  ## When Set
+      iex> node1_id = UUID.uuid5(:oid, "node-1")
+      ...> node2_id = UUID.uuid5(:oid, "node-2")
+      ...> l = GenAI.Graph.Link.new(node1_id, node2_id, name: "A")
+      ...> GenAI.Graph.Link.name(l)
+      {:ok, "A"}
+  
+  ## When Not Set
+      iex> node1_id = UUID.uuid5(:oid, "node-1")
+      ...> node2_id = UUID.uuid5(:oid, "node-2")
+      ...> l = GenAI.Graph.Link.new(node1_id, node2_id)
+      ...> GenAI.Graph.Link.name(l)
+      {:error, {:name, :is_nil}}
+  
+  """
+  @spec name(graph_link :: G.graph_link) :: T.result(T.name, T.details)
   def name(graph_link)
   def name(%__MODULE__{name: nil}), do: {:error, {:name, :is_nil}}
   def name(%__MODULE__{name: name}), do: {:ok, name}
@@ -143,6 +232,28 @@ defmodule GenAI.Graph.Link do
   #-------------------------
   # name/2
   #-------------------------
+  
+  @doc """
+  Obtain the name of a graph link, or return a default value if the name is nil.
+  
+  # Examples
+  
+  ## When Set
+      iex> node1_id = UUID.uuid5(:oid, "node-1")
+      ...> node2_id = UUID.uuid5(:oid, "node-2")
+      ...> l = GenAI.Graph.Link.new(node1_id, node2_id, name: "A")
+      ...> GenAI.Graph.Link.name(l, "default")
+      {:ok, "A"}
+  
+  ## When Not Set
+      iex> node1_id = UUID.uuid5(:oid, "node-1")
+      ...> node2_id = UUID.uuid5(:oid, "node-2")
+      ...> l = GenAI.Graph.Link.new(node1_id, node2_id)
+      ...> GenAI.Graph.Link.name(l, "default")
+      {:ok, "default"}
+  
+  """
+  @spec name(graph_link :: G.graph_link, default :: T.name) :: T.result(T.name, T.details)
   def name(graph_link, default)
   def name(%__MODULE__{name: nil}, default), do: {:ok, default}
   def name(%__MODULE__{name: name}, _), do: {:ok, name}
@@ -151,6 +262,28 @@ defmodule GenAI.Graph.Link do
   #-------------------------
   # description/1
   #-------------------------
+  
+  @doc """
+  Obtain the description of a graph link.
+  
+  # Examples
+  
+  ## When Set
+      iex> node1_id = UUID.uuid5(:oid, "node-1")
+      ...> node2_id = UUID.uuid5(:oid, "node-2")
+      ...> l = GenAI.Graph.Link.new(node1_id, node2_id, description: "B")
+      ...> GenAI.Graph.Link.description(l)
+      {:ok, "B"}
+  
+  ## When Not Set
+      iex> node1_id = UUID.uuid5(:oid, "node-1")
+      ...> node2_id = UUID.uuid5(:oid, "node-2")
+      ...> l = GenAI.Graph.Link.new(node1_id, node2_id)
+      ...> GenAI.Graph.Link.description(l)
+      {:error, {:description, :is_nil}}
+  
+  """
+  @spec description(graph_link :: G.graph_link) :: T.result(T.description, T.details)
   def description(graph_link)
   def description(%__MODULE__{description: nil}), do: {:error, {:description, :is_nil}}
   def description(%__MODULE__{description: description}), do: {:ok, description}
@@ -158,6 +291,28 @@ defmodule GenAI.Graph.Link do
   #-------------------------
   # description/2
   #-------------------------
+  
+  @doc """
+  Obtain the description of a graph link, or return a default value if the description is nil.
+  
+  # Examples
+  
+  ## When Set
+      iex> node1_id = UUID.uuid5(:oid, "node-1")
+      ...> node2_id = UUID.uuid5(:oid, "node-2")
+      ...> l = GenAI.Graph.Link.new(node1_id, node2_id, description: "B")
+      ...> GenAI.Graph.Link.description(l, "default")
+      {:ok, "B"}
+  
+  ## When Not Set
+      iex> node1_id = UUID.uuid5(:oid, "node-1")
+      ...> node2_id = UUID.uuid5(:oid, "node-2")
+      ...> l = GenAI.Graph.Link.new(node1_id, node2_id)
+      ...> GenAI.Graph.Link.description(l, "default")
+      {:ok, "default"}
+  
+  """
+  @spec description(graph_link :: G.graph_link, default :: T.description) :: T.result(T.description, T.details)
   def description(graph_link, default)
   def description(%__MODULE__{description: nil}, default), do: {:ok, default}
   def description(%__MODULE__{description: description}, _), do: {:ok, description}
@@ -196,6 +351,29 @@ defmodule GenAI.Graph.Link do
   #-------------------------
   # with_id/1
   #-------------------------
+  
+  @doc """
+  Ensure the graph link has an id, generating one if necessary.
+  
+  # Examples
+  ## When Already Set
+      iex> node1_id = UUID.uuid5(:oid, "node-1")
+      ...> node2_id = UUID.uuid5(:oid, "node-2")
+      ...> l = GenAI.Graph.Link.new(node1_id, node2_id)
+      ...> {:ok, l2} = GenAI.Graph.Link.with_id(l)
+      ...> %{was_nil: is_nil(l.id), is_nil: is_nil(l2.id), id_change: l.id != l2.id}
+      %{was_nil: false, is_nil: false, id_change: false}
+  
+  ## When Not Set
+      iex> node1_id = UUID.uuid5(:oid, "node-1")
+      ...> node2_id = UUID.uuid5(:oid, "node-2")
+      ...> l = GenAI.Graph.Link.new(node1_id, node2_id) |> put_in([Access.key(:id)], nil)
+      ...> {:ok, l2} = GenAI.Graph.Link.with_id(l)
+      ...> %{was_nil: is_nil(l.id), is_nil: is_nil(l2.id), id_change: l.id != l2.id}
+      %{was_nil: true, is_nil: false, id_change: true}
+  
+  """
+  @spec with_id(graph_link :: G.graph_link) :: T.result(G.graph_link, T.details)
   def with_id(graph_link) do
     cond do
       graph_link.id == nil ->
@@ -212,18 +390,97 @@ defmodule GenAI.Graph.Link do
   #-------------------------
   # source_connector/1
   #-------------------------
+  
+  @doc """
+  Obtain the source connector of a graph link.
+  
+  # Examples
+  
+      iex> node1_id = UUID.uuid5(:oid, "node-1")
+      ...> node2_id = UUID.uuid5(:oid, "node-2")
+      ...> l = GenAI.Graph.Link.new(node1_id, node2_id)
+      ...> {:ok, sut} = GenAI.Graph.Link.source_connector(l)
+      ...> sut
+      R.connector(external: false) = sut
+  
+      iex> node1_id = UUID.uuid5(:oid, "node-1")
+      ...> l = GenAI.Graph.Link.new(nil, node1_id)
+      ...> {:ok, sut} = GenAI.Graph.Link.source_connector(l)
+      ...> sut
+      R.connector(external: true) = sut
+  
+  """
+  @spec source_connector(graph_link :: G.graph_link) :: T.result(R.connector, T.details)
   def source_connector(%__MODULE__{source: nil}), do: {:error, {:source, :is_nil}}
   def source_connector(%__MODULE__{source: connector}), do: {:ok, connector}
 
   #-------------------------
   # target_connector/1
   #-------------------------
+  
+  @doc """
+  Obtain the target connector of a graph link.
+  
+  # Examples
+  
+      iex> node1_id = UUID.uuid5(:oid, "node-1")
+      ...> node2_id = UUID.uuid5(:oid, "node-2")
+      ...> l = GenAI.Graph.Link.new(node1_id, node2_id)
+      ...> {:ok, sut} = GenAI.Graph.Link.target_connector(l)
+      ...> sut
+      R.connector(node: ^node2_id) = sut
+  
+      iex> node1_id = UUID.uuid5(:oid, "node-1")
+      ...> l = GenAI.Graph.Link.new(node1_id, nil)
+      ...> {:ok, sut} = GenAI.Graph.Link.target_connector(l)
+      ...> sut
+      R.connector(external: true) = sut
+  """
+  @spec target_connector(graph_link :: G.graph_link) :: T.result(R.connector, T.details)
   def target_connector(%__MODULE__{target: nil}), do: {:error, {:target, :is_nil}}
   def target_connector(%__MODULE__{target: connector}), do: {:ok, connector}
 
   #-------------------------
   # putnew_target/2
   #-------------------------
+  
+  @doc """
+  Set the target connector of a graph link, if it is not already set.
+  
+  # Examples
+  
+  ## When Not Set. By ID
+      iex> node1_id = UUID.uuid5(:oid, "node-1")
+      ...> node2_id = UUID.uuid5(:oid, "node-2")
+      ...> l = GenAI.Graph.Link.new(node1_id, nil)
+      ...> |> GenAI.Graph.Link.putnew_target(node2_id)
+      %GenAI.Graph.Link{target: R.connector(node: ^node2_id, external: false)} = l
+  
+  ## When Not Set. By Connector
+      iex> node1_id = UUID.uuid5(:oid, "node-1")
+      ...> node2_id = UUID.uuid5(:oid, "node-2")
+      ...> l = GenAI.Graph.Link.new(node1_id, nil)
+      ...> |> GenAI.Graph.Link.putnew_target(R.connector(node: node2_id, socket: :foo, external: false))
+      %GenAI.Graph.Link{target: R.connector(node: ^node2_id, external: false)} = l
+  
+  ## When Set. By ID
+      iex> node1_id = UUID.uuid5(:oid, "node-1")
+      ...> node2_id = UUID.uuid5(:oid, "node-2")
+      ...> node3_id = UUID.uuid5(:oid, "node-3")
+      ...> l = GenAI.Graph.Link.new(node1_id, node2_id)
+      ...> |> GenAI.Graph.Link.putnew_target(node3_id)
+      %GenAI.Graph.Link{target: R.connector(node: ^node2_id, external: false)} = l
+  
+  ## When Set. By Connector
+      iex> node1_id = UUID.uuid5(:oid, "node-1")
+      ...> node2_id = UUID.uuid5(:oid, "node-2")
+      ...> node3_id = UUID.uuid5(:oid, "node-3")
+      ...> l = GenAI.Graph.Link.new(node1_id, node2_id)
+      ...> |> GenAI.Graph.Link.putnew_target(R.connector(node: node3_id, socket: :foo, external: false))
+      %GenAI.Graph.Link{target: R.connector(node: ^node2_id, external: false)} = l
+  
+  """
+  @spec putnew_target(graph_link :: G.graph_link, target :: term) :: G.graph_link
   def putnew_target(graph_link, R.connector(node: connector_node, socket: connector_socket, external: connector_external)) do
     x = graph_link.target || R.connector(node: nil, socket: nil, external: false)
     if (is_nil(R.connector(x, :node))) do
@@ -277,6 +534,44 @@ defmodule GenAI.Graph.Link do
   #-------------------------
   # putnew_source/2
   #-------------------------
+  
+  @doc """
+  Set the source connector of a graph link, if it is not already set.
+  
+  # Examples
+  
+  ## When Not Set. By ID
+      iex> node1_id = UUID.uuid5(:oid, "node-1")
+      ...> node2_id = UUID.uuid5(:oid, "node-2")
+      ...> l = GenAI.Graph.Link.new(nil, node2_id)
+      ...> |> GenAI.Graph.Link.putnew_source(node1_id)
+      %GenAI.Graph.Link{source: R.connector(node: ^node1_id, external: false)} = l
+  
+  ## When Not Set. By Connector
+      iex> node1_id = UUID.uuid5(:oid, "node-1")
+      ...> node2_id = UUID.uuid5(:oid, "node-2")
+      ...> l = GenAI.Graph.Link.new(nil, node2_id)
+      ...> |> GenAI.Graph.Link.putnew_source(R.connector(node: node1_id, socket: :foo, external: false))
+      %GenAI.Graph.Link{source: R.connector(node: ^node1_id, socket: :foo, external: false)} = l
+  
+  ## When Set. By ID
+      iex> node1_id = UUID.uuid5(:oid, "node-1")
+      ...> node2_id = UUID.uuid5(:oid, "node-2")
+      ...> node3_id = UUID.uuid5(:oid, "node-3")
+      ...> l = GenAI.Graph.Link.new(node1_id, node2_id)
+      ...> |> GenAI.Graph.Link.putnew_source(node3_id)
+      %GenAI.Graph.Link{source: R.connector(node: ^node1_id, external: false)} = l
+  
+  ## When Set. By Connector
+      iex> node1_id = UUID.uuid5(:oid, "node-1")
+      ...> node2_id = UUID.uuid5(:oid, "node-2")
+      ...> node3_id = UUID.uuid5(:oid, "node-3")
+      ...> l = GenAI.Graph.Link.new(node1_id, node2_id)
+      ...> |> GenAI.Graph.Link.putnew_source(R.connector(node: node3_id, socket: :foo, external: false))
+      %GenAI.Graph.Link{source: R.connector(node: ^node1_id, external: false)} = l
+  
+  """
+  @spec putnew_source(graph_link :: G.graph_link, source :: term) :: G.graph_link
   def putnew_source(graph_link, R.connector(node: connector_node, socket: connector_socket, external: connector_external)) do
     x = graph_link.source || R.connector(node: nil, socket: nil, external: false)
     if (is_nil(R.connector(x, :node))) do
@@ -339,34 +634,3 @@ defmodule GenAI.Graph.Link do
     R.connector(node: x, socket: :default, external: false)
   end
 end
-
-defimpl GenAI.Graph.LinkProtocol, for: GenAI.Graph.Link do
-  @handler GenAI.Graph.Link
-  defdelegate id(graph_link), to: @handler
-
-  defdelegate handle(graph_link), to: @handler
-  defdelegate handle(graph_link, default), to: @handler
-
-  defdelegate name(graph_link), to: @handler
-  defdelegate name(graph_link, default), to: @handler
-
-  defdelegate description(graph_link), to: @handler
-  defdelegate description(graph_link, default), to: @handler
-
-  defdelegate type(graph_link), to: @handler
-  defdelegate type(graph_link, default), to: @handler
-
-  defdelegate label(graph_link), to: @handler
-  defdelegate label(graph_link, default), to: @handler
-
-  defdelegate with_id(graph_link), to: @handler
-
-  defdelegate source_connector(graph_link), to: @handler
-  defdelegate target_connector(graph_link), to: @handler
-
-  defdelegate putnew_target(graph_link, target), to: @handler
-  defdelegate putnew_source(graph_link, source), to: @handler
-
-
-end
-

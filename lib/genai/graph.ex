@@ -15,6 +15,7 @@ defmodule GenAI.Graph do
 
   use GenAI.Graph.NodeBehaviour
   @derive GenAI.Graph.NodeProtocol
+  @derive GenAI.Session.NodeProtocol
   defnodetype [
                nodes: %{ G.graph_node_id => G.graph_node },
                node_handles: %{ T.handle => G.graph_node_id },
@@ -39,7 +40,23 @@ defmodule GenAI.Graph do
 
     settings: nil,
   ]
+  
+  def node_type(%__MODULE__{}), do: GenAI.Graph
 
+  @doc """
+  Process node and proceed to next step.
+  """
+  def process_node(graph_node, graph_link, container, state, runtime, context, options)
+  def process_node(graph_node, graph_link, container, state, runtime, context, options) do
+      with {:ok, head} <- GenAI.Graph.head(graph_node) do
+        # Run graph and then pass back to parent container if set based on end state.
+          with x <- GenAI.Session.NodeProtocol.Runner.do_process_node(head, nil, graph_node, state, runtime, context, options) do
+              x
+          end
+      end
+  end
+  
+  
   def new(options \\ nil)
   def new(options) do
     settings = Keyword.merge(
@@ -88,60 +105,29 @@ defmodule GenAI.Graph do
   alias GenAI.Graph.Types, as: G
   require GenAI.Graph.Link.Records
   alias GenAI.Graph.Link.Records, as: R
-
-  #-------------------------
-  # id/1
-  #-------------------------
-  def id(graph)
-  def id(%__MODULE__{id: nil}), do: {:error, {:id, :is_nil}}
-  def id(%__MODULE__{id: id}), do: {:ok, id}
-
-  #-------------------------
-  # handle/1
-  #-------------------------
-  def handle(graph)
-  def handle(%__MODULE__{handle: nil}), do: {:error, {:handle, :is_nil}}
-  def handle(%__MODULE__{handle: handle}), do: {:ok, handle}
-
-  #-------------------------
-  # handle/2
-  #-------------------------
-  def handle(graph, default)
-  def handle(%__MODULE__{handle: nil}, default), do: {:ok, default}
-  def handle(%__MODULE__{handle: handle}, _), do: {:ok, handle}
-
-  #-------------------------
-  # name/1
-  #-------------------------
-  def name(graph)
-  def name(%__MODULE__{name: nil}), do: {:error, {:name, :is_nil}}
-  def name(%__MODULE__{name: name}), do: {:ok, name}
-
-  #-------------------------
-  # name/2
-  #-------------------------
-  def name(graph, default)
-  def name(%__MODULE__{name: nil}, default), do: {:ok, default}
-  def name(%__MODULE__{name: name}, _), do: {:ok, name}
-
-
-  #-------------------------
-  # description/1
-  #-------------------------
-  def description(graph)
-  def description(%__MODULE__{description: nil}), do: {:error, {:description, :is_nil}}
-  def description(%__MODULE__{description: description}), do: {:ok, description}
-
-  #-------------------------
-  # description/2
-  #-------------------------
-  def description(graph, default)
-  def description(%__MODULE__{description: nil}, default), do: {:ok, default}
-  def description(%__MODULE__{description: description}, _), do: {:ok, description}
-
+  
   #-------------------------
   # node/2
   #-------------------------
+  
+  @doc """
+  Obtain node by id.
+  
+  ## Examples
+  
+  ### When Found
+      iex> graph = GenAI.Graph.new()
+      ...> node = GenAI.Graph.Node.new(id: UUID.uuid4())
+      ...> graph = GenAI.Graph.add_node(graph, node)
+      ...> GenAI.Graph.node(graph, node.id)
+      {:ok, node}
+  
+  ### When Not Found
+      iex> graph = GenAI.Graph.new()
+      ...> GenAI.Graph.node(graph, UUID.uuid4())
+      {:error, {:node, :not_found}}
+  """
+  @spec node(graph :: G.graph, id :: G.graph_node_id) :: T.result(G.graph_node, T.details)
   def node(graph, graph_node)
   def node(graph, Link.connector(node: id)) do
     node(graph, id)
@@ -180,6 +166,29 @@ defmodule GenAI.Graph do
   #-------------------------
   # link/2
   #-------------------------
+  
+  @doc """
+  Obtain link by id.
+  
+  ## Examples
+  
+  ### When Found
+      iex> graph = GenAI.Graph.new()
+      ...> node1 = GenAI.Graph.Node.new(id: UUID.uuid4())
+      ...> node2 = GenAI.Graph.Node.new(id: UUID.uuid4())
+      ...> graph = GenAI.Graph.add_node(graph, node1)
+      ...> graph = GenAI.Graph.add_node(graph, node2)
+      ...> link = GenAI.Graph.Link.new(node1.id, node2.id)
+      ...> graph = GenAI.Graph.add_link(graph, link)
+      ...> GenAI.Graph.link(graph, link.id)
+      {:ok, link}
+  
+  ### When Not Found
+      iex> graph = GenAI.Graph.new()
+      ...> GenAI.Graph.link(graph, UUID.uuid4())
+      {:error, {:link, :not_found}}
+  """
+  @spec link(graph :: G.graph, id :: G.graph_link_id) :: T.result(G.graph_link, T.details)
   def link(graph, graph_link)
   def link(graph, graph_link) when G.is_link_id(graph_link) do
     if x = graph.links[graph_link] do
@@ -189,7 +198,7 @@ defmodule GenAI.Graph do
     end
   end
   def link(graph, graph_link) when is_struct(graph_link) do
-    with {:ok, id} <- GenAI.Graph.LinkProtocol.id(graph_link) do
+    with {:ok, id} <- GenAI.Graph.Link.id(graph_link) do
       node(graph, id)
     end
   end
@@ -197,6 +206,24 @@ defmodule GenAI.Graph do
   #-------------------------
   # member?/2
   #-------------------------
+  
+  
+  @doc """
+  Check if a node is a member of the graph.
+  
+  ## Examples
+  
+      iex> graph = GenAI.Graph.new()
+      ...> node = GenAI.Graph.Node.new(id: UUID.uuid4())
+      ...> graph = GenAI.Graph.add_node(graph, node)
+      ...> GenAI.Graph.member?(graph, node.id)
+      true
+  
+      iex> graph = GenAI.Graph.new()
+      ...> GenAI.Graph.member?(graph, UUID.uuid4())
+      false
+  """
+  @spec member?(graph :: G.graph, id :: G.graph_node_id) :: boolean
   def member?(graph, graph_node)
   def member?(graph, graph_node) when G.is_node_id(graph_node) do
     graph.nodes[graph_node] && true || false
@@ -210,6 +237,25 @@ defmodule GenAI.Graph do
   #-------------------------
   # by_handle/2
   #-------------------------
+  
+  @doc """
+  Obtain node by handle.
+  
+  ## Examples
+  
+  ### When Found
+      iex> graph = GenAI.Graph.new()
+      ...> node = GenAI.Graph.Node.new(id: UUID.uuid4(), handle: :foo)
+      ...> graph = GenAI.Graph.add_node(graph, node)
+      ...> GenAI.Graph.by_handle(graph, :foo)
+      {:ok, node}
+  
+  ### When Not Found
+      iex> graph = GenAI.Graph.new()
+      ...> GenAI.Graph.by_handle(graph, :foo)
+      {:error, {:handle, :not_found}}
+  """
+  @spec by_handle(graph :: G.graph, handle :: T.handle) :: T.result(G.graph_node, T.details)
   def by_handle(graph, handle)
   def by_handle(graph, handle) do
     if x = graph.node_handles[handle] do
@@ -222,6 +268,29 @@ defmodule GenAI.Graph do
   #-------------------------
   # link_by_handle/2
   #-------------------------
+  
+  @doc """
+  Obtain link by handle.
+  
+  ## Examples
+  
+  ### When Found
+      iex> graph = GenAI.Graph.new()
+      ...> node1 = GenAI.Graph.Node.new(id: UUID.uuid4())
+      ...> node2 = GenAI.Graph.Node.new(id: UUID.uuid4())
+      ...> graph = GenAI.Graph.add_node(graph, node1)
+      ...> graph = GenAI.Graph.add_node(graph, node2)
+      ...> link = GenAI.Graph.Link.new(node1.id, node2.id, handle: :bar)
+      ...> graph = GenAI.Graph.add_link(graph, link)
+      ...> GenAI.Graph.link_by_handle(graph, :bar)
+      {:ok, link}
+  
+  ### When Not Found
+      iex> graph = GenAI.Graph.new()
+      ...> GenAI.Graph.link_by_handle(graph, :bar)
+      {:error, {:handle, :not_found}}
+  """
+  @spec link_by_handle(graph :: G.graph, handle :: T.handle) :: T.result(G.graph_link, T.details)
   def link_by_handle(graph, handle)
   def link_by_handle(graph, handle) do
     if x = graph.link_handles[handle] do
@@ -304,26 +373,21 @@ defmodule GenAI.Graph do
   end
 
   defp attempt_auto_link(graph, from_node, node_id, _node, options) do
-    auto_link = auto_link_setting(graph, options) |> IO.inspect(label: "auto_link?")
+    auto_link = auto_link_setting(graph, options)
     cond do
       auto_link == false ->
         graph
       auto_link == true ->
         link = GenAI.Graph.Link.new(from_node, node_id)
-        x = graph
-        |> GenAI.GraphProtocol.add_link(link, options)
-
-        IO.inspect(link, label: "NEW LINK")
-        x
-
-
-      GenAI.Graph.LinkProtocol.impl_for(auto_link) ->
+        graph
+        |> GenAI.Graph.add_link(link, options)
+      is_struct(auto_link, GenAI.Graph.Link) ->
         link = auto_link
-        with {:ok, link} <- GenAI.Graph.LinkProtocol.putnew_source(link, from_node),
-             {:ok, link} <- GenAI.Graph.LinkProtocol.putnew_target(link, node_id),
-             {:ok, link} <- GenAI.Graph.LinkProtocol.with_id(link) do
+        with {:ok, link} <- GenAI.Graph.Link.putnew_source(link, from_node),
+             {:ok, link} <- GenAI.Graph.Link.putnew_target(link, node_id),
+             {:ok, link} <- GenAI.Graph.Link.with_id(link) do
           graph
-          |> GenAI.GraphProtocol.add_link(link,  options)
+          |> GenAI.Graph.add_link(link,  options)
         else
           {:error, details} ->
             raise GenAI.Graph.Exception,
@@ -334,7 +398,7 @@ defmodule GenAI.Graph do
         auto_link_options = auto_link
         link = GenAI.Graph.Link.new(from_node, node_id, auto_link_options)
         graph
-        |> GenAI.GraphProtocol.add_link(link, options)
+        |> GenAI.Graph.add_link(link, options)
     end
   end
 
@@ -348,36 +412,24 @@ defmodule GenAI.Graph do
             details: {:node_exists, node_id}
     end
   end
-
-
-  #-------------------------
-  # with_id/1
-  #-------------------------
-  def with_id(graph) do
-    cond do
-      graph.id == nil ->
-        graph
-        |> put_in([Access.key(:id)], UUID.uuid4())
-      graph.id == :auto ->
-        graph
-        |> put_in([Access.key(:id)], UUID.uuid4())
-      :else -> graph
-    end
-    |> then(& {:ok, &1})
-  end
-
-
-  #-------------------------
-  # attach_node/2
-  #-------------------------
-  def attach_node(graph, graph_node), do: attach_node(graph, graph_node, nil)
-
+  
   #-------------------------
   # attach_node/3
   #-------------------------
+  
   @doc """
-  Attach a node to a graph using add_node method with auto_head, update_last, update_last_link and auto_link enabled.
+  Attach a node to the graph linked to last inserted item.
+  
+  ## Examples
+  
+      iex> graph = GenAI.Graph.new()
+      ...> node = GenAI.Graph.Node.new(id: UUID.uuid4())
+      ...> graph = GenAI.Graph.attach_node(graph, node)
+      ...> GenAI.Graph.member?(graph, node.id)
+      true
   """
+  @spec attach_node(graph :: G.graph, node :: G.graph_node, options :: map) :: T.result(G.graph, T.details)
+  def attach_node(graph, graph_node, options \\ nil)
   def attach_node(graph, graph_node, options) do
     options = Keyword.merge(
       [auto_head: true, update_last: true, update_last_link: true, link: true],
@@ -387,14 +439,22 @@ defmodule GenAI.Graph do
   end
 
   #-------------------------
-  # add_node/2
-  #-------------------------
-  def add_node(graph, graph_node), do: add_node(graph, graph_node, nil)
-
-  #-------------------------
   # add_node/3
   #-------------------------
-  def add_node(graph, graph_node, options)
+  
+  @doc """
+  Add a node to the graph.
+  
+  ## Examples
+  
+      iex> graph = GenAI.Graph.new()
+      ...> node = GenAI.Graph.Node.new(id: UUID.uuid4())
+      ...> graph = GenAI.Graph.add_node(graph, node)
+      ...> GenAI.Graph.member?(graph, node.id)
+      true
+  """
+  @spec add_node(graph :: G.graph, node :: G.graph_node, options :: map) :: T.result(G.graph, T.details)
+  def add_node(graph, graph_node, options \\ nil)
   def add_node(graph, graph_node, options) do
     with {:ok, node_id} <- GenAI.Graph.NodeProtocol.id(graph_node) do
       graph
@@ -420,10 +480,29 @@ defmodule GenAI.Graph do
   #-------------------------
   # add_node/3
   #-------------------------
+  
+  
+  @doc """
+  Add a link to the graph.
+  
+  ## Examples
+  
+      iex> graph = GenAI.Graph.new()
+      ...> node1 = GenAI.Graph.Node.new(id: UUID.uuid4())
+      ...> node2 = GenAI.Graph.Node.new(id: UUID.uuid4())
+      ...> graph = GenAI.Graph.add_node(graph, node1)
+      ...> graph = GenAI.Graph.add_node(graph, node2)
+      ...> link = GenAI.Graph.Link.new(node1.id, node2.id)
+      ...> graph = GenAI.Graph.add_link(graph, link)
+      ...> GenAI.Graph.link(graph, link.id)
+      {:ok, link}
+  """
+  @spec add_link(graph :: G.graph, link :: G.graph_link, options :: map) :: T.result(G.graph, T.details)
+  def add_link(graph, graph_link, options \\ nil)
   def add_link(graph, graph_link, options) do
-    with {:ok, link_id} <- GenAI.Graph.LinkProtocol.id(graph_link),
-         {:ok, source} <- GenAI.Graph.LinkProtocol.source_connector(graph_link),
-         {:ok, target} <- GenAI.Graph.LinkProtocol.target_connector(graph_link),
+    with {:ok, link_id} <- GenAI.Graph.Link.id(graph_link),
+         {:ok, source} <- GenAI.Graph.Link.source_connector(graph_link),
+         {:ok, target} <- GenAI.Graph.Link.target_connector(graph_link),
          true <- local_reference?(source, target) || {:error, {:link, :local_reference_required}} do
 
       graph
@@ -443,7 +522,7 @@ defmodule GenAI.Graph do
   defp attempt_set_link(graph, link_id, graph_link, _options) do
     unless Map.has_key?(graph.links, link_id) do
 
-      with {:ok, handle} <- GenAI.Graph.LinkProtocol.handle(graph_link) do
+      with {:ok, handle} <- GenAI.Graph.Link.handle(graph_link) do
         graph
         |> put_in([Access.key(:link_handles), handle], link_id)
         |> put_in([Access.key(:links), link_id], graph_link)
@@ -484,50 +563,14 @@ defmodule GenAI.Graph do
               details: {:source_not_found, connector}
     end
   end
-
-
-end
-
-
-defimpl GenAI.Session.NodeProtocol, for: GenAI.Graph do
-  @doc """
-  Process node and proceed to next step.
-  """
-  def process_node(graph_node, graph_link, container, state, runtime, context, options)
-  def process_node(graph_node, graph_link, container, state, runtime, context, options) do
-    IO.inspect("EXECUTE GRAPH_NODE #{graph_node.id}")
-    with {:ok, head} <- GenAI.Graph.head(graph_node) do
-          # Run graph and then pass back to parent container if set based on end state.
-      with x <- GenAI.Session.NodeProtocol.Runner.do_process_node(head, nil, graph_node, state, runtime, context, options) do
-        x
-      end
-    end
-  end
-end
-
-
-defimpl GenAI.GraphProtocol, for: GenAI.Graph do
-  @handler GenAI.Graph
-  defdelegate id(graph), to: @handler
-  defdelegate handle(graph), to: @handler
-  defdelegate handle(graph, default), to: @handler
-  defdelegate name(graph), to: @handler
-  defdelegate name(graph, default), to: @handler
-  defdelegate description(graph), to: @handler
-  defdelegate description(graph, default), to: @handler
-  defdelegate node(graph, id), to: @handler
-  defdelegate nodes(graph, options \\ nil), to: @handler
-  defdelegate nodes!(graph, options \\ nil), to: @handler
-  defdelegate link(graph, id), to: @handler
-  defdelegate member?(graph, id), to: @handler
-  defdelegate by_handle(graph, handle), to: @handler
-  defdelegate link_by_handle(graph, handle), to: @handler
-  defdelegate add_node(graph, graph_node, options \\ nil), to: @handler
-  defdelegate attach_node(graph, graph_node, options \\ nil), to: @handler
-  defdelegate add_link(graph, graph_link, options \\ nil), to: @handler
-  defdelegate with_id(graph), to: @handler
+  
+  
+  
 
 end
+
+
+
 
 defimpl GenAI.Graph.Mermaid, for: GenAI.Graph do
 

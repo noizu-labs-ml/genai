@@ -78,8 +78,8 @@ defimpl GenAI.Graph.Mermaid, for: GenAI.Graph.Node do
                           Enum.map(links,
                               fn link_id ->
                                 # TODO - Node protocol needs to return a get_link method that accepts node, container
-                                {:ok, link} = GenAI.GraphProtocol.link(container, link_id)
-                                {:ok, R.connector(node: n)} = GenAI.Graph.LinkProtocol.target_connector(link)
+                                {:ok, link} = GenAI.Graph.link(container, link_id)
+                                {:ok, R.connector(node: n)} = GenAI.Graph.Link.target_connector(link)
                                 "#{identifier} --> #{GenAI.Graph.Mermaid.Helpers.mermaid_id(n)}"
                               end)
                         end)

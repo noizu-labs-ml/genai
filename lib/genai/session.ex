@@ -68,21 +68,10 @@ defmodule GenAI.Session do
          vsn: @vsn
         }
     end
-    
-end
 
-
-
-defimpl GenAI.SessionProtocol, for: [GenAI.Session] do
-    @moduledoc """
-    This allows chat contexts to be used for configuring and running GenAI interactions.
-    """
-    #  alias GenAI.Graph.Node
-    #  alias GenAI.Graph.ModelNode
-    #  alias GenAI.Graph.MessageNode
-    #  alias GenAI.Graph.SettingNode
-    #  alias GenAI.Graph.ProviderSettingNode
-    #  alias GenAI.Graph.ToolNode
+    #-------------------------------------------
+    # Session Behavior
+    #---------------------------------------------
     require Logger
     
     defp append_node(context, node, options \\ nil)
@@ -93,17 +82,31 @@ defimpl GenAI.SessionProtocol, for: [GenAI.Session] do
     #-------------------------------------
     # with_model/2
     #-------------------------------------
+    @doc """
+    Specify a specific model or model picker.
+    
+    This function allows you to define the model to be used for inference.
+    You can either provide a specific model, like `Model.smartest()`, or a model picker function that dynamically selects
+    the best model based on the context and available providers.
+    
+    Examples:
+    * `Model.smartest()` - This will select the "smartest" available model at inference time, based on factors
+      like performance and capabilities.
+    * `Model.cheapest(params: :best_effort)` - This will select the cheapest available model that can handle the
+      given parameters and context size.
+    * `CustomProvider.custom_model` - This allows you to use a custom model from a user-defined provider.
+    """
     def with_model(context, model) do
-        if GenAI.ModelProtocol.impl_for(model) do
+        if GenAI.Session.NodeProtocol.impl_for(model) && GenAI.Model == GenAI.Session.NodeProtocol.node_type(model) do
             {:ok, n} = GenAI.Graph.NodeProtocol.with_id(model)
             context
             |> append_node(n)
         else
             cond do
                 is_struct(model) ->
-                    raise GenAI.Graph.Exception, "With Model Argument Must Implement GenAI.ModelProtocol: #{model.__struct__}"
+                    raise GenAI.Graph.Exception, "With Model Argument Must Implement GenAI.Session.NodeProtocol and report node_type as GenAI.Model: #{model.__struct__}"
                 :else ->
-                    raise GenAI.Graph.Exception, "With Model Argument Must Implement GenAI.ModelProtocol: #{inspect model}"
+                    raise GenAI.Graph.Exception, "With Model Argument Must Implement GenAI.Session.NodeProtocol and report node_type GenAI.Model: #{inspect model}"
             end
         end
     end
@@ -111,17 +114,18 @@ defimpl GenAI.SessionProtocol, for: [GenAI.Session] do
     #-------------------------------------
     #
     #-------------------------------------
+    
     def with_tool(context, tool) do
-        if GenAI.ToolProtocol.impl_for(tool) do
+        if GenAI.Session.NodeProtocol.impl_for(tool) && GenAI.Tool == GenAI.Session.NodeProtocol.node_type(tool) do
             {:ok, n} = GenAI.Graph.NodeProtocol.with_id(tool)
             context
             |> append_node(n)
         else
             cond do
                 is_struct(tool) ->
-                    raise GenAI.Graph.Exception, "With Model Argument Must Implement GenAI.ModelProtocol: #{tool.__struct__}"
+                    raise GenAI.Graph.Exception, "With Tool Argument Must Implement GenAI.Session.NodeProtocol and report node_type as GenAI.Tool: #{tool.__struct__}"
                 :else ->
-                    raise GenAI.Graph.Exception, "With Model Argument Must Implement GenAI.ModelProtocol: #{inspect tool}"
+                    raise GenAI.Graph.Exception, "With Tool Argument Must Implement GenAI.Session.NodeProtocol and report node_type GenAI.Tool: #{inspect tool}"
             end
         end
     end
@@ -139,6 +143,10 @@ defimpl GenAI.SessionProtocol, for: [GenAI.Session] do
     #-------------------------------------
     #
     #-------------------------------------
+    
+    @doc """
+    Specify an API key for a provider.
+    """
     def with_api_key(context, provider, api_key) do
         n = %GenAI.Setting.ProviderSetting{
             id: UUID.uuid4(),
@@ -153,6 +161,10 @@ defimpl GenAI.SessionProtocol, for: [GenAI.Session] do
     #-------------------------------------
     #
     #-------------------------------------
+    
+    @doc """
+    Specify an API org for a provider.
+    """
     def with_api_org(context, provider, api_org) do
         n = %GenAI.Setting.ProviderSetting{
             id: UUID.uuid4(),
@@ -167,6 +179,18 @@ defimpl GenAI.SessionProtocol, for: [GenAI.Session] do
     #-------------------------------------
     #
     #-------------------------------------
+    
+    @doc """
+    Set a hyperparameter option.
+    
+    Some options are model-specific. The value can be a literal or a picker function that dynamically determines
+    the best value based on the context and model.
+    
+    Examples:
+    * `Parameter.required(name, value)` - This sets a required parameter with the specified name and value.
+    * `Gemini.best_temperature_for(:chain_of_thought)` - This uses a picker function to determine the best temperature
+       for the Gemini provider when using the "chain of thought" prompting technique.
+    """
     def with_setting(context, setting, value) do
         n = %GenAI.Setting{
             id: UUID.uuid4(),
@@ -181,16 +205,16 @@ defimpl GenAI.SessionProtocol, for: [GenAI.Session] do
     #
     #-------------------------------------
     def with_setting(context, setting) do
-        if GenAI.SettingProtocol.impl_for(setting) do
+        if GenAI.Session.NodeProtocol.impl_for(setting) && GenAI.Setting == GenAI.Session.NodeProtocol.node_type(setting) do
             {:ok, n} = GenAI.Graph.NodeProtocol.with_id(setting)
             context
             |> append_node(n)
         else
             cond do
                 is_struct(setting) ->
-                    raise GenAI.Graph.Exception, "With Model Argument Must Implement GenAI.SettingProtocol: #{setting.__struct__}"
+                    raise GenAI.Graph.Exception, "With Setting Argument Must Implement GenAI.Session.NodeProtocol and report node_type as GenAI.Setting: #{setting.__struct__}"
                 :else ->
-                    raise GenAI.Graph.Exception, "With Model Argument Must Implement GenAI.SettingProtocol: #{inspect setting}"
+                    raise GenAI.Graph.Exception, "With Setting Argument Must Implement GenAI.Session.NodeProtocol and report node_type GenAI.Setting: #{inspect setting}"
             end
         end
     end
@@ -224,16 +248,16 @@ defimpl GenAI.SessionProtocol, for: [GenAI.Session] do
     #
     #-------------------------------------
     def with_safety_setting(context, safety_setting) do
-        if GenAI.SettingProtocol.impl_for(safety_setting) do
+        if GenAI.Session.NodeProtocol.impl_for(safety_setting) && GenAI.Setting == GenAI.Session.NodeProtocol.node_type(safety_setting) do
             {:ok, n} = GenAI.Graph.NodeProtocol.with_id(safety_setting)
             context
             |> append_node(n)
         else
             cond do
                 is_struct(safety_setting) ->
-                    raise GenAI.Graph.Exception, "With Model Argument Must Implement GenAI.SettingProtocol: #{safety_setting.__struct__}"
+                    raise GenAI.Graph.Exception, "With Safety Setting Argument Must Implement GenAI.Session.NodeProtocol and report node_type as GenAI.Setting: #{safety_setting.__struct__}"
                 :else ->
-                    raise GenAI.Graph.Exception, "With Model Argument Must Implement GenAI.SettingProtocol: #{inspect safety_setting}"
+                    raise GenAI.Graph.Exception, "With Safety Setting Argument Must Implement GenAI.Session.NodeProtocol and report node_type GenAI.Setting: #{inspect safety_setting}"
             end
         end
     end
@@ -253,18 +277,22 @@ defimpl GenAI.SessionProtocol, for: [GenAI.Session] do
     #-------------------------------------
     #
     #-------------------------------------
-    def with_message(context, message, options)
+    
+    @doc """
+    Add a message to the conversation.
+    """
+    def with_message(context, message, options \\ nil)
     def with_message(context, message, _) do
-        if GenAI.MessageProtocol.impl_for(message) do
+        if GenAI.Session.NodeProtocol.impl_for(message) && GenAI.Message == GenAI.Session.NodeProtocol.node_type(message) do
             {:ok, n} = GenAI.Graph.NodeProtocol.with_id(message)
             context
             |> append_node(n)
         else
             cond do
                 is_struct(message) ->
-                    raise GenAI.Graph.Exception, "With Model Argument Must Implement GenAI.MessageProtocol: #{message.__struct__}"
+                    raise GenAI.Graph.Exception, "With Message Argument Must Implement GenAI.Session.NodeProtocol and report node_type as GenAI.Message: #{message.__struct__}"
                 :else ->
-                    raise GenAI.Graph.Exception, "With Model Argument Must Implement GenAI.MessageProtocol: #{inspect message}"
+                    raise GenAI.Graph.Exception, "With Message Argument Must Implement GenAI.Session.NodeProtocol and report node_type GenAI.Message: #{inspect message}"
             end
         end
     end
@@ -272,6 +300,9 @@ defimpl GenAI.SessionProtocol, for: [GenAI.Session] do
     #-------------------------------------
     #
     #-------------------------------------
+    @doc """
+    Add a list of messages to the conversation.
+    """
     def with_messages(context, messages, options)
     def with_messages(context, messages, options) do
         Enum.reduce(messages, context, fn(message, context) ->
@@ -282,6 +313,9 @@ defimpl GenAI.SessionProtocol, for: [GenAI.Session] do
     #-------------------------------------
     #
     #-------------------------------------
+    @doc """
+    specify/override default stream handler
+    """
     def with_stream_handler(context, handler, options)
     def with_stream_handler(context, _, _) do
         Logger.info("nyi")
@@ -291,6 +325,11 @@ defimpl GenAI.SessionProtocol, for: [GenAI.Session] do
     #-------------------------------------
     #
     #-------------------------------------
+    @doc """
+    Start inference using a streaming handler.
+    
+    If the selected model does not support streaming, the handler will be called with the final inference result.
+    """
     def stream(session, context, options)
     def stream(_,_,_) do
         {:ok, :pending}
@@ -300,15 +339,19 @@ defimpl GenAI.SessionProtocol, for: [GenAI.Session] do
     #
     #-------------------------------------
     @doc """
-    Runs inference on the chat context.
+    Run inference.
     
-    This function determines the final settings and model, prepares the messages, and then delegates the actual inference execution to the selected provider's `chat/3` function.
+    This function performs the following steps:
+    * Picks the appropriate model and hyperparameters based on the provided context and settings.
+    * Performs any necessary pre-processing, such as RAG (Retrieval-Augmented Generation) or message consolidation.
+    * Runs inference on the selected model with the prepared input.
+    * Returns the inference result.
     """
     def run(session, context, options)
     def run(_,_,_) do
-
-
-
+      
+      
+      
       #    with {:prepare_state, {:ok, state}} <-
       #           GenAi.Graph.NodeProtocol.apply(context.graph, context.state)
       #           |> label(:prepare_state),
@@ -324,29 +367,36 @@ defimpl GenAI.SessionProtocol, for: [GenAI.Session] do
     #-------------------------------------
     #
     #-------------------------------------
+    @doc """
+    Execute a command, such as run prompt fine tuner, dynamic prompt etc.
+    # Options
+    - report: return a report of the command execution (entire effective conversation with extended timing/loop details.
+    - thread: return full thread along with most recent reply, useful for investigating exact dynamic messages generated in flow
+    """
     def execute(session, command, context, options) do
-      context = context || Noizu.Context.system()
-      with {:ok, runtime} <-
-             # Set Runtime Mode
-             GenAI.Session.Runtime.command(session.runtime, command, context, options),
-           {:ok, session_state} <-
-             # Refresh state (clear any ephemeral values, etc. for rerun as specified by runtime object
-             # set seeds, clear monitor cache, etc.
-             GenAI.Session.State.initialize(session.state, runtime, context, options),
-           {:ok, {session_state, runtime}} <-
-             # Setup telemetry agents, etc.
-             GenAI.Session.State.monitor(session_state, runtime, context, options) do
-        with x <- GenAI.Session.NodeProtocol.process_node(session.graph, nil, nil, session_state, runtime, context, options) do
-          # TODO apply updates, return completion (if any) and session and generated report from monitor agent
-          {:ok, :pending2}
+        context = context || Noizu.Context.system()
+        with {:ok, runtime} <-
+               # Set Runtime Mode
+               GenAI.Session.Runtime.command(session.runtime, command, context, options),
+             {:ok, session_state} <-
+               # Refresh state (clear any ephemeral values, etc. for rerun as specified by runtime object
+               # set seeds, clear monitor cache, etc.
+               GenAI.Session.State.initialize(session.state, runtime, context, options),
+             {:ok, {session_state, runtime}} <-
+               # Setup telemetry agents, etc.
+               GenAI.Session.State.monitor(session_state, runtime, context, options) do
+            with x <- GenAI.Session.NodeProtocol.process_node(session.graph, nil, nil, session_state, runtime, context, options) do
+              # TODO apply updates, return completion (if any) and session and generated report from monitor agent
+                {:ok, :pending2}
+            end
         end
-      end
-
+      
       # Spawn Monitor Agent
       # Register Callbacks to Monitor Agent
       # Process session
       # Strip runtime flags from execute
       # Get metrics from monitor
-
+    
     end
+    
 end

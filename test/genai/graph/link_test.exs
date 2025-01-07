@@ -6,6 +6,5 @@ defmodule GenAI.Graph.LinkTest do
   alias GenAI.Graph.Link.Records, as: R
 
   doctest GenAI.Graph.Link
-  doctest GenAI.Graph.LinkProtocol
 
 end
