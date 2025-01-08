@@ -63,4 +63,317 @@ Some details need to be figured out.
         (Somewhere in process_node or a unique method tto keep process_node generic) after updating state/artifacts we expand the node into any rules and messages and these are aadded to sequence.
 
         Finally as needed when we reach inference points we build effective settings, etc.
+
+
+
+
+
+<style>
+div.details { 
+    text-align: left;
+    border-top: dashed 1px gray;
+    padding-top: 5px;
+    margin-top: 5px;
+}
+
+div.details br:first-child {
+    display: none;
+}
+
+</style>
+
+```mermaid 
+flowchart TD
+
+    EXTERNAL{{"EXTERNAL DATA"}}
+    --> AGENT_META_DATA["Agent Meta Data"]
+
+
+    START@{ shape: start} 
+    --> SYSTEM_MSG 
+    --> USER_MSG 
+    --> COMPOSITE_MSG
+    --> REVIEW_DOCUMENT
+
+    subgraph SYSTEM_MSG[System Message]
+        SM_PROMPT["
+        **System Prompt**
+        <div class="details">
+        Core Instructions.
+        Follow NPL Conventions. etc.
+        </div>
+        "]
+
+        SM_NPL["
+        **NPL Prompt**
+        <div class="details">
+        1. NPL Prompt Conventions.
+        2. NPL Declarations.
+        &nbsp;&nbsp;2.1  Author Agent
+        &nbsp;&nbsp;2.2  Grading Service
+        &nbsp;&nbsp;2.3  Copy Editor Service
+        </div>
+        "]
+
+        SM_CONTEXT["
+        **System Context**
+        <div class="details">
+        1. User Profile.
+        2. User Instructions.
+        3. Working Relantship
+        and details from memory.
+        </div>
+        "]
+
+        SM_MINDERS["
+        **System Minders**
+        <div class="details">
+        Reinforcing instructions based on past behavior/model quirks to correct behavior.
+        </div>
+        "]
+    end
+
+    USER_MSG["
+    **User Message**
+    <div class="details">
+    Initial Request for a Document
+    </div>
+    "]
+
+
+    subgraph COMPOSITE_MSG["Composite Message"]
+        direction LR
+
+        AGENT_META_DATA1["Agent Meta Data"] -->
+        AUTHER_AGENT["
+        **Author Agent**:
+        <div class="details">Full Definition of Author Agent</div>
+        "] -->
+
+        GENERATE_CONTEXT["
+        **Context**:
+        <div class="details">
+        Scan memory database for details relevent to request
+        </div>
+        "] -->
+
+        PLAN_CONTEXT["
+        **Planning**:
+        <div class="details">
+        State Assumptions. Plan how to proceed.
+        </div>
+        "] -->
+
+        DRAFT_OUTLINE["
+        **Draft Outline**:
+        <div class="details">
+        Structure Document.
+        </div>
+        "] -->
+
+    
+        WRITE_SECTION["
+        **Draft Outline**:
+        <div class="details">
+        Write Sections (one at a time to control length.)
+        </div>
+        "] --> 
+
+        CONTINUE@{ shape: diamond, label: "Decision" }
+        CONTINUE --> |finished?| DOCUMENT_ARTIFACT
+        CONTINUE --> |remaining sections| WRITE_SECTION
+
+        DOCUMENT_ARTIFACT["
+        **Store Draft Artifact**:
+        <div class="details">
+        Now that initial draft is complte store as draft. 
+        </div>
+        "]
+
+    end
+
+
+    
+
+    subgraph REVIEW_DOCUMENT["Review Document"]
+        DOCUMENT_ARTIFACT2["Draft Artifact"] 
+        --> BEGIN_REVIEW@{ shape: fork }
+        --> AUTHOR_AGENT_1_1 & GRADE_AGENT_1_1 & EDITOR_AGENT_1_1
+
+        AGENT_META_DATA2["Agent Meta Data"] -->
+        AUTHOR_AGENT_1_1["
+        **Author Agent**:
+        <div class="details">Full Definition of Author Agent</div>
+        "]  --> 
+        AUTHOR_AGENT_1_2["Self Assess/Review Work"] --> AUTHOR_AGENT_1_3["`Save Draft with inline comments and suggested changes.`"] --> 
+        END_REVIEW
+
+
+        AGENT_META_DATA2 ---> 
+        GRADE_AGENT_1_1["
+        **GRADE Agent**:
+        <div class="details">Full Definition of Grade Agent</div>
+        "] -->
+        GRADE_AGENT_1_2["Grader: Grade By Rubix"] -->
+        GRADE_AGENT_1_3["Save Draft with Rubix and inline comments added"] --> 
+        END_REVIEW
+
+
+        AGENT_META_DATA2 ---> 
+        EDITOR_AGENT_1_1["
+        **GRADE Agent**:
+        <div class="details">Full Definition of Grade Agent</div>
+        "] -->
+        EDITOR_AGENT_1_2["Copy Editor Review"] -->
+        EDITOR_AGENT_1_3["Save Draft with inline comments and suggested changes"] --> 
+        END_REVIEW
+        
+        
+        END_REVIEW@{ shape: fork }
+        --> MERGE_ARTIFACTS["Merge Author, Grader and Editor Documents"]
+    end
+
+
+
+       
+
+
+    REVIEW_DOCUMENT -->
+    AUTHOR_AGENT_2_1["Reflect on combined artifact, and prepare notes to adjust self instructions for generating content"]  -->
+    AUTHOR_AGENT_2_2["Decide on desired changes and resources for Collab Step."] -->
+    AUTHOR_AGENT_2_3["Prepare Agenda"]  -->
+      GOOD_ENOUGH@{ shape: diamond, label: "Decision" }
+      
   
+    AUTHOR_AGENT_2_1 
+    --> |Update|AGENT_META_DATA3["Agent Meta Data"] 
+    
+
+GOOD_ENOUGH --> |yes|END
+GOOD_ENOUGH --> |no|COLLAB
+
+
+    subgraph COLLAB["Team Collab"]
+        
+        TEAM["Generate Team Profiles"] --> 
+        BEGIN_PRELIM@{ shape: fork }
+
+            BEGIN_PRELIM -->
+            REVIEW_DOC["REVIEW_DOC"] -->
+        BEGIN_PR@{ shape: fork }
+
+            BEGIN_PR -->
+            R1_1["REVIEWER 1"] -->
+            R1_2["Tailored Feedback Request"] -->
+            R1_3["Review and add Comments to Artifact"] --> END_PR
+
+            BEGIN_PR -->
+            R2_1["REVIEWER 2"] -->
+            R2_2["Tailored Feedback Request"] -->
+            R2_3["Review and add Comments to Artifact"] --> END_PR
+
+            BEGIN_PR -->
+            RN_1["...REVIEWER N"] -->
+            RN_2["Tailored Feedback Request"] -->
+            RN_3["Review and add Comments to Artifact"] --> END_PR
+
+        END_PR@{ shape: fork }
+        --> COMBINE_PR["Merge Artifacts and Summarize"]
+        --> END_PRELIM
+
+
+
+            BEGIN_PRELIM -->
+            REVIEW_DOC_2["FACT_CHECK_DOC"] -->
+        BEGIN_FR@{ shape: fork }
+
+            BEGIN_FR -->
+            F1_1["Statement 1"] -->
+            F1_2["Verify/Research"] -->
+            F1_3["Review and add Comments to Artifact"] --> END_FR
+
+            BEGIN_FR -->
+            F2_1["Statement 2"] -->
+            F2_2["Verify/Reaserch"] -->
+            F2_3["Review and add Comments to Artifact"] --> END_FR
+
+            BEGIN_FR -->
+            FN_1["...STATEMENT N"] -->
+            FN_2["Verify/Research"] -->
+            FN_3["Review and add Comments to Artifact"] --> END_FR
+
+        END_FR@{ shape: fork }
+        --> COMBINE_FR["Merge Artifacts and Summarize"]
+        --> END_PRELIM
+
+
+            BEGIN_PRELIM -->
+            REVIEW_DOC_3["Test Code Samples/Equations"] -->
+            BEGIN_TR@{ shape: fork }
+T
+            BEGIN_TR -->
+            T1_1["Example 1"] -->
+            T1_2["Test Code"] -->
+            T1_3["Review and add Comments to Artifact"] --> END_TR
+
+            BEGIN_TR -->
+            T2_1["Statement 2"] -->
+            T2_2["Test Code"] -->
+            T2_3["Review and add Comments to Artifact"] --> END_TR
+
+            BEGIN_TR -->
+            TN_1["...STATEMENT N"] -->
+            TN_2["Test Code"] -->
+            TN_3["Review and add Comments to Artifact"] --> END_TR
+
+        END_TR@{ shape: fork }
+        --> COMBINE_TR["Merge Artifacts and Summarize"]
+        --> END_PRELIM
+
+        END_PRELIM@{ shape: fork }
+
+        --> COMBINE_PRELIM["Merge Doc Notes,Items"]
+        --> 
+
+               BEGIN_RR@{ shape: fork }
+
+
+            BEGIN_RR -->
+            RR_1_1["REVIEWER 1"] -->
+            RR_1_2["Add comments to other reviewer comments."] --> END_RR
+
+            BEGIN_RR -->
+            RR_2_1["REVIEWER 2"] -->
+            RR_2_2["Add comments to other reviewer comments."] --> END_RR
+
+            BEGIN_RR -->
+            RR_N_1["...REVIEWER N"] -->
+            RR_N_2["Add comments to other reviewer comments."] --> END_RR
+
+
+               END_RR@{ shape: fork }
+ 
+        --> AUTHOR_3_1["Review and prepare Agenda for Team Collab"]
+
+
+        --> DISCUSSION["Collab Chat Room: Discuss Document, Prepare Revisions for Review, vote, change outline"]
+
+        --> KEY_POINTS["Prepare Key Takeaway and action plan for waht to change in document, comment on notes what resolution will be applied"]
+
+        --> REVISE["Passing Agenda and annoted Document prepare additional revision (using same loop process as before)"]
+
+    end
+ 
+
+   
+COLLAB ----------------------> REVIEW_DOCUMENT2["Return to Review Step"]
+
+
+
+
+    END@{ shape: start} 
+
+
+
+```
+

@@ -3,6 +3,105 @@
 #===============================================================================
 
 
+defmodule GenAI.Session.State.Path.Node do
+
+
+end
+
+defmodule GenAI.Session.State.Path do
+  @vsn 1.0
+  @moduledoc """
+  Encode a walk across a graph.
+
+  ## Note
+  When Async steps are encountered (fan out) state is forked for each path and collapsed on completion.
+    For example if post processing of a thread to generate memory inserts involves multiple calls/operations and inference steps
+  run in parallel a single entry is included in path once complete embedding the flow.
+    Meanwhile while executing the base state is forked per path and consolidated on completion.
+
+  """
+
+  defstruct [
+    path: [],
+    meta: %{},
+    vsn: @vsn
+  ]
+end
+
+defmodule GenAI.Session.State do
+  @moduledoc """
+  Track runtime state and setting constraint resolvers.
+
+  """
+
+  defstruct [
+
+    node_state: %{},
+    link_state: %{},
+
+  path: [],
+
+  ]
+
+end
+
+
+
+
+
+
+
+
+
+
+# TODO this should be a protocol
+defmodule GenAI.Session.State.Rule do
+  @moduledoc """
+  Provides a rule record and supporting methods for applying/merging, etc.
+  """
+  defmodule Record do
+    # Implement actual record.
+  end
+
+  # Methods for working with record.
+end
+
+# TODO this should be a protocol / behavior
+defmodule GenAI.Session.State.Node do
+  # record for wrapping node state
+end
+
+
+defmodule GenAI.Session.State.Link do
+  # record for wrapping link state
+end
+
+defmodule GenAI.Session.State.Global do
+  # record for wrapping a global artifact/state value. Like user information, etc.
+end
+
+defmodule GenAI.Session.State.Options do
+  @moduledoc """
+  Effective Inference Options and Global State derived from applied nodes.
+  """
+end
+
+defmodule GenAI.Session.State do
+  @moduledoc """
+  Tracks runtime state and setting inference for chat session with caching/replay mechanisms for faster reruns.
+  """
+
+
+
+end
+
+
+
+
+
+
+
+
 
 defmodule GenAI.Session.State.Records do
    require Record
