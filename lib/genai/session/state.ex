@@ -46,6 +46,8 @@ defmodule GenAI.Session.State.SettingEntry do
     @doc """
     Injection point for a selector/constraint path
     """
+    def apply_setting_path({:option, name}), do:
+      [Access.key(:options), name]
     def apply_setting_path({:setting, name}), do:
       [Access.key(:settings), name]
     def apply_setting_path({:model_setting, model, name}), do:
@@ -238,6 +240,7 @@ defmodule GenAI.Session.State do
         processing: %{},
         directives: [],
         
+        options: %{},
         settings: %{},
         model_settings: %{},
         provider_settings: %{},
