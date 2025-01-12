@@ -3,217 +3,247 @@
 #===============================================================================
 
 
-defmodule GenAI.Session.State.Path.Node do
-
-
+defmodule GenAI.Session.Records do
+    @moduledoc """
+    Records useed by for preparing/encoding GenAI.Session
+    """
+    
+    require Record
+    
+    # Calculate effective/tentative value for option
+    Record.defrecord(:selector, [for: nil, value: nil, directive: nil])
+    
+    # Constraint on allowed option values.
+    Record.defrecord(:constraint, [for: nil, value: nil, directive: nil])
+    
+    # Constraint computed effective option value with cache tag for invalidation.
+    Record.defrecord(:effective_value, [value: nil]) # tracking fields.
+    
+    # Constraint computed tentative option value with cache tag for invalidation.
+    Record.defrecord(:tentative_value, [value: nil]) # tracking fields.
 end
 
-defmodule GenAI.Session.State.Path do
-  @vsn 1.0
-  @moduledoc """
-  Encode a walk across a graph.
-
-  ## Note
-  When Async steps are encountered (fan out) state is forked for each path and collapsed on completion.
-    For example if post processing of a thread to generate memory inserts involves multiple calls/operations and inference steps
-  run in parallel a single entry is included in path once complete embedding the flow.
-    Meanwhile while executing the base state is forked per path and consolidated on completion.
-
-  """
-
-  defstruct [
-    path: [],
-    meta: %{},
-    vsn: @vsn
-  ]
+defmodule GenAI.Session.State.SettingEntry do
+    @moduledoc """
+    Option record constructed from directives value constructor.
+    
+    # Note
+    Directives defines constraints/selectors for calculating dynamic (or concrete) values for a given setting or group of settings.
+    """
+    
+    require GenAI.Session.Records
+    import GenAI.Session.Records
+    defstruct [
+        name: nil,
+        effective: nil,
+        selectors: [],
+        constraints: [],
+    ]
+    
+    #------------------------
+    # apply_setting_path/1
+    #------------------------
+    @doc """
+    Injection point for a selector/constraint path
+    """
+    def apply_setting_path({:setting, name}), do:
+      [Access.key(:settings), name]
+    def apply_setting_path({:model_setting, model, name}), do:
+      [Access.key(:model_settings), model, name]
+    def apply_setting_path({:provider_setting, provider, name}), do:
+      [Access.key(:provider_settings), provider, name]
+    
+    #------------------------
+    # effective_expired?/4
+    #------------------------
+    @doc """
+    Verify is stored effective value must be recalculated due to input value changes or other factors such as ttl.
+    """
+    def effective_expired?(this, state, context, options) do
+      # TODO Implement logic
+        {false, state}
+    end
+    
+    #-------------------------
+    # effective_value/4
+    #-------------------------
+    @doc """
+    Calculate or returned cahced effective value for a given setting.
+    
+    ## Note
+    If selector depends on input of other settings/artifcats (like chat thread) it will in turn insure dependencies are resolved.
+    """
+    def effective_value(this, state, context, options)
+    def effective_value(nil, state, context, options) do
+        {:error, :not_set}
+    end
+    def effective_value(this, state, context, options) do
+      # @TODO support more selector types
+      # @TODO support dependency resolution
+      # @TODO cyclic loop protection.
+        cond do
+            is_nil(this.effective) || effective_expired?(this.effective, state, context, options) ->
+                with [h|_] <- this.selectors do
+                    case h do
+                        x = selector(value: {:concrete, value}) ->
+                            e = effective_value(value: x)
+                            put_in(state, apply_setting_path(this.name) ++ [Access.key(:effective)], e)
+                            {:ok, {value, state}}
+                    end
+                else
+                    _ -> {:ok, :unset}
+                end
+            :else ->
+                case this.effective do
+                    effective_value(value: {:concrete, value}) ->
+                        {:ok, {value, state}}
+                end
+        end
+    end
+    
+    def effective_value(this, default, state, context, options)
+    def effective_value(nil, default, state, context, options) do
+        {:ok, {default, state}}
+    end
+    def effective_value(this, default, state, context, options) do
+      # @TODO support more selector types
+      # @TODO support dependency resolution
+      # @TODO cyclic loop protection.
+        cond do
+            is_nil(this.effective) || effective_expired?(this.effective, state, context, options) ->
+                with [h|_] <- this.selectors do
+                    case h do
+                        x = selector(value: {:concrete, value}) ->
+                            e = effective_value(value: x)
+                            put_in(state, apply_setting_path(this.name) ++ [Access.key(:effective)], e)
+                            {:ok, {value, state}}
+                    end
+                    else
+                    _ -> {:ok, {default, state}}
+                end
+            :else ->
+                case this.effective do
+                    effective_value(value: {:concrete, value}) ->
+                        {:ok, {value, state}}
+                end
+        end
+    end
+    
+    #-------------------------
+    # apply_selector/4
+    #-------------------------
+    @doc """
+    Set active selector for setting.
+    """
+    def apply_selector(this, selector, context, options)
+    def apply_selector(nil, selector = selector(for: name), context, options) do
+        %__MODULE__{
+            name: name,
+            selectors: [selector],
+        }
+    end
+    def apply_selector(this, selector, context, options) do
+      # @TODO - override/merge logic
+        %__MODULE__{this|
+            selectors: [selector |this.selectors],
+        }
+    end
+    
+    #-------------------------
+    # apply_constraint/4
+    #-------------------------
+    @doc """
+    Apply constraint on allowed values like temperature must be > 95, model but support tools, etc.
+    """
+    def apply_constraint(this, constraint, context, options)
+    def apply_constraint(nil, constraint = constraint(for: name), context, options) do
+        %__MODULE__{
+            name: name,
+            constraints: [constraint],
+        }
+    end
+    
+    def apply_constraint(this, constraint, context, options) do
+      # @TODO Merge/Overridde Logic
+        %__MODULE__{this|
+            constraints: [constraint |this.constraints],
+        }
+    end
 end
 
-defmodule GenAI.Session.State do
-  @moduledoc """
-  Track runtime state and setting constraint resolvers.
-
-  """
-
-  defstruct [
-
-    node_state: %{},
-    link_state: %{},
-
-  path: [],
-
-  ]
-
-end
-
-
-
-
-
-
-
-
-
-
-# TODO this should be a protocol
-defmodule GenAI.Session.State.Rule do
-  @moduledoc """
-  Provides a rule record and supporting methods for applying/merging, etc.
-  """
-  defmodule Record do
-    # Implement actual record.
-  end
-
-  # Methods for working with record.
-end
-
-# TODO this should be a protocol / behavior
-defmodule GenAI.Session.State.Node do
-  # record for wrapping node state
-end
-
-
-defmodule GenAI.Session.State.Link do
-  # record for wrapping link state
-end
-
-defmodule GenAI.Session.State.Global do
-  # record for wrapping a global artifact/state value. Like user information, etc.
-end
-
-defmodule GenAI.Session.State.Options do
-  @moduledoc """
-  Effective Inference Options and Global State derived from applied nodes.
-  """
-end
-
-defmodule GenAI.Session.State do
-  @moduledoc """
-  Tracks runtime state and setting inference for chat session with caching/replay mechanisms for faster reruns.
-  """
-
-
-
-end
-
-
-
-
-
-
-
-
-
-defmodule GenAI.Session.State.Records do
-   require Record
-   
-   @type id :: term
-   @type setting :: term
-   @type source :: {:rule, id}
-   @type weight :: integer
-   @type selector_type :: :interstitial | :defaut | :user | :derived | atom
-   
-   @type warn_action :: {:log, :info | :warning | :error} |  :error | :raise
-   @type warn_settings :: [
-                    unmet: warn_action,
-                    on_override: warn_action,
-                    ]
-   
-   # tuple {:<, 500}, {:in, [a,b,c]}, Module with constraint method, Struct with constraint behavior, mfa, function/3 (constraint, setting, state)
-   @type constraint_value :: {m :: Module, f :: atom, a :: list()} | Module | struct() | function
-   
-   
-   # tuple {:<, 500}, {:in, [a,b,c]}, Module with constraint method, Struct with constraint behavior, mfa, function/3 (constraint, setting, state)
-   @type selector_value :: {m :: Module, f :: atom, a :: list()} | Module | struct() | function
-   @type rule_source :: {:node, term} | :config | {:derived, {setting, :selector, id}} | {:derived, {setting, :constraint, id}} | {:derived, {setting, :tentative, id}} | {:derived, {setting, :effective, id}}
-
-   Record.defrecord(:selector, [id: nil, setting: nil, selector: nil, source: nil, weight: nil, type: nil, meta: nil])
-   Record.defrecord(:constraint, [id: nil, setting: nil, constraint: nil, source: nil, weight: nil, required: false, warn_settings: nil, meta: nil])
-   Record.defrecord(:rule, [id: nil, source: nil])
-   Record.defrecord(:tentative_value, [id: nil, type: nil, value: nil, cache_key: nil, meta: nil])
-   Record.defrecord(:effective_value, [id: nil, value: nil, cache_key: nil, meta: nil])
-   
-   @type selector :: record(:selector, [id: id, setting: setting, selector: selector_value, source: source, weight: weight, type: selector_type, meta: term])
-   @type constraint :: record(:constraint, [id: id, setting: setting, constraint: constraint_value, source: source, weight: weight, required: boolean, warn_settings: warn_settings, meta: term])
-   @type rule :: record(:rule, [id: id, source: rule_source])
-   @type tentative_value :: record(:tentative_value, [id: id, type: term, value: term, cache_key: term, meta: term])
-   @type effective_value :: record(:effective_value, [id: id, value: term, cache_key: term, meta: term])
-   
-   
-   
-end
-
-
-defmodule GenAI.Session.Rule do
+defmodule GenAI.Session.State.Directive do
+    @moduledoc """
+    A Directive specifying which models, options, etc. values should be applied to session state.
+    
+    ## Note
+    This is a basic Directive, more advanced directives may be dynamic with resulting entries calculated at apply time
+    Based on other setting/global values in state.
+    """
+    require GenAI.Session.Records
+    import GenAI.Session.Records
+    
     defstruct [
         id: nil,
         source: nil,
         finger_print: nil,
-        references: nil,
-        modifies: nil,
-        selectors: %{},
-        constraints: %{},
+        entries: [],
     ]
-end
-
-defmodule GenAI.Session.NodeState do
-    defstruct [
-        id: nil,
-        finger_print: nil,
-        updated_at: nil,
-        core: nil,
-        ephermal: nil
-    ]
-end
-
-
-defmodule GenAI.Session.Entry do
-    defstruct [
-        name: nil,
-        selectors: [],
-        constraints: [],
-        effective: nil,
-        tentative: nil,
-        dependencies: [],
-        dependents: [],
-    ]
-end
-
-
-defmodule GenAI.Session.StateBehaviour do
-    @moduledoc false
-
+    
+    @doc """
+    Calculate a unique fingerprint for directive based on selector/constraint dependency values.
+    """
+    def fingerprint(this, state, context, options) do
+      # TODO Impelment - uuid5 concat of entry fingerprints.
+      # Returns fingerprint and updated state.
+        this.id
+    end
+    
+    
+    def apply_directive(directive, state, context, options \\ nil)
+    def apply_directive(directive, state, context, options) do
+        Enum.reduce(
+            directive.entries,
+            state,
+            fn
+                x = selector(for: setting), state ->
+                    x = selector(x, directive: directive.id)
+                    state = state
+                            |> update_in(
+                                   GenAI.Session.State.SettingEntry.apply_setting_path(setting),
+                                   & GenAI.Session.State.SettingEntry.apply_selector(&1, x, context, options)
+                               )
+                x = constraint(for: setting), state->
+                    x = constraint(x, directive: directive.id)
+                    state = state
+                            |> update_in(
+                                   GenAI.Session.State.SettingEntry.apply_setting_path(setting),
+                                   & GenAI.Session.State.SettingEntry.apply_constraint(&1, x, context, options)
+                               )
+            end
+        )
+    end
 end
 
 
 defmodule GenAI.Session.State do
-    @moduledoc false
+    @moduledoc """
+    Represent status/state such as node state, sessions, message thread, etc.
+    """
+    
 
-    # TODO logic to avoid reprocessing already applied nodes/rules.
-    # Some nodes/rules have dynamic parts, some are fixed.
-    # once graph is already processed subsequent runs should be light touch and only generate new nodes and nodes with changes.
-    # nodes should provide a version/key field to determine if a change has occured/should occur. e.g. indicate they are dynamic.
+    require GenAI.Session.Records
+    import GenAI.Session.Records
     
     defstruct [
-        # Inferred Settings/State
+        processing: %{},
+        directives: [],
+        
         settings: %{},
-        tools: %{},
         model_settings: %{},
         provider_settings: %{},
-      
-      
-        # id -> applied message/effective (containing any generated/injected parts, memories, etc.), a message may wrap multiple nodes that are combined to build a final message like preparing a plan, injecting memories, dynamic insertion, etc to prepare final effective message.
-        # may not be a final form message may contain stub elements that are processed las tminute by provider such as formatting instructions as xml versus json, etc.
-        messages: %{},
-        message_sequence: [], # by id
-    
-        rules: %{}, # id -> message
-        rule_sequence: [], # by id
-    
-        # node state - (state only not entire object), externalized object sent by node.
-        graph_nodes: %{},
-        graph_links: %{},
-    
-        # running options
+        model: nil,
+        
+        directive_position: 0,
         monitors: %{},
         vsn: 1.0
     ]
@@ -221,33 +251,77 @@ defmodule GenAI.Session.State do
     #===========================================================================
     #
     #===========================================================================
+    
+    #-----------------------
+    # new/1
+    #-----------------------
     def new(options \\ nil)
     def new(_) do
         %__MODULE__{
         
         }
     end
-
+    
+    #-----------------------
+    # initialize/4
+    #-----------------------
     def initialize(state, runtime, context, options \\ nil)
     def initialize(state, _runtime, _context, _options) do
-      {:ok, state}
+        {:ok, state}
     end
-
+    
+    #-----------------------
+    # monitor/4
+    #-----------------------
     def monitor(state, runtime, context, options \\ nil)
     def monitor(state, runtime, _, _) do
-      state = %__MODULE__{state| monitors: :wip}
-      {:ok, {state, runtime}}
+        state = %__MODULE__{state| monitors: :wip}
+        {:ok, {state, runtime}}
     end
-
-    # with_setting, model, tool, ... default_api_key (pushes to top of rules), ...
     
-    # effective_model, effective_setting, effective_model_settings, effective_provider_settings, messages, tools, rules, monitors, ...
-  
-  #=============================================================================
-  #
-  #=============================================================================
-  
-
+    #-----------------------
+    # pending_directives?/1
+    #-----------------------
+    @doc """
+    Check if pending directives should be applied.
+    """
+    def pending_directives?(state) do
+        length(state.directives) > state.directive_position
+    end
+    
+    
+    
+    def apply_directives(state, context, options \\ nil)
+    def apply_directives(state, context, options) do
+        if pending_directives?(state) do
+            state = Enum.reduce(
+                state.directive_position .. length(state.directives) -1,
+                state,
+                fn
+                    index, state ->
+                        directive = Enum.at(state.directives, index)
+                        GenAI.Session.State.Directive.apply_directive(directive, state, context, options)
+                end
+            )
+            %__MODULE__{state |
+                directive_position: length(state.directives)
+            }
+        else
+            state
+        end
+    end
+    
+    def effective_setting(state, name, context, options)
+    def effective_setting(state, name, context, options) do
+        state = apply_directives(state, context, options)
+        entry = get_in(state, GenAI.Session.State.SettingEntry.apply_setting_path({:setting, name}))
+        GenAI.Session.State.SettingEntry.effective_value(entry, state, context, options)
+    end
+    
+    def effective_setting(state, name, default, context, options)
+    def effective_setting(state, name, default, context, options) do
+        state = apply_directives(state, context, options)
+        entry = get_in(state, GenAI.Session.State.SettingEntry.apply_setting_path({:setting, name}))
+        GenAI.Session.State.SettingEntry.effective_value(entry, default, state, context, options)
+    end
 end
-
-
