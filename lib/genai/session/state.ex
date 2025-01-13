@@ -1,8 +1,6 @@
 #===============================================================================
 # Copyright (c) 2025, Noizu Labs, Inc.
 #===============================================================================
-
-
 defmodule GenAI.Session.Records do
     @moduledoc """
     Records useed by for preparing/encoding GenAI.Session
@@ -11,10 +9,10 @@ defmodule GenAI.Session.Records do
     require Record
     
     # Calculate effective/tentative value for option
-    Record.defrecord(:selector, [for: nil, value: nil, directive: nil])
+    Record.defrecord(:selector, [id: nil, for: nil, value: nil, directive: nil, impacts: [], references: []])
     
     # Constraint on allowed option values.
-    Record.defrecord(:constraint, [for: nil, value: nil, directive: nil])
+    Record.defrecord(:constraint, [id: nil, for: nil, value: nil, directive: nil, impacts: [], references: []])
     
     # Constraint computed effective option value with cache tag for invalidation.
     Record.defrecord(:effective_value, [value: nil]) # tracking fields.
@@ -38,18 +36,22 @@ defmodule GenAI.Session.State.SettingEntry do
         effective: nil,
         selectors: [],
         constraints: [],
+        references: [],
+        impacts: [],
     ]
     
     #------------------------
     # apply_setting_path/1
     #------------------------
     @doc """
-    Injection point for a selector/constraint path
+    Injection point for a selector/constraint path - e.g. state.settings, state.options, state.provider_settings, etc.
     """
     def apply_setting_path({:option, name}), do:
       [Access.key(:options), name]
     def apply_setting_path({:setting, name}), do:
       [Access.key(:settings), name]
+    def apply_setting_path({:tool, name}), do:
+      [Access.key(:tools), name]
     def apply_setting_path({:model_setting, model, name}), do:
       [Access.key(:model_settings), model, name]
     def apply_setting_path({:provider_setting, provider, name}), do:
@@ -63,11 +65,13 @@ defmodule GenAI.Session.State.SettingEntry do
     """
     def effective_expired?(this, state, context, options) do
       # TODO Implement logic
-        {false, state}
+        false
     end
     
+    
+    
     #-------------------------
-    # effective_value/4
+    # effective_setting/4
     #-------------------------
     @doc """
     Calculate or returned cahced effective value for a given setting.
@@ -75,25 +79,36 @@ defmodule GenAI.Session.State.SettingEntry do
     ## Note
     If selector depends on input of other settings/artifcats (like chat thread) it will in turn insure dependencies are resolved.
     """
-    def effective_value(this, state, context, options)
-    def effective_value(nil, state, context, options) do
-        {:error, :not_set}
+    def effective_setting(this, state, context, options)
+    def effective_setting(nil, state, context, options) do
+        {:error, :unset}
     end
-    def effective_value(this, state, context, options) do
-      # @TODO support more selector types
-      # @TODO support dependency resolution
+    def effective_setting(this, state, context, options) do
       # @TODO cyclic loop protection.
         cond do
             is_nil(this.effective) || effective_expired?(this.effective, state, context, options) ->
-                with [h|_] <- this.selectors do
-                    case h do
-                        x = selector(value: {:concrete, value}) ->
-                            e = effective_value(value: x)
-                            put_in(state, apply_setting_path(this.name) ++ [Access.key(:effective)], e)
-                            {:ok, {value, state}}
-                    end
-                else
-                    _ -> {:ok, :unset}
+                # load dependencies.
+                do_effective_setting(this, this.selectors, state, context, options)
+            :else ->
+                case this.effective do
+                    effective_value(value: {:concrete, value}) ->
+                        {:ok, {value, state}}
+                end
+        end
+    end
+    
+    def effective_setting(this, default, state, context, options)
+    def effective_setting(nil, default, state, context, options) do
+        {:ok, {default, state}}
+    end
+    def effective_setting(this, default, state, context, options) do
+      # @TODO cyclic loop protection.
+        cond do
+            is_nil(this.effective) || effective_expired?(this.effective, state, context, options) ->
+                case do_effective_setting(this, this.selectors, state, context, options) do
+                    {:error, :unresolved} -> {:ok, {default, state}}
+                    {:error, :unset} -> {:ok, {default, state}}
+                    {:ok, {value, state}} -> {:ok, {value, state}}
                 end
             :else ->
                 case this.effective do
@@ -103,33 +118,85 @@ defmodule GenAI.Session.State.SettingEntry do
         end
     end
     
-    def effective_value(this, default, state, context, options)
-    def effective_value(nil, default, state, context, options) do
-        {:ok, {default, state}}
-    end
-    def effective_value(this, default, state, context, options) do
-      # @TODO support more selector types
-      # @TODO support dependency resolution
-      # @TODO cyclic loop protection.
-        cond do
-            is_nil(this.effective) || effective_expired?(this.effective, state, context, options) ->
-                with [h|_] <- this.selectors do
-                    case h do
-                        x = selector(value: {:concrete, value}) ->
-                            e = effective_value(value: x)
-                            put_in(state, apply_setting_path(this.name) ++ [Access.key(:effective)], e)
-                            {:ok, {value, state}}
-                    end
-                    else
-                    _ -> {:ok, {default, state}}
-                end
-            :else ->
-                case this.effective do
-                    effective_value(value: {:concrete, value}) ->
-                        {:ok, {value, state}}
+    defp do_effective_setting(this, [], state, context, options), do: {:error, :unset}
+    defp do_effective_setting(this, [h|t], state, context, options) do
+        case h do
+            selector(value: :chain) ->
+                do_effective_setting(this, t, state, context, options)
+            selector(value: x = {:concrete, value}) ->
+                e = effective_value(value: x)
+                state = put_in(state, apply_setting_path(this.name) ++ [Access.key(:effective)], e)
+                {:ok, {value, state}}
+            selector(value: {:lambda, lambda}) ->
+                case lambda.(h, state, context, options) do
+                    {:ok, {unpacked, state}} ->
+                        do_effective_setting(this, [selector(h, value: unpacked)|t], state, context, options)
                 end
         end
     end
+    
+    
+    
+    
+    @doc """
+    Load all values this item references/requires to process.
+    """
+    def load_references(this, state, context, options)
+    def load_references(nil, state, context, options), do: state
+    def load_references(this, state, context, options) do
+        Enum.reduce(this.references, state,
+            fn name, state ->
+              with {:ok, {_, state}} <- GenAI.Session.State.effective_entry(state, name, context, options) do
+                  state
+              else
+                  _ -> state
+              end
+            end
+        )
+    end
+    
+    #-------------------------
+    # mark_reference/4
+    #-------------------------
+    @doc """
+    Set active selector for setting.
+    """
+    def mark_reference(this, name, reference, context, options)
+    def mark_reference(nil, name, reference, context, options) do
+        %__MODULE__{
+            name: name,
+            references: [reference],
+        }
+    end
+    def mark_reference(this, name, reference, context, options) do
+        # @todo override logic needed.
+        %__MODULE__{this|
+            name: name,
+            references: [reference| this.references],
+        }
+    end
+    
+    #-------------------------
+    # mark_references/4
+    #-------------------------
+    @doc """
+    Set active selector for setting.
+    """
+    def mark_references(this, name, references, context, options)
+    def mark_references(nil, name, references, context, options) do
+        %__MODULE__{
+            name: name,
+            references: references,
+        }
+    end
+    def mark_references(this, name, references, context, options) do
+      # @todo override logic needed.
+        %__MODULE__{this|
+            name: name,
+            references: references ++ [this.references],
+        }
+    end
+    
     
     #-------------------------
     # apply_selector/4
@@ -207,13 +274,27 @@ defmodule GenAI.Session.State.Directive do
             directive.entries,
             state,
             fn
-                x = selector(for: setting), state ->
+                x = selector(for: setting, impacts: impacts), state ->
                     x = selector(x, directive: directive.id)
                     state = state
                             |> update_in(
                                    GenAI.Session.State.SettingEntry.apply_setting_path(setting),
                                    & GenAI.Session.State.SettingEntry.apply_selector(&1, x, context, options)
                                )
+                               
+                    # Tap Settings which are impacted by this selector
+                    impacts = if not is_list(impacts), do: [impacts], else: impacts
+                    state = Enum.reduce(
+                        impacts,
+                        state,
+                        fn impact, state ->
+                          state = state
+                                  |> update_in(
+                                         GenAI.Session.State.SettingEntry.apply_setting_path(impact),
+                                         & GenAI.Session.State.SettingEntry.mark_reference(&1, impact, setting, context, options))
+                        end)
+                        
+                        
                 x = constraint(for: setting), state->
                     x = constraint(x, directive: directive.id)
                     state = state
@@ -294,11 +375,18 @@ defmodule GenAI.Session.State do
     
     
     
+    def append_directive(state, directive, context, options) do
+        
+        %__MODULE__{state|
+            directives: state.directives ++ [directive]
+        }
+    end
+    
     def apply_directives(state, context, options \\ nil)
     def apply_directives(state, context, options) do
         if pending_directives?(state) do
             state = Enum.reduce(
-                state.directive_position .. length(state.directives) -1,
+                state.directive_position ..  length(state.directives) - 1 ,
                 state,
                 fn
                     index, state ->
@@ -314,17 +402,74 @@ defmodule GenAI.Session.State do
         end
     end
     
+    
+    defp do_effective(state, path, context, options) do
+        # Advance Unnapplied directives
+        state = apply_directives(state, context, options)
+        entry = get_in(state, GenAI.Session.State.SettingEntry.apply_setting_path(path))
+        
+        # Insure referenced settings are loaded if required
+        position = state.directive_position
+        state = GenAI.Session.State.SettingEntry.load_references(entry, state, context, options)
+        state = apply_directives(state, context, options)
+        entry = get_in(state, GenAI.Session.State.SettingEntry.apply_setting_path(path))
+        unless state.directive_position == position do
+           # Repeat if injected directives have been added until resolved.
+            do_effective(state, path, context, options)
+        else
+            # Proceed
+            GenAI.Session.State.SettingEntry.effective_setting(entry, state, context, options)
+        end
+    end
+    
+    
+    defp do_effective(state, path, default, context, options) do
+      # Advance Unnapplied directives
+        state = apply_directives(state, context, options)
+        entry = get_in(state, GenAI.Session.State.SettingEntry.apply_setting_path(path))
+        # Insure referenced settings are loaded if required
+        position = state.directive_position
+        state = GenAI.Session.State.SettingEntry.load_references(entry, state, context, options)
+        state = apply_directives(state, context, options)
+        entry = get_in(state, GenAI.Session.State.SettingEntry.apply_setting_path(path))
+        if state.directive_position == position do
+          # Proceed
+            GenAI.Session.State.SettingEntry.effective_setting(entry, default, state, context, options)
+        else
+          # Repeat if injected directives have been added until resolved.
+            do_effective(state, path, default, context, options)
+        end
+    end
+    
+    def effective_entry(state, entry, context, options) do
+        do_effective(state, entry, context, options)
+    end
+    def effective_entry(state, entry, default, context, options) do
+        do_effective(state, entry, default, context, options)
+    end
+    
+    
     def effective_setting(state, name, context, options)
     def effective_setting(state, name, context, options) do
-        state = apply_directives(state, context, options)
-        entry = get_in(state, GenAI.Session.State.SettingEntry.apply_setting_path({:setting, name}))
-        GenAI.Session.State.SettingEntry.effective_value(entry, state, context, options)
+        do_effective(state, {:setting, name}, context, options)
     end
     
     def effective_setting(state, name, default, context, options)
     def effective_setting(state, name, default, context, options) do
-        state = apply_directives(state, context, options)
-        entry = get_in(state, GenAI.Session.State.SettingEntry.apply_setting_path({:setting, name}))
-        GenAI.Session.State.SettingEntry.effective_value(entry, default, state, context, options)
+        do_effective(state, {:setting, name}, default, context, options)
     end
+    
+    
+    def effective_option(state, name, context, options)
+    def effective_option(state, name, context, options) do
+        do_effective(state, {:option, name}, context, options)
+    end
+    
+    def effective_option(state, name, default, context, options)
+    def effective_option(state, name, default, context, options) do
+        do_effective(state, {:option, name}, default, context, options)
+    end
+    
+    
+    
 end
