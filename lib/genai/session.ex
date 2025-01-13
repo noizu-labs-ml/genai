@@ -2,52 +2,54 @@
 # Copyright (c) 2025, Noizu Labs, Inc.
 #===============================================================================
 defmodule GenAI.Session.Runtime do
-  @moduledoc false
-  @vsn 1.0
-  defstruct [
-      command: :default,
-      config: [],
-      data: %{},
-      monitors: %{},
-      meta: %{},
-      vsn: @vsn
-  ]
-
-  def new(options \\ nil)
-  def new(options) do
-      %__MODULE__{
-        command: options[:command] || :default,
-      }
-  end
-
-
-  defp prepare_command(command, context, options)
-  defp prepare_command(command, _context, _options) when is_atom(command), do: {command, []}
-  defp prepare_command({command, config}, _, _) when is_atom(command), do: {command, config}
-
-  def command(runtime, command, context, options \\ nil)
-  def command(runtime, command, context, options) when is_atom(command) do
-    command(runtime, prepare_command(command, context, options), context, options)
-  end
-  def command(runtime, {command, config}, context, options) do
-    {command, config} = prepare_command({command, config}, context, options)
-    # deal with merging config
-    x = %__MODULE__{runtime|
-      command: command,
-      config: config,
-      monitors: %{},
-      data: %{},
-      meta: %{}
-    }
-    {:ok, x}
-  end
+    @moduledoc false
+    @vsn 1.0
+    defstruct [
+        command: :default,
+        config: [],
+        data: %{},
+        monitors: %{},
+        meta: %{},
+        vsn: @vsn
+    ]
+    
+    def new(options \\ nil)
+    def new(options) do
+        %__MODULE__{
+            command: options[:command] || :default,
+        }
+    end
+    
+    
+    defp prepare_command(command, context, options)
+    defp prepare_command(command, _context, _options) when is_atom(command), do: {command, []}
+    defp prepare_command({command, config}, _, _) when is_atom(command), do: {command, config}
+    
+    def command(runtime, command, context, options \\ nil)
+    def command(runtime, command, context, options) when is_atom(command) do
+        command(runtime, prepare_command(command, context, options), context, options)
+    end
+    def command(runtime, {command, config}, context, options) do
+        {command, config} = prepare_command({command, config}, context, options)
+        # deal with merging config
+        x = %__MODULE__{runtime|
+            command: command,
+            config: config,
+            monitors: %{},
+            data: %{},
+            meta: %{}
+        }
+        {:ok, x}
+    end
 
 end
 
 defmodule GenAI.Session do
     @moduledoc false
     @vsn 1.0
-
+    require GenAI.Session.Node.Records
+    alias GenAI.Session.Node.Records, as: Node
+    
     defstruct [
         state: nil,
         graph: nil,
@@ -60,15 +62,15 @@ defmodule GenAI.Session do
         graph = GenAI.Graph.new(options[:graph])
         state = GenAI.Session.State.new(options[:state])
         runtime = GenAI.Session.Runtime.new(options[:runtime])
-
+        
         %__MODULE__{
-         state: state,
-         graph: graph,
-         runtime: runtime,
-         vsn: @vsn
+            state: state,
+            graph: graph,
+            runtime: runtime,
+            vsn: @vsn
         }
     end
-
+    
     #-------------------------------------------
     # Session Behavior
     #---------------------------------------------
@@ -385,7 +387,17 @@ defmodule GenAI.Session do
              {:ok, {session_state, runtime}} <-
                # Setup telemetry agents, etc.
                GenAI.Session.State.monitor(session_state, runtime, context, options) do
-            with x <- GenAI.Session.NodeProtocol.process_node(session.graph, nil, nil, session_state, runtime, context, options) do
+            with x <- GenAI.Session.NodeProtocol.process_node(
+                session.graph,
+                Node.scope(
+                    graph_node: session.graph,
+                    graph_link: nil,
+                    graph_container: nil,
+                    session_state: session_state,
+                    session_runtime: runtime
+                ),
+                context,
+                options) do
               # TODO apply updates, return completion (if any) and session and generated report from monitor agent
                 {:ok, :pending2}
             end
@@ -398,5 +410,5 @@ defmodule GenAI.Session do
       # Get metrics from monitor
     
     end
-    
+
 end

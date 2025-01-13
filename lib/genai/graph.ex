@@ -46,11 +46,31 @@ defmodule GenAI.Graph do
   @doc """
   Process node and proceed to next step.
   """
-  def process_node(graph_node, graph_link, container, state, runtime, context, options)
-  def process_node(graph_node, graph_link, container, state, runtime, context, options) do
+  def process_node(graph_node, scope, context, options)
+  def process_node(
+          graph_node,
+          Node.scope(
+              graph_node: graph_node,
+              graph_link: graph_link,
+              graph_container: graph_container,
+              session_state: session_state,
+              session_runtime: session_runtime
+          ),
+          context,
+          options) do
       with {:ok, head} <- GenAI.Graph.head(graph_node) do
         # Run graph and then pass back to parent container if set based on end state.
-          with x <- GenAI.Session.NodeProtocol.Runner.do_process_node(head, nil, graph_node, state, runtime, context, options) do
+          with x <- GenAI.Session.NodeProtocol.Runner.do_process_node(
+              head,
+              Node.scope(
+                graph_node: head,
+              graph_link: nil,
+                graph_container: graph_node,
+                session_state: session_state,
+                session_runtime: session_runtime
+              ),
+              context,
+              options) do
               x
           end
       end

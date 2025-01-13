@@ -8,8 +8,6 @@ defmodule GenAI.Session.StateTest do
         Noizu.Context.system()
     end
     
-    @moduletag :work
-    
     describe "Directive Resolution" do
         
         test "Does not Have Pending Directive" do
