@@ -99,38 +99,65 @@ defprotocol GenAI.Session.NodeProtocol do
     The default implementation should be fine for most cases but you can override if needed.
     """
     def finger_print(graph_node, finger_print_key, scope, context, options)
+    
+    #==================================
+    # Meta Data Feed
+    #==================================
+    def graph_node_protocol_options(graph_node, context, options)
+    def __derive_graph_node_protocol_options__(graph_node)
+    
 end
 
 defimpl GenAI.Session.NodeProtocol, for: Any do
     defmacro __deriving__(module, _struct, options) do
+        
+        options = Macro.escape(options)
+        IO.inspect(options)
+        
         quote do
             defimpl GenAI.Session.NodeProtocol, for: unquote(module) do
                 
                 @provider unquote(options[:provider]) || GenAI.Session.NodeProtocol.DefaultProvider
-                @input_directives unquote(options[:input]) || %{}
-                @finger_print_keys unquote(options[:finger_print]) || %{}
+                @input_directives unquote(options)[:input] || %{}
+                @finger_print unquote(options)[:finger_print] || %{}
+                @graph_node_protocol_options %{
+                    provider: @provider,
+                    input: @input_directives,
+                    finger_print: @finger_print
+                }
                 
                 defdelegate node_type(graph_node), to: @provider
                 defdelegate process_node(graph_node, scope, context, options), to: @provider
                 defdelegate update_state(graph_node, scope, context, options), to: @provider
+                defdelegate graph_node_protocol_options(graph_node, context, options), to: @provider
+                def __derive_graph_node_protocol_options__(graph_node) do
+                    @graph_node_protocol_options
+                end
                 defdelegate update_state_input(graph_node, scope, context, options), to: @provider
-                defdelegate directives(graph_node, input, finger_print_key, scope, context, options), to: @provider
-                defdelegate finger_print_key(graph_node, input, default_key, scope, context, options), to: @provider
                 defdelegate finger_print(graph_node, finger_print_key, scope, context, options), to: @provider
+                defdelegate finger_print_key(graph_node, input, default_key, scope, context, options), to: @provider
+                defdelegate directives(graph_node, input, finger_print_key, scope, context, options), to: @provider
             
             end
         end
     end
 end
 
-
-
-
 defmodule GenAI.Session.NodeProtocol.DefaultProvider do
     require GenAI.Session.Node.Records
     alias GenAI.Session.Node.Records, as: Node
     require GenAI.Graph.Link.Records
     alias GenAI.Graph.Link.Records, as: Link
+    require GenAI.Session.Records
+    alias GenAI.Session.Records, as: S
+    
+    def graph_node_protocol_options(%{__struct__: module} = graph_node, context, options) do
+        if Code.ensure_loaded?(module) and function_exported?(module, :graph_node_protocol_options, 3) do
+            module.graph_node_protocol_options(graph_node, context, options)
+        else
+            GenAI.Session.NodeProtocol.__derive_graph_node_protocol_options__(graph_node)
+        end
+    end
     
     #-----------------------------------------------
     # node_type
@@ -146,6 +173,10 @@ defmodule GenAI.Session.NodeProtocol.DefaultProvider do
         end
     end
     
+    def do_node_type(%{__struct__: module}) do
+        module
+    end
+    
     #-----------------------------------------------
     # process_node
     #-----------------------------------------------
@@ -153,41 +184,11 @@ defmodule GenAI.Session.NodeProtocol.DefaultProvider do
     Apply/process a node. check/update fingerprint and add any appropriate directives to state.
     """
     def process_node(%{__struct__: module} = graph_node, scope, context, options) do
-        if Code.ensure_loaded?(module) and function_exported?(module, :process_node, 7) do
+        if Code.ensure_loaded?(module) and function_exported?(module, :process_node, 4) do
             module.process_node(graph_node, scope, context, options)
         else
             do_process_node(graph_node, scope, context, options)
         end
-    end
-    
-    
-    def update_state(graph_node, scope, context, options) do
-        :wip
-    end
-    
-    def update_state_input(graph_node, scope, context, options) do
-        :wip
-    end
-    
-    def directives(graph_node, input, finger_print_key, scope, context, options) do
-        :wip
-    end
-    
-    def finger_print_key(graph_node, input, default_key, scope, context, options) do
-        :wip
-    end
-    
-    def finger_print(graph_node, finger_print_key, scope, context, options) do
-        :wip
-    end
-    
-    
-    #===========================================================================
-    # Helpers
-    #===========================================================================
-    
-    def do_node_type(%{__struct__: module}) do
-        module
     end
     
     
@@ -224,25 +225,84 @@ defmodule GenAI.Session.NodeProtocol.DefaultProvider do
         end
     end
     
-    def finger_print(graph_node, graph_link, container, state, runtime, context, options) do
-        {:ok, 1234}
+    #-----------------------------------------------
+    # update_state
+    #-----------------------------------------------
+    def update_state(%{__struct__: module} = graph_node, scope, context, options) do
+        if Code.ensure_loaded?(module) and function_exported?(module, :process_node, 4) do
+            module.update_state(graph_node, scope, context, options)
+        else
+            do_update_state(graph_node, scope, context, options)
+        end
+    end
+    def do_update_state(graph_node, scope, context, options) do
+    
     end
     
-    @doc """
-    Update state for node.
-    """
-    def update_state(graph_node, graph_link, previous_state,  container, state, runtime, context, options) do
-        {:ok, 1234}
+    #-----------------------------------------------
+    # update_state_input
+    #-----------------------------------------------
+    def update_state_input(%{__struct__: module} = graph_node, scope, context, options) do
+        if Code.ensure_loaded?(module) and function_exported?(module, :update_state_input, 4) do
+            module.update_state_input(graph_node, scope, context, options)
+        else
+            do_update_state_input(graph_node, scope, context, options)
+        end
     end
     
-    @doc """
-    Return directive(s) for setting tools/messages/settings/artifacts for node.
-    Only re-executed if fingerprint change indicates values will result in new values.
-    """
-    def directive(graph_node, graph_link, container, state, runtime, context, options) do
-        {:ok, 1234}
+    
+    def do_update_state_input(graph_node, scope = Node.scope(), context, options) do
+        with config = %{input: x} <- GenAI.Session.NodeProtocol.graph_node_protocol_options(graph_node, context, options) do
+            GenAI.Session.Node.Input.expand_inputs(config.input, scope, context, options)
+        end
     end
+    
+    #-----------------------------------------------
+    # node_directives
+    #-----------------------------------------------
+    def node_directives(%{__struct__: module} = graph_node, input, finger_print_key, scope, context, options) do
+        if Code.ensure_loaded?(module) and function_exported?(module, :update_state_input, 6) do
+            module.directives(graph_node, input, finger_print_key, scope, context, options)
+        else
+            do_node_directives(graph_node, input, finger_print_key, scope, context, options)
+        end
+    end
+    def do_node_directives(graph_node, input, finger_print_key, scope, context, options), do: nil
+    
+    #-----------------------------------------------
+    # finger_print_key
+    #-----------------------------------------------
+    def finger_print_key(%{__struct__: module} = graph_node, input, default_key, scope, context, options) do
+        if Code.ensure_loaded?(module) and function_exported?(module, :finger_print_key, 6) do
+            module.finger_print_key(graph_node, input, default_key, scope, context, options)
+        else
+            do_finger_print_key(graph_node, input, default_key, scope, context, options)
+        end
+    end
+    def do_finger_print_key(graph_node, input, default_key, scope, context, options), do: nil
+    
+    #-----------------------------------------------
+    # finger_print
+    #-----------------------------------------------
+    def finger_print(%{__struct__: module} = graph_node, finger_print_key, scope, context, options) do
+        if Code.ensure_loaded?(module) and function_exported?(module, :finger_print, 5) do
+            module.finger_print(graph_node, finger_print_key, scope, context, options)
+        else
+            do_finger_print(graph_node, finger_print_key, scope, context, options)
+        end
+    end
+    
+    def do_finger_print(graph_node, finger_print_key, scope, context, options) do
+        nil
+    end
+    
+    
+    #===========================================================================
+    # Helpers
+    #===========================================================================
 
+    
+    
 end
 
 
@@ -266,7 +326,7 @@ defmodule GenAI.Session.NodeProtocol.Runner do
                 session_state: session_state,
                 session_runtime: session_runtime
             ),
-            Node.scope(
+            Node.process_update(
                 graph_node: graph_node_changes,
                 graph_link: graph_link_changes,
                 graph_container: graph_container_changes,
