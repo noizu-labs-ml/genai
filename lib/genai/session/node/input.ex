@@ -59,11 +59,8 @@ defmodule GenAI.Session.Node.Input do
     end
     
     #-----------------------------------
-    #
+    # expand_input/4
     #-----------------------------------
-    
-    
-    
     def expand_input(key_value, scope, context, options)
     def expand_input({k, S.data_set(name: n, records: c)}, scope = Node.scope(session_state: ss), context, options) do
         x = fn (generator, state, context, options) ->
@@ -74,11 +71,18 @@ defmodule GenAI.Session.Node.Input do
         {:ok, {response, ss}} = GenAI.Session.State.query_data_generator(ss, n, x, context, options)
         {{k,response}, Node.scope(scope, session_state: ss)}
     end
-    
-    
-    
+    def expand_input({k, S.stack(item: i, default: d)}, Node.scope(session_state: ss), _, _) do
+        v = if Map.has_key?(ss.stack, i), do: Map.get(ss.stack, i), else: d
+        {{k,v}, scope}
+    end
+    def expand_input({k, S.stack_item_value(item: i, default: d)}, Node.scope(session_state: ss), _, _) do
+        i = if is_list(i), do:  i, else: [i]
+        v = case get_in(ss.stack, i) do
+            nil -> d
+            x -> x
+        end
+        {{k,v}, scope}
+    end
     def expand_input({key, value},scope,_,_), do: {nil, scope}
     def expand_input(_,scope,_,_), do: {nil, scope}
-
-
 end

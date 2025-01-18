@@ -110,10 +110,7 @@ end
 
 defimpl GenAI.Session.NodeProtocol, for: Any do
     defmacro __deriving__(module, _struct, options) do
-        
         options = Macro.escape(options)
-        IO.inspect(options)
-        
         quote do
             defimpl GenAI.Session.NodeProtocol, for: unquote(module) do
                 

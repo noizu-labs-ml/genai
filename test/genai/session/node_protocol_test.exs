@@ -28,10 +28,7 @@ defmodule GenAI.Session.NodeProtocolTest do
         end
         
         test "Automatic Data Pull from Derive" do
-            context = context()
-            scope = Node.scope(graph_node: graph_node) = GenAI.Fixture.Session.scenario()
-            {:ok, {input, scope}} =  GenAI.Session.NodeProtocol.update_state_input(graph_node, scope, context, [])
-            IO.inspect(input, label: "UNPACKED INPUT")
+
             
         end
     
