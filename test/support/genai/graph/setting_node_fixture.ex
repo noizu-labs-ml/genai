@@ -5,8 +5,8 @@
 defmodule GenAI.Fixture.Session do
     require GenAI.Session.Records
     alias GenAI.Session.Records, as: S
-    require GenAI.Session.Node.Records
-    alias GenAI.Session.Node.Records, as: N
+    require GenAI.Session.NodeProtocol.Records
+    alias GenAI.Session.NodeProtocol.Records, as: N
     
     def context() do
         Noizu.Context.system()
@@ -19,18 +19,19 @@ defmodule GenAI.Fixture.Session do
         alias GenAI.Session.Records, as: S
         use GenAI.Graph.NodeBehaviour
         @derive GenAI.Graph.NodeProtocol
-        @derive {
-            GenAI.Session.NodeProtocol,
-            input: %{
-                ohmy: S.data_set(name: :bob, records: 1),
-                apple: S.stack(item: :global_loon),
-                not_in_finger_print: GenAI.Session.Records.no_finger_print(S.stack(item: :foo_bop))
-            },
-            finger_print: %{
-                five_second_update: S.time_bucket([seconds: 5])
-                
-            }
-        }
+        @derive GenAI.Graph.NodeProtocol
+#        @derive {
+#            GenAI.Session.NodeProtocol,
+#            input: %{
+#                ohmy: S.data_set(name: :bob, records: 1),
+#                apple: S.stack(item: :global_loon),
+#                not_in_finger_print: GenAI.Session.Records.no_finger_print(S.stack(item: :foo_bop))
+#            },
+#            finger_print: %{
+#                five_second_update: S.time_bucket([seconds: 5])
+#
+#            }
+#        }
         
         
         

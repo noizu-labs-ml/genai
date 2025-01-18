@@ -7,8 +7,8 @@ defmodule GenAI.Graph do
   alias GenAI.Types, as: T
   alias GenAI.Graph.Types, as: G
 
-  require GenAI.Session.Node.Records
-  alias GenAI.Session.Node.Records, as: Node
+  require GenAI.Session.NodeProtocol.Records
+  alias GenAI.Session.NodeProtocol.Records, as: Node
   require GenAI.Graph.Link.Records
   alias GenAI.Graph.Link.Records, as: Link
 

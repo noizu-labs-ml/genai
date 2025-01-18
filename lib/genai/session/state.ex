@@ -70,7 +70,7 @@ defmodule GenAI.Session.State do
     end
     
     #-----------------------
-    # monitor/4
+    # append_directive/4
     #-----------------------
     @doc """
     Add additional directive to list.
@@ -82,7 +82,7 @@ defmodule GenAI.Session.State do
     end
     
     #-----------------------
-    # monitor/4
+    # apply_directives/3
     #-----------------------
     @doc """
     Expand out/apply directive when settings required.

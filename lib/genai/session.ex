@@ -47,8 +47,8 @@ end
 defmodule GenAI.Session do
     @moduledoc false
     @vsn 1.0
-    require GenAI.Session.Node.Records
-    alias GenAI.Session.Node.Records, as: Node
+    require GenAI.Session.NodeProtocol.Records
+    alias GenAI.Session.NodeProtocol.Records, as: Node
     
     defstruct [
         state: nil,

@@ -1,6 +1,6 @@
-defmodule GenAI.Session.Node.Records do
+defmodule GenAI.Session.NodeProtocol.Records do
   alias GenAI.Graph.Types, as: G
-
+ 
   require Record
   
   # Return list of any fields to update.
