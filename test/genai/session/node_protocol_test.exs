@@ -17,6 +17,18 @@ defmodule GenAI.Session.NodeProtocolTest do
 
     
     describe "Node Protocol Core Logic" do
+        
+        test "Setting Node" do
+            context = context()
+            sut = GenAI.chat()
+                  |> GenAI.with_setting(:temperature, 72)
+                  |> GenAI.execute()
+            
+            
+            IO.inspect sut
+            
+        end
+        
 #
 #        test "Node derive option passing" do
 #            context = context()

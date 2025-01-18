@@ -23,18 +23,6 @@ defmodule GenAI.Session.State.Directive do
     ]
     
     #-------------------------
-    # fingerprint/4
-    #-------------------------
-    @doc """
-    Calculate a unique fingerprint for directive based on selector/constraint dependency values.
-    """
-    def fingerprint(this, state, context, options) do
-      # TODO Impelment - uuid5 concat of entry fingerprints.
-      # Returns fingerprint and updated state.
-        this.id
-    end
-    
-    #-------------------------
     # apply_directive/4
     #-------------------------
     @doc """

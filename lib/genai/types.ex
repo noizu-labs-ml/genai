@@ -3,7 +3,8 @@ defmodule GenAI.Types do
   @type handle :: term
   @type name :: term
   @type description :: term
-
+  @type finger_print :: term
+  
   @typedoc """
   Error details
   """

@@ -22,6 +22,7 @@ defmodule GenAI.Graph.NodeBehaviour do
                 unquote_splicing(types),
                 {:inbound_links, T.link_map},
                 {:outbound_links, T.link_map},
+                {:finger_print, T.finger_print},
                 {:meta, nil | map() | keyword()},
                 {:vsn, float}
             ]
@@ -47,8 +48,9 @@ defmodule GenAI.Graph.NodeBehaviour do
                              [
                                  outbound_links: %{}, # edge ids grouped by outlet
                                  inbound_links: %{}, # edge ids grouped by outlet
-                                 vsn: @vsn,
+                                 finger_print: nil,
                                  meta: nil,
+                                 vsn: @vsn,
                              ]
         end # end of quote
     end

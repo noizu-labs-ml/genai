@@ -99,7 +99,7 @@ defmodule GenAITest do
           value: 4096
         }
 
-        sut = GenAI.chat()
+        _sut = GenAI.chat()
               |> GenAI.with_setting(setting)
       end
     end
@@ -119,7 +119,7 @@ defmodule GenAITest do
         end
         
         test "Static Setting" do
-            sut = GenAI.chat()
+            _sut = GenAI.chat()
                   |> GenAI.with_setting(:max_tokens, 4096)
                   |> GenAI.execute(:report, context())
             

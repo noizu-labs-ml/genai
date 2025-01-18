@@ -93,8 +93,43 @@ defmodule GenAI.Session.NodeProtocol.DefaultProvider do
         end
     end
     
+    #-----------------------------------------------
+    # new_selector/3
+    #-----------------------------------------------
+    def new_selector(target, value, options \\ nil)
+    def new_selector(target, value, _) do
+        ts = System.system_time(:nanosecond)
+        S.selector(
+            for: target,
+            value: value,
+            inserted_at: ts,
+            updated_at: ts
+        )
+    end
     
+    #-----------------------------------------------
+    # new_directive/5
+    #-----------------------------------------------
+    def new_directive(name, for_node, entries, context, options \\ nil)
+    def new_directive(name, for_node, entries, context, options) when not is_list(entries) do
+        new_directive(name, for_node, [entries], context, options)
+    end
+    def new_directive(name, for_node, entries, _context, options) do
+        directive_id = new_directive_id(for_node.id, name)
+        directive = %GenAI.Session.State.Directive{
+                id: directive_id,
+                source: {:node, for_node.id},
+                entries: entries,
+                finger_print: options[:finger_print] || for_node.finger_print || directive_id
+            }
+            # TODO finger print logic
+            {:ok, directive}
+    end
     
+    defp new_directive_id(source, name) do
+        UUID.uuid5(:oid, "#{inspect source}.directive[#{inspect name}]")
+    end
+  
   #
   #    #-----------------------------------------------
   #    # update_state

@@ -12,6 +12,7 @@ defmodule GenAI.Setting do
     alias GenAI.Graph.Link.Records, as: Link
     require GenAI.Session.Records
     alias GenAI.Session.Records, as: S
+    alias GenAI.Session.NodeProtocol.DefaultProvider, as: Provider
     
     use GenAI.Graph.NodeBehaviour
     @derive GenAI.Graph.NodeProtocol
@@ -30,24 +31,17 @@ defmodule GenAI.Setting do
     
     def process_node(graph_node, scope, context, options)
     def process_node(
-            %{__struct__: module} = graph_node,
+            %{__struct__: module} = this,
             Node.scope(
-                graph_node: original_graph_node,
-                graph_link: graph_link,
                 graph_container: graph_container,
-                session_state: session_state,
-                session_runtime: session_runtime
+                session_state: session_state
             ), context, options) do
-        directive = %GenAI.Session.State.Directive{
-            id: UUID.uuid5(graph_node.id, "directive-1"),
-            source: {:node, graph_node.id},
-            entries: [
-                S.selector(for: {:setting, graph_node.setting}, value: {:concrete, graph_node.value})
-            ]
-        }
+        # TODO if literal (int/float/string) - otherwise not a concrete value
+        selector = Provider.new_selector({:setting, this.setting}, {:concrete, this.value})
+        directive = Provider.new_directive(this.setting, this, selector, context, options)
         session_state = GenAI.Session.State.append_directive(session_state, directive, context, options)
         GenAI.Session.NodeProtocol.DefaultProvider.process_node_response(
-            graph_node,
+            this,
             graph_container,
             Node.process_update(session_state: session_state)
         )

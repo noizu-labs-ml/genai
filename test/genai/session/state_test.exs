@@ -129,7 +129,7 @@ defmodule GenAI.Session.StateTest do
                 id: 1001,
                 source: {:node, 2},
                 entries: [
-                    selector(for: {:setting, :temperature}, value: {:lambda, fn(entry, state, context, options) ->
+                    selector(for: {:setting, :temperature}, value: {:lambda, fn(_entry, state, context, options) ->
                                                                        with {:ok, {value, state}} <- GenAI.Session.State.effective_option(state, :analytic_mode, false, context(), options) do
                                                                            if value do
                                                                                {:ok, {{:concrete, 15}, state}}
@@ -178,7 +178,7 @@ defmodule GenAI.Session.StateTest do
                         for: {:setting, :temperature},
                         impacts: {:option, :reply_mode},
                         references: {:options, :analytic_mode},
-                        value: {:lambda, fn(entry, state, context, options) ->
+                        value: {:lambda, fn(_entry, state, context, options) ->
                                                                                  with {:ok, {value, state}} <- GenAI.Session.State.effective_option(state, :analytic_mode, false, context, options) do
                                                                                      if value do
                                                                                          state = GenAI.Session.State.append_directive(state, virtual_directive, context, options)
@@ -232,7 +232,7 @@ defmodule GenAI.Session.StateTest do
                         for: {:setting, :temperature},
                         impacts: {:option, :reply_mode},
                         references: {:options, :analytic_mode},
-                        value: {:lambda, fn(entry, state, context, options) ->
+                        value: {:lambda, fn(_entry, state, context, options) ->
                                              with {:ok, {value, state}} <- GenAI.Session.State.effective_option(state, :analytic_mode, false, context, options) do
                                                  if value do
                                                      state = GenAI.Session.State.append_directive(state, virtual_directive, context, options)
