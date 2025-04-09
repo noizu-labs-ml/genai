@@ -1,6 +1,9 @@
 Todo
 =====
 
+# Setup Core Repo
+- [x] Move GenAI Core to its own repo
+
 # Model Details
 - [ ] Overhaul how model details are loaded to incorporate a model database to fill in model internal details.
   - [ ] Context Limits
@@ -17,4 +20,4 @@ Todo
 - [ ] Tool use via api for Groq models that support it.
 
 # Local Llama
-- [ ] Move LocalLama to extension/add-on module
+- [x] Move LocalLama to extension/add-on module

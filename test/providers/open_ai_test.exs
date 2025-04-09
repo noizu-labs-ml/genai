@@ -11,8 +11,7 @@ defmodule GenAI.Provider.OpenAITest do
 
     @tag :wip
     test "Model And Model Database Binding" do
-        {:ok, models} = GenAI.Provider.OpenAI.Models.list()
-        IO.inspect(models, label: Models, limit: :infinity)
+        {:ok, _} = GenAI.Provider.OpenAI.Models.list()
     end
 
     @tag :models
@@ -148,7 +147,7 @@ defmodule GenAI.Provider.OpenAITest do
     @tag :advanced
     test "Vision Test" do
       Mimic.expect(Finch, :request, fn(request, _, _) ->
-        assert request.body =~ "{\"messages\":[{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"Describe this image\"},{\"type\":\"image_url\",\"image_url\":{\"url\":\"data:image/jpeg;base64,/9j/6zMMSlATAAAAAAAAADMCa"
+        assert request.body =~ "{\"messages\":[{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"Describe this image\"},{\"type\":\"image_url\",\"image_url\":{\"url\":\"data:image/jpeg;base64,/9j/4QBORX"
         {:ok,
           %Finch.Response{
             status: 200,
