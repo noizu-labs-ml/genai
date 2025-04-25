@@ -14,7 +14,26 @@ defmodule GenAI.Provider.AnthropicTest do
         {:ok,
           %Finch.Response{
             status: 200,
-            body: "{\"id\":\"msg_01XxRbEi4tvwxGZwPhMGBWU6\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"Okay, here is a tool call to generate a random fact about cats:\\n\\n<function_calls>\\n  <invoke>\\n    <tool_name>random_fact</tool_name>\\n    <parameters>{\\\"subject\\\": \\\"Cats\\\"}</parameters>\\n  </invoke>\\n</function_calls>\"}],\"model\":\"claude-3-opus-20240229\",\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"usage\":{\"input_tokens\":176,\"output_tokens\":71}}",
+            body: """
+            {
+              \"id\": \"msg_01Aq9w938a90dw8q\",
+              \"model\": \"claude-3-7-sonnet-20250219\",
+              \"stop_reason\": \"tool_use\",
+              \"role\": \"assistant\",
+              \"content\": [
+                {
+                  \"type\": \"text\",
+                  \"text\": \"<thinking>I need to use the random_fact, and the user wants SF, which is likely San Francisco, CA.</thinking>\"
+                },
+                {
+                  \"type\": \"tool_use\",
+                  \"id\": \"toolu_01A09q90qw90lq917835lq9\",
+                  \"name\": \"random_fact\",
+                  \"input\": {\"subject\": \"Cats\"}
+                }
+              ]
+            }
+            """,
             headers: [],
             trailers: []
           }
@@ -33,8 +52,8 @@ defmodule GenAI.Provider.AnthropicTest do
       assert choice.message.role == :assistant
       assert choice.message.__struct__ == GenAI.Message.ToolUsage
       [fc] = choice.message.tool_calls
-      assert fc.function.name == "random_fact"
-      assert fc.function.arguments[:subject] == "Cats"
+      assert fc.tool_name == "random_fact"
+      assert fc.arguments[:subject] == "Cats"
     end
 
 
@@ -84,7 +103,18 @@ defmodule GenAI.Provider.AnthropicTest do
       assert choice.index == 0
       assert choice.message.role == :assistant
       assert choice.message.__struct__ == GenAI.Message
-      assert choice.message.content == "Here is a random fact about cats, generated using the random_fact tool:\n\nCats have 230 bones, while humans only have 206.\n\nIsn't that interesting? Even though cats are much smaller than humans, they actually have more bones in their bodies. This is because cats have more vertebrae in their spines which allows them to be more flexible. Their flexible spine is one of the things that makes cats such agile climbers and jumpers.\n\nLet me know if you would like me to generate any other random cat facts using the tool!"
+
+      expected_content = [
+        %GenAI.Message.Content.TextContent{
+          system: false,
+          type: :response,
+          text: "Here is a random fact about cats, generated using the random_fact tool:\n\nCats have 230 bones, while humans only have 206.\n\nIsn't that interesting? Even though cats are much smaller than humans, they actually have more bones in their bodies. This is because cats have more vertebrae in their spines which allows them to be more flexible. Their flexible spine is one of the things that makes cats such agile climbers and jumpers.\n\nLet me know if you would like me to generate any other random cat facts using the tool!",
+          citations: nil,
+          vsn: 1.0
+        }
+      ]
+
+      assert choice.message.content == expected_content
     end
 
     test "chat" do
@@ -111,7 +141,7 @@ defmodule GenAI.Provider.AnthropicTest do
       choice = List.first(response.choices)
       assert choice.index == 0
       assert choice.message.role == :assistant
-      assert choice.message.content == "Hello!"
+      assert choice.message.content == [%GenAI.Message.Content.TextContent{system: false, type: :response, text: "Hello!", citations: nil, vsn: 1.0}]
       assert choice.finish_reason == :stop
     end
 
@@ -142,7 +172,9 @@ defmodule GenAI.Provider.AnthropicTest do
                     })
       {:ok, sut} = GenAI.run(thread)
       response = sut.choices |> hd()
-      assert response.message.content =~ "This image shows a cute, cartoon-style illustration of a small cat"
+
+      [text_content = %GenAI.Message.Content.TextContent{}] = response.message.content
+      assert text_content.text =~ "This image shows a cute, cartoon-style illustration of a small cat"
     end
     
     
@@ -173,7 +205,8 @@ defmodule GenAI.Provider.AnthropicTest do
                     })
       {:ok, sut} = GenAI.run(thread)
       response = sut.choices |> hd()
-      assert response.message.content =~ "This image shows a cute, cartoon-style illustration of a small cat"
+      [text_content = %GenAI.Message.Content.TextContent{}] = response.message.content
+      assert text_content.text =~ "This image shows a cute, cartoon-style illustration of a small cat"
     end
 
   end

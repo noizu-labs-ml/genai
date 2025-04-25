@@ -2,23 +2,33 @@ defmodule  GenAI.Provider.Anthropic.Models do
   @moduledoc """
   Defines some common Anthropic models.
   """
-  def llama3_8b() do
+
+
+  def claude_opus() do
     %GenAI.Model{
-      model: "llama3-8b-8192",
+      model: "claude-3-opus-20240229",
       provider: GenAI.Provider.Anthropic
     }
   end
-  
-  def mixtral_8x7b() do
+
+
+  def claude_sonnet() do
     %GenAI.Model{
-      model: "mixtral-8x7b-32768",
+      model: "claude-3-sonnet-20240229",
       provider: GenAI.Provider.Anthropic
     }
   end
-  
-  def gemma_7b_it() do
+
+  def claude_sonnet_3_5() do
     %GenAI.Model{
-      model: "gemma-7b-it",
+      model: "claude-3-5-sonnet-20240620",
+      provider: GenAI.Provider.Anthropic
+    }
+  end
+
+  def claude_haiku() do
+    %GenAI.Model{
+      model: "claude-3-haiku-20240307",
       provider: GenAI.Provider.Anthropic
     }
   end

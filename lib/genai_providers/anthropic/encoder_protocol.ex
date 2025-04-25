@@ -17,13 +17,22 @@ defmodule GenAI.Provider.Anthropic.EncoderProtocolHelper do
   end
   
   def content(content, subject, model, session, context, options)
-  
+
+  def content(content, _, _, session, _, options) when is_bitstring(content) do
+    system_message = options[:system_message]
+    cond do
+      system_message -> {%{type: :text, text: system_message_markup(content)}, session}
+      :else -> {%{type: :text, text: content}, session}
+    end
+  end
+
+
   def content(%GenAI.Message.Content.TextContent{type: type, system: system_content, text: text} = content, _, _, session, _, options) do
     system_type = type in [:input, :prompt]
     system_message = options[:system_message]
     cond do
-      !system_type ->  {%{type: :text, text: system_message_markup(text)}, session}
-      !(system_message || system_content) -> {%{type: :text, text: system_message_markup(text)}, session}
+      !system_type ->  {%{type: :text, text: text}, session}
+      !(system_message || system_content) -> {%{type: :text, text: text}, session}
       :else -> {%{type: :text, text: system_message_markup(text)}, session}
     end
   end
@@ -50,7 +59,7 @@ defmodule GenAI.Provider.Anthropic.EncoderProtocolHelper do
   end
   
   
-  def content(%GenAI.Message.ToolUsage{} = content, _, _, session, _, _) do
+  def content(%GenAI.Message.ToolCall{} = content, _, _, session, _, _) do
     content = %{
       id: content.id,
       type: :tool_use,
