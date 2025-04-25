@@ -129,11 +129,11 @@ defmodule GenAI.Provider.Anthropic.Encoder do
       ) do
 
     content = completion_message(json)
-    tool_calls = Enum.filter(content, & &1.__struct__ == GenAI.Message.ToolCall)
-    content = Enum.reject(content, & &1.__struct__ == GenAI.Message.ToolCall)
-              |> then(& &1 != [] && &1)
+#    tool_calls = Enum.filter(content, & &1.__struct__ == GenAI.Message.ToolCall)
+#    content = Enum.reject(content, & &1.__struct__ == GenAI.Message.ToolCall)
+#              |> then(& &1 != [] && &1)
 
-    msg = GenAI.Message.ToolUsage.new(id: id, role: :assistant, content: content, tool_calls: tool_calls)
+    msg = GenAI.Message.ToolUsage.new(id: id, role: :assistant, content: content, tool_calls: [])
     {:ok, msg}
   end
 
@@ -166,9 +166,8 @@ defmodule GenAI.Provider.Anthropic.Encoder do
 
   def completion_content(json)
   def completion_content(%{id: id, type: "tool_use", name: tool_name, input: arguments}) do
-    %GenAI.Message.ToolCall{
+    %GenAI.Message.Content.ToolUseContent{
       id: id,
-      type: :function,
       tool_name: tool_name,
       arguments: arguments
     }
@@ -196,6 +195,25 @@ defmodule GenAI.Provider.Anthropic.Encoder do
       data: json[:data],
     }
   end
+
+  def completion_content(%{type: "image"} = json)  do
+   media_types = %{
+      "image/jpeg" => :jpeg,
+      "image/png" => :png,
+      "image/gif" => :gif,
+      "image/webp" => :webp,
+      "image/svg+xml" => :svg,
+    }
+
+    %GenAI.Message.Content.ImageContent{
+      source: :anthropic,
+      type: media_types[json[:souce][:media_type]],
+      resolution: :auto,
+      resource: {:base64, json[:source][:data]},
+      options: nil,
+    }
+  end
+
 
 
 end
