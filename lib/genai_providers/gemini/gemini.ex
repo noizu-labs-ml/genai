@@ -95,7 +95,7 @@ defmodule GenAI.Provider.Gemini do
   end
 
   @impl GenAI.ProviderBehaviour
-  def run(state) do
+  def run(state, context \\ nil, options \\ nil) do
     provider = __MODULE__
     with {:ok, provider_settings, state} <- GenAI.Thread.StateProtocol.provider_settings(state, provider),
          {:ok, settings, state} <- GenAI.Thread.StateProtocol.settings(state),

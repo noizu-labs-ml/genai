@@ -109,7 +109,7 @@ end
 defimpl GenAI.Provider.Anthropic.EncoderProtocol, for: GenAI.Message do
   import GenAI.Provider.Anthropic.EncoderProtocolHelper
   
-  def encode(subject, model, session, context, options, _, _, session, _, _) do
+  def encode(subject, model, session, context, options) do
     roles = %{
       user: :user,
       assistant: :assistant,

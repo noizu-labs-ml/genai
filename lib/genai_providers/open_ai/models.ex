@@ -12,7 +12,7 @@ defmodule GenAI.Provider.OpenAI.Models do
 
   # TODO allow local meta data merge
   def list(options \\ nil) do
-    headers = GenAI.Provider.OpenAI.legacy_headers(options)
+    headers = GenAI.Provider.OpenAI.headers(options)
     call = api_call(:get, "#{@api_base}/v1/models", headers)
     with {:ok, %Finch.Response{status: 200, body: body}} <- call,
          {:ok, json} <- Jason.decode(body, keys: :atoms) do

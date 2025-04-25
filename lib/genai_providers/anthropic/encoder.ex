@@ -1,5 +1,5 @@
 defmodule GenAI.Provider.Anthropic.Encoder do
-  @base_url "api.anthropic.com"
+  @base_url "https://api.anthropic.com"
   use GenAI.Model.EncoderBehaviour
   
   def endpoint(model, settings, session, context, options)

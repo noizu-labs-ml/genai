@@ -70,13 +70,10 @@ defmodule GenAI.Provider.MistralTest do
             role: :assistant,
             content: "",
             tool_calls: [
-              %{
-                function: %{
-                  name: "random_fact",
-                  arguments: %{"category" => "animals", :subject => "cats"}
-                },
-                id: "call_CzTrgmcWofyDCVp9tgkomE",
-                type: "function"
+              %GenAI.Message.ToolCall{
+                id: "call_euQN3UTzL8HNn3jc2TzFnz",
+                tool_name: "random_fact",
+                arguments: %{:subject => "Cats"}
               }
             ],
             vsn: 1.0

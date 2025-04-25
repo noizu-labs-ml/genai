@@ -6,14 +6,6 @@ defmodule GenAI.Provider.OpenAI do
   @config_key :openai
   use GenAI.InferenceProviderBehaviour
 
-
-  def legacy_headers(options) do
-    config_settings = Application.get_env(:genai,  GenAI.Provider.OpenAI.config_key(), [])
-    context = Noizu.Context.system()
-    {:ok, {headers,_}} = GenAI.Provider.OpenAI.Encoder.headers(nil, %{settings: options, config_settings: config_settings}, nil, context, [])
-    headers
-  end
-
   #------------------
   # models/0
   # models/1
@@ -22,7 +14,7 @@ defmodule GenAI.Provider.OpenAI do
   Retrieves a list of models supported by the OpenAI API for given user.
   """
   def models(settings \\ []) do
-    headers = legacy_headers(settings)
+    headers = headers(settings)
     call = api_call(:get, "#{@base_url}/v1/models", headers)
     with {:ok, %Finch.Response{status: 200, body: body}} <- call,
          {:ok, json} <- Jason.decode(body, keys: :atoms) do

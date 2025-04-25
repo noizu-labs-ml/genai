@@ -76,13 +76,24 @@ end
 # GenAI.Message.ToolUsage
 #-----------------------------
 defimpl GenAI.Provider.OpenAI.EncoderProtocol, for: GenAI.Message.ToolUsage do
+  
+  def encode_call(
+        %GenAI.Message.ToolCall{
+          id: id,
+          type: type,
+          tool_name: tool_name,
+          arguments: arguments
+        }
+      ) do
+    %{
+      function: %{name: tool_name, arguments: Jason.encode!(arguments)},
+      id: id,
+      type: type
+    }
+  end
+  
   def encode(subject, model, session, context, options) do
-    tool_calls = Enum.map(subject.tool_calls,
-      fn(tc) ->
-        update_in(tc, [Access.key(:function), Access.key(:arguments)], & &1 && Jason.encode!(&1))
-      end
-    )
-    
+    tool_calls = Enum.map(subject.tool_calls,& encode_call/1)
     encoded = %{
       role: subject.role,
       content: subject.content,

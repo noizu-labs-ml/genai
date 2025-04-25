@@ -12,8 +12,7 @@ defmodule GenAI.Provider.Mistral do
   This function calls the Mistral API to retrieve a list of models and returns them as a list of `GenAI.Model` structs.
   """
   def models(settings \\ []) do
-    context = Noizu.Context.system()
-    headers = GenAI.Providers.Mistral.Encoder.headers(nil, %{settings: settings}, nil, context, [])
+    headers = headers(settings)
     call = api_call(:get, "#{@base_url}/v1/models", headers)
 
     with {:ok, %Finch.Response{status: 200, body: body}} <- call,
