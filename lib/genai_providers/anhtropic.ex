@@ -1,35 +1,36 @@
-defmodule GenAI.Provider.OpenAI do
+defmodule GenAI.Provider.Anthropic do
   @moduledoc """
-  Module for interacting with the OpenAI API.
+  This module implements the GenAI provider for Groq AI.
   """
-  @base_url "https://api.openai.com"
+  
+  @base_url "api.anthropic.com"
   use GenAI.InferenceProviderBehaviour,
   
-
-  #------------------
-  # models/0
-  # models/1
-  #------------------
+  
   @doc """
-  Retrieves a list of models supported by the OpenAI API for given user.
+  Retrieves a list of available Groq models.
+
+  This function calls the Groq API to retrieve a list of models and returns them as a list of `GenAI.Model` structs.
   """
   def models(settings \\ []) do
     conext = Noizu.Context.system()
     headers = GenAI.Providers.Anthropic.Encoder.headers(nil, %{settings: settings}, nil, context, [])
     call = api_call(:get, "#{@base_url}/v1/models", headers)
+
     with {:ok, %Finch.Response{status: 200, body: body}} <- call,
          {:ok, json} <- Jason.decode(body, keys: :atoms) do
+      case json do
+        %{data: models, object: "list"} ->
+          models = models |> Enum.map(&model_from_json/1)
+          {:ok, models}
 
-      with %{data: models, object: "list"} <- json do
-        models = models
-                 |> Enum.map(&model_from_json/1)
-        {:ok, models}
-      else
-        _ -> {:error, {:response, json}}
+        _ ->
+          {:error, {:response, json}}
       end
     end
   end
-  
+
+  # Converts a JSON representation of a Mistral model to a `GenAI.Model` struct.
   defp model_from_json(json) do
     %GenAI.Model{
       model: json[:id],
@@ -37,4 +38,7 @@ defmodule GenAI.Provider.OpenAI do
       details: json
     }
   end
+
+
+
 end

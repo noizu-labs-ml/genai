@@ -5,10 +5,10 @@ defmodule GenAI.Provider.OpenAI.Encoder do
     with {:ok, {headers, session}} <- super(model, settings, session, context, options) do
       search_scope = [
         options,
-        settings.model_settings,
-        settings.provider_settings,
-        settings.settings,
-        settings.config_settings,
+        settings[:model_settings],
+        settings[:provider_settings],
+        settings[:settings],
+        settings[:config_settings],
       ]
       
       headers = search_scope

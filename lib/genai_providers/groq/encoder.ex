@@ -1,5 +1,5 @@
 defmodule GenAI.Provider.Groq.Encoder do
-  
+  use GenAI.Model.EncoderBehaviour
   
   def default_hyper_params(model, settings, session, context, options)
   def default_hyper_params(model, settings, session, context, options) do
