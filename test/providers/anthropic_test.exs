@@ -51,7 +51,7 @@ defmodule GenAI.Provider.AnthropicTest do
       assert choice.index == 0
       assert choice.message.role == :assistant
       assert choice.message.__struct__ == GenAI.Message.ToolUsage
-      [fc] = choice.message.tool_calls
+      [_,fc] = choice.message.content
       assert fc.tool_name == "random_fact"
       assert fc.arguments[:subject] == "Cats"
     end

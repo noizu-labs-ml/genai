@@ -23,7 +23,7 @@ defmodule GenAI.Provider.GeminiTest do
       end)
 
       {:ok, [h|_]} = GenAI.Provider.Gemini.models()
-      assert h.model == "models/chat-bison-001"
+      assert h.model == "chat-bison-001"
     end
 
     test "chat" do
@@ -51,7 +51,8 @@ defmodule GenAI.Provider.GeminiTest do
       choice = List.first(response.choices)
       assert choice.index == 0
       assert choice.message.role == :assistant
-      assert choice.message.content == "Hello there!"
+      [message|_] = choice.message.content
+      assert message.text == "Hello there!"
       assert choice.finish_reason == :stop
     end
 
@@ -80,9 +81,9 @@ defmodule GenAI.Provider.GeminiTest do
       assert choice.index == 0
       assert choice.message.role == :assistant
       assert choice.message.__struct__ == GenAI.Message.ToolUsage
-      [fc] = choice.message.tool_calls
-      assert fc.function.name == "random_fact"
-      assert fc.function.arguments[:subject] == "Cats"
+      [fc] = choice.message.content
+      assert fc.tool_name == "random_fact"
+      assert fc.arguments[:subject] == "Cats"
     end
 
 
@@ -129,7 +130,8 @@ defmodule GenAI.Provider.GeminiTest do
       assert choice.index == 0
       assert choice.message.role == :assistant
       assert choice.message.__struct__ == GenAI.Message
-      assert choice.message.content == "Cats have 230 bones, while humans only have 206"
+      [message|_] = choice.message.content
+      assert message.text == "Cats have 230 bones, while humans only have 206"
     end
 
     
@@ -160,7 +162,8 @@ defmodule GenAI.Provider.GeminiTest do
                     })
       {:ok, sut} = GenAI.run(thread)
       response = sut.choices |> hd()
-      assert response.message.content =~ "The image is a cartoon illustration of a cute white cat"
+      [message|_] = response.message.content
+      assert message.text =~ "The image is a cartoon illustration of a cute white cat"
     end
     
     
@@ -191,7 +194,8 @@ defmodule GenAI.Provider.GeminiTest do
                     })
       {:ok, sut} = GenAI.run(thread)
       response = sut.choices |> hd()
-      assert response.message.content =~ "The image is a cartoon illustration of a cute white cat"
+      [message|_] = response.message.content
+      assert message.text =~ "The image is a cartoon illustration of a cute white cat"
     end
     
   end
