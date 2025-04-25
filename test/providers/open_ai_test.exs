@@ -2,6 +2,8 @@ defmodule GenAI.Provider.OpenAITest do
   use ExUnit.Case
   import GenAI.Test.Support.Common
   @moduletag provider: :open_ai
+  @moduletag :wip_4_25
+
 
   def priv() do
     :code.priv_dir(:genai) |> List.to_string()
@@ -9,7 +11,6 @@ defmodule GenAI.Provider.OpenAITest do
 
   describe "OpenAI Provider" do
 
-    @tag :wip
     test "Model And Model Database Binding" do
         {:ok, _} = GenAI.Provider.OpenAI.Models.list()
     end

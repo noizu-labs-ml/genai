@@ -3,6 +3,7 @@ defmodule GenAI.Provider.OpenAI.Encoder do
   use GenAI.Model.EncoderBehaviour
   
   def headers(model, settings, session, context, options) do
+    IO.inspect(settings, label: "SETTINGS")
     with {:ok, {headers, session}} <- super(model, settings, session, context, options) do
       search_scope = [
         options,
