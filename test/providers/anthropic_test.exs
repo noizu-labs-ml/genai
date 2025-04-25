@@ -31,7 +31,7 @@ defmodule GenAI.Provider.AnthropicTest do
       choice = List.first(response.choices)
       assert choice.index == 0
       assert choice.message.role == :assistant
-      assert choice.message.__struct__ == GenAI.Message.ToolCall
+      assert choice.message.__struct__ == GenAI.Message.ToolUsage
       [fc] = choice.message.tool_calls
       assert fc.function.name == "random_fact"
       assert fc.function.arguments[:subject] == "Cats"
@@ -53,7 +53,7 @@ defmodule GenAI.Provider.AnthropicTest do
       {:ok, response} = GenAI.Provider.Anthropic.chat(
         [
           %GenAI.Message{role: :user, content: "Tell me a random fact about cats using a tool call."},
-          %GenAI.Message.ToolCall{
+          %GenAI.Message.ToolUsage{
             role: :assistant,
             content: "Okay, here is a tool call to generate a random fact about cats:\n\n",
             tool_calls: [
@@ -66,7 +66,7 @@ defmodule GenAI.Provider.AnthropicTest do
             vsn: 1.0
           },
           %GenAI.Message.ToolResponse{
-            response: %{
+            tool_response: %{
               body: "Cats have 230 bones, while humans only have 206"
             },
             tool_call_id: "call_euQN3UTzL8HNn3jc2TzFnz"

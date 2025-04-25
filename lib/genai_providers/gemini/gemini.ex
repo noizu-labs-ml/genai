@@ -1,8 +1,5 @@
 defmodule GenAI.Provider.Gemini do
-  import GenAI.Provider
-  @behaviour GenAI.ProviderBehaviour
-
-
+  import GenAI.InferenceProvider.Helpers
   defp standardize_model(model) when is_atom(model),  do: %GenAI.Model{model: model, provider: __MODULE__}
   defp standardize_model(model) when is_bitstring(model),  do: %GenAI.Model{model: model, provider: __MODULE__}
   defp standardize_model(model) do
@@ -250,7 +247,7 @@ defmodule GenAI.Provider.Gemini do
           id: "call_#{short_uuid}",
           type: "function"
         }
-        {:ok, %GenAI.Message.ToolCall{role: :assistant, content: "", tool_calls: [call]}}
+        {:ok, %GenAI.Message.ToolUsage{role: :assistant, content: "", tool_calls: [call]}}
     end
   end
 

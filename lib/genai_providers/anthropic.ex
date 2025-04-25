@@ -4,7 +4,7 @@ defmodule GenAI.Provider.Anthropic do
   """
   
   @base_url "api.anthropic.com"
-  use GenAI.InferenceProviderBehaviour,
+  use GenAI.InferenceProviderBehaviour
   
   
   @doc """
@@ -13,7 +13,7 @@ defmodule GenAI.Provider.Anthropic do
   This function calls the Groq API to retrieve a list of models and returns them as a list of `GenAI.Model` structs.
   """
   def models(settings \\ []) do
-    conext = Noizu.Context.system()
+    context = Noizu.Context.system()
     headers = GenAI.Providers.Anthropic.Encoder.headers(nil, %{settings: settings}, nil, context, [])
     call = api_call(:get, "#{@base_url}/v1/models", headers)
 

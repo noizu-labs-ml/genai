@@ -1,4 +1,5 @@
 defmodule GenAI.Provider.Anthropic.Encoder do
+  @base_url "api.anthropic.com"
   use GenAI.Model.EncoderBehaviour
   
   def endpoint(model, settings, session, context, options)
@@ -17,13 +18,13 @@ defmodule GenAI.Provider.Anthropic.Encoder do
     
       headers = [{"content-type", "application/json"}]
       headers = search_scope
-                |> Enum.find_value(& &[:anthropic_beta])
+                |> Enum.find_value(& &1[:anthropic_beta])
                 |> then(& &1 && [{"anthropic-beta", &1} | headers] || headers)
       headers = search_scope
-                |> Enum.find_value(& &[:anthropic_version])
+                |> Enum.find_value(& &1[:anthropic_version])
                 |> then(&  [{"anthropic-version", &1 || "2023-06-01"} | headers])
       headers = search_scope
-                |> Enum.find_value(& &[:api_key])
+                |> Enum.find_value(& &1[:api_key])
                 |> then(& &1 && [{"x-api-key", &1} | headers] || headers)
       
       {:ok, {headers, session}}

@@ -46,7 +46,7 @@ end
 
 
 
-defimpl GenAI.Provider.Gemini.MessageProtocol, for: GenAI.Message.ToolCall do
+defimpl GenAI.Provider.Gemini.MessageProtocol, for: GenAI.Message.ToolUsage do
   def message(message) do
     tool_calls = Enum.map(message.tool_calls,
       fn(tc) ->

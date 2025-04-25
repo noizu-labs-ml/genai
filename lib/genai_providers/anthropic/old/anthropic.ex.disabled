@@ -228,7 +228,7 @@ defmodule GenAI.Provider.Anthropic do
         # check for tool usage
         if String.contains?(text, "<function_calls>") do
           {text, f} = extract_function_calls(text)
-          {:ok, %GenAI.Message.ToolCall{role: :assistant, content: text, tool_calls: f}}
+          {:ok, %GenAI.Message.ToolUsage{role: :assistant, content: text, tool_calls: f}}
         else
           {:ok, %GenAI.Message{role: :assistant, content: text}}
         end

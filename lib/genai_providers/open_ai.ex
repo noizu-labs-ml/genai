@@ -3,7 +3,7 @@ defmodule GenAI.Provider.OpenAI do
   Module for interacting with the OpenAI API.
   """
   @base_url "https://api.openai.com"
-  use GenAI.InferenceProviderBehaviour,
+  use GenAI.InferenceProviderBehaviour
   
 
   #------------------
@@ -14,8 +14,8 @@ defmodule GenAI.Provider.OpenAI do
   Retrieves a list of models supported by the OpenAI API for given user.
   """
   def models(settings \\ []) do
-    conext = Noizu.Context.system()
-    headers = GenAI.Providers.Anthropic.Encoder.headers(nil, %{settings: settings}, nil, context, [])
+    context = Noizu.Context.system()
+    headers = GenAI.Providers.OpenAI.Encoder.headers(nil, %{settings: settings}, nil, context, [])
     call = api_call(:get, "#{@base_url}/v1/models", headers)
     with {:ok, %Finch.Response{status: 200, body: body}} <- call,
          {:ok, json} <- Jason.decode(body, keys: :atoms) do

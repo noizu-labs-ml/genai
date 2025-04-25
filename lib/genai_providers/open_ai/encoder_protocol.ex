@@ -32,6 +32,9 @@ end
 #-----------------------------
 defimpl GenAI.Provider.OpenAI.EncoderProtocol, for: GenAI.Message do
   def content(content)
+  def content(content) when is_bitstring(content) do
+    %{type: :text, text: content}
+  end
   def content(%GenAI.Message.Content.TextContent{} = content) do
     %{type: :text, text: content.text}
   end
@@ -70,9 +73,9 @@ defimpl GenAI.Provider.OpenAI.EncoderProtocol, for: GenAI.Message.ToolResponse d
 end
 
 #-----------------------------
-# GenAI.Message.ToolCall
+# GenAI.Message.ToolUsage
 #-----------------------------
-defimpl GenAI.Provider.OpenAI.EncoderProtocol, for: GenAI.Message.ToolCall do
+defimpl GenAI.Provider.OpenAI.EncoderProtocol, for: GenAI.Message.ToolUsage do
   def encode(subject, model, session, context, options) do
     tool_calls = Enum.map(subject.tool_calls,
       fn(tc) ->

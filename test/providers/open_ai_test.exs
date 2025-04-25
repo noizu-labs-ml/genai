@@ -55,7 +55,7 @@ defmodule GenAI.Provider.OpenAITest do
       choice = List.first(response.choices)
       assert choice.index == 0
       assert choice.message.role == :assistant
-      assert choice.message.__struct__ == GenAI.Message.ToolCall
+      assert choice.message.__struct__ == GenAI.Message.ToolUsage
       [fc] = choice.message.tool_calls
       assert fc.function.name == "random_fact"
       assert fc.function.arguments[:subject] == "cats"
@@ -79,7 +79,7 @@ defmodule GenAI.Provider.OpenAITest do
       {:ok, response} = GenAI.Provider.OpenAI.chat(
         [
           %GenAI.Message{role: :user, content: "Tell me a random fact about cats using a tool call."},
-          %GenAI.Message.ToolCall{
+          %GenAI.Message.ToolUsage{
             role: :assistant,
             content: nil,
             tool_calls: [
@@ -92,7 +92,7 @@ defmodule GenAI.Provider.OpenAITest do
             vsn: 1.0
           },
           %GenAI.Message.ToolResponse{
-            response: %{
+            tool_response: %{
               body: "Cats are awesome, now there's a cat fact!"
             },
             tool_call_id: "call_pSe98iKMXYxjNriBuEqQFltC"

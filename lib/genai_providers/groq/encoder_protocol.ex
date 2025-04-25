@@ -32,6 +32,9 @@ end
 #-----------------------------
 defimpl GenAI.Provider.Groq.EncoderProtocol, for: GenAI.Message do
   def content(content)
+  def content(content) when is_bitstring(content) do
+    %{type: :text, text: content}
+  end
   def content(%GenAI.Message.Content.TextContent{} = content) do
     %{type: :text, text: content.text}
   end
@@ -74,10 +77,10 @@ defimpl GenAI.Provider.Groq.EncoderProtocol, for: GenAI.Message.ToolResponse do
 end
 
 #-----------------------------
-# GenAI.Message.ToolCall
+# GenAI.Message.ToolUsage
 #-----------------------------
-defimpl GenAI.Provider.Groq.EncoderProtocol, for: GenAI.Message.ToolCall do
-  def encode(subject, model, session, context, options) do
+defimpl GenAI.Provider.Groq.EncoderProtocol, for: GenAI.Message.ToolUsage do
+  def encode(subject, model, session, context, _) do
     tool_calls = Enum.map(subject.tool_calls,
       fn(tc) ->
         update_in(tc, [Access.key(:function), Access.key(:arguments)], & &1 && Jason.encode!(&1))

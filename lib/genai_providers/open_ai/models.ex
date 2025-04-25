@@ -1,9 +1,9 @@
 defmodule GenAI.Provider.OpenAI.Models do
-  import GenAI.Provider
   @api_base "https://api.openai.com"
   @model_metadata_provider (Application.compile_env(:genai, :openai)[:metadata_provider] || GenAI.ModelMetadata.DefaultProvider)
-  @behaviour GenAI.Provider.ModelsBehaviour
 
+  import GenAI.InferenceProvider.Helpers
+  
   def load_metadata(options \\ nil)
   def load_metadata(_) do
     :ok
