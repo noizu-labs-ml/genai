@@ -32,3 +32,5 @@ config :genai_local, :local_llama,
 
 and add `{:genai_local, "~> 0.1"} to your dep list.
 
+# 0.2.0
+Update to use revamped core libs.
