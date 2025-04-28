@@ -104,7 +104,7 @@ defmodule GenAITest do
 
       {:ok, sut} = GenAI.run(thread)
 
-      assert sut.model == "gemini-pro"
+      assert sut.model == "gemini-2.5-pro-preview-03-25"
     end
     
     
@@ -173,7 +173,7 @@ defmodule GenAITest do
       
       {:ok, sut} = GenAI.run(thread)
       
-      assert sut.model == "gemini-pro"
+      assert sut.model == "gemini-2.5-pro-preview-03-25"
     end
   end
 
