@@ -23,7 +23,7 @@ defmodule GenAI.Provider.GeminiTest do
       end)
 
       {:ok, [h|_]} = GenAI.Provider.Gemini.models()
-      assert h.model == "models/chat-bison-001"
+      assert h.model == "chat-bison-001"
     end
 
     test "chat" do
@@ -51,7 +51,8 @@ defmodule GenAI.Provider.GeminiTest do
       choice = List.first(response.choices)
       assert choice.index == 0
       assert choice.message.role == :assistant
-      assert choice.message.content == "Hello there!"
+      [message|_] = choice.message.content
+      assert message.text == "Hello there!"
       assert choice.finish_reason == :stop
     end
 
@@ -79,10 +80,10 @@ defmodule GenAI.Provider.GeminiTest do
       choice = List.first(response.choices)
       assert choice.index == 0
       assert choice.message.role == :assistant
-      assert choice.message.__struct__ == GenAI.Message.ToolCall
-      [fc] = choice.message.tool_calls
-      assert fc.function.name == "random_fact"
-      assert fc.function.arguments[:subject] == "Cats"
+      assert choice.message.__struct__ == GenAI.Message.ToolUsage
+      [fc] = choice.message.content
+      assert fc.tool_name == "random_fact"
+      assert fc.arguments[:subject] == "Cats"
     end
 
 
@@ -101,24 +102,24 @@ defmodule GenAI.Provider.GeminiTest do
       {:ok, response} = GenAI.Provider.Gemini.chat(
         [
           %GenAI.Message{role: :user, content: "Tell me a random fact about cats using a tool call."},
-          %GenAI.Message.ToolCall{
+          %GenAI.Message.ToolUsage{
             role: :assistant,
             content: "Okay, here is a tool call to generate a random fact about cats:\n\n",
             tool_calls: [
-              %{
-                function: %{name: "random_fact", arguments: %{subject: "Cats"}},
+              %GenAI.Message.ToolCall{
                 id: "call_euQN3UTzL8HNn3jc2TzFnz",
-                type: "function"
+                tool_name: "random_fact",
+                arguments: %{:subject => "Cats"}
               }
             ],
             vsn: 1.0
           },
           %GenAI.Message.ToolResponse{
-            response: %{
+            tool_response: %{
               body: "Cats have 230 bones, while humans only have 206"
             },
             tool_call_id: "call_euQN3UTzL8HNn3jc2TzFnz",
-            name: "random_fact"
+            tool_name: "random_fact"
           }
         ],
         [random_fact_tool()],
@@ -129,10 +130,11 @@ defmodule GenAI.Provider.GeminiTest do
       assert choice.index == 0
       assert choice.message.role == :assistant
       assert choice.message.__struct__ == GenAI.Message
-      assert choice.message.content == "Cats have 230 bones, while humans only have 206"
+      [message|_] = choice.message.content
+      assert message.text == "Cats have 230 bones, while humans only have 206"
     end
 
-    @tag :wip
+    
     @tag :vision
     @tag :advanced
     test "Vision Test" do
@@ -160,9 +162,42 @@ defmodule GenAI.Provider.GeminiTest do
                     })
       {:ok, sut} = GenAI.run(thread)
       response = sut.choices |> hd()
-      assert response.message.content =~ "The image is a cartoon illustration of a cute white cat"
+      [message|_] = response.message.content
+      assert message.text =~ "The image is a cartoon illustration of a cute white cat"
     end
-
+    
+    
+    @tag :vision
+    @tag :advanced
+    test "Vision Test - vnext session" do
+      Mimic.expect(Finch, :request, fn(request, _, _) ->
+        assert request.body =~ "{\"contents\":[{\"parts\":[{\"text\":\"Describe this image\"},{\"inlineData\":{\"data\":\"/9j/4QBORXhpZgAATU0AKgAAAAgAAwEaAAUAAAABAAAAMgEbAAUAAAABAAAAOgEoAAMAAAABAAIAAAAAAAAADqYAAAAnEAAOpgAAACcQAAAAAP/tAEBQaG90b3Nob3AgMy4wADhCSU0EBgAAAAAABwABAQEAAQEAOEJJTQQlAAAAAAAQAAAAAAAAAAAAAAAAAAAAAP/iDFhJQ0NfUFJPRklMRQABAQAADEhMaW5vAhAAAG1udHJSR0IgWFlaIAfOAAIACQAGA"
+        {:ok,
+          %Finch.Response{
+            status: 200,
+            body: "{\n  \"candidates\": [\n    {\n      \"content\": {\n        \"parts\": [\n          {\n            \"text\": \"The image is a cartoon illustration of a cute white cat with orange stripes sitting in a field of flowers. The cat has big, round eyes and a small, pink nose. It is surrounded by flowers in various colors, including blue, pink, and yellow. There are also two butterflies flying around the cat. The background is a light green color with white dots. The image is drawn in a whimsical style and evokes a sense of happiness and innocence.\"\n          }\n        ],\n        \"role\": \"model\"\n      },\n      \"finishReason\": \"STOP\",\n      \"index\": 0,\n      \"safetyRatings\": [\n        {\n          \"category\": \"HARM_CATEGORY_SEXUALLY_EXPLICIT\",\n          \"probability\": \"NEGLIGIBLE\"\n        },\n        {\n          \"category\": \"HARM_CATEGORY_HATE_SPEECH\",\n          \"probability\": \"NEGLIGIBLE\"\n        },\n        {\n          \"category\": \"HARM_CATEGORY_HARASSMENT\",\n          \"probability\": \"NEGLIGIBLE\"\n        },\n        {\n          \"category\": \"HARM_CATEGORY_DANGEROUS_CONTENT\",\n          \"probability\": \"NEGLIGIBLE\"\n        }\n      ]\n    }\n  ],\n  \"usageMetadata\": {\n    \"promptTokenCount\": 262,\n    \"candidatesTokenCount\": 90,\n    \"totalTokenCount\": 352\n  }\n}\n",
+            headers: [],
+            trailers: []
+          }}
+      end)
+      
+      thread = GenAI.chat(:session)
+               |> GenAI.with_model(GenAI.Provider.Gemini.Models.gemini_flash_1_5())
+               |> GenAI.with_setting(:temperature, 0.7)
+               |> GenAI.with_message(
+                    %GenAI.Message{
+                      role: :user,
+                      content: [
+                        "Describe this image",
+                        GenAI.Message.image(priv() <> "/media/kitten.jpeg")
+                      ]
+                    })
+      {:ok, sut} = GenAI.run(thread)
+      response = sut.choices |> hd()
+      [message|_] = response.message.content
+      assert message.text =~ "The image is a cartoon illustration of a cute white cat"
+    end
+    
   end
 
 end

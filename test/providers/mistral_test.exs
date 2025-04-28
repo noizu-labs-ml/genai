@@ -44,7 +44,7 @@ defmodule GenAI.Provider.MistralTest do
       choice = List.first(response.choices)
       assert choice.index == 0
       assert choice.message.role == :assistant
-      assert choice.message.__struct__ == GenAI.Message.ToolCall
+      assert choice.message.__struct__ == GenAI.Message.ToolUsage
       [fc] = choice.message.tool_calls
       assert fc.function.name == "random_fact"
       assert fc.function.arguments[:subject] == "cats"
@@ -66,23 +66,20 @@ defmodule GenAI.Provider.MistralTest do
       {:ok, response} = GenAI.Provider.Mistral.chat(
         [
           %GenAI.Message{role: :user, content: "Tell me a random fact about cats using a tool call."},
-          %GenAI.Message.ToolCall{
+          %GenAI.Message.ToolUsage{
             role: :assistant,
             content: "",
             tool_calls: [
-              %{
-                function: %{
-                  name: "random_fact",
-                  arguments: %{"category" => "animals", :subject => "cats"}
-                },
-                id: "call_CzTrgmcWofyDCVp9tgkomE",
-                type: "function"
+              %GenAI.Message.ToolCall{
+                id: "call_euQN3UTzL8HNn3jc2TzFnz",
+                tool_name: "random_fact",
+                arguments: %{:subject => "Cats"}
               }
             ],
             vsn: 1.0
           },
           %GenAI.Message.ToolResponse{
-            response: %{
+            tool_response: %{
               body: "Cats are awesome, now there's a cat fact!"
             },
             tool_call_id: "call_CzTrgmcWofyDCVp9tgkomE"

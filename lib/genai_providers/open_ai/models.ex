@@ -1,16 +1,18 @@
 defmodule GenAI.Provider.OpenAI.Models do
-  import GenAI.Provider
   @api_base "https://api.openai.com"
   @model_metadata_provider (Application.compile_env(:genai, :openai)[:metadata_provider] || GenAI.ModelMetadata.DefaultProvider)
-  @behaviour GenAI.Provider.ModelsBehaviour
 
+  import GenAI.InferenceProvider.Helpers
+  
   def load_metadata(options \\ nil)
   def load_metadata(_) do
     :ok
   end
 
+
+  # TODO allow local meta data merge
   def list(options \\ nil) do
-    headers = headers(options)
+    headers = GenAI.Provider.OpenAI.headers(options)
     call = api_call(:get, "#{@api_base}/v1/models", headers)
     with {:ok, %Finch.Response{status: 200, body: body}} <- call,
          {:ok, json} <- Jason.decode(body, keys: :atoms) do
@@ -28,42 +30,48 @@ defmodule GenAI.Provider.OpenAI.Models do
   def gpt_3_5_turbo() do
     %GenAI.Model{
       model: "gpt-3.5-turbo",
-      provider: GenAI.Provider.OpenAI
+      provider: GenAI.Provider.OpenAI,
+      encoder: GenAI.Provider.OpenAI.Encoder
     }
   end
 
   def gpt_3_5_turbo_16k() do
     %GenAI.Model{
       model: "gpt-3.5-turbo",
-      provider: GenAI.Provider.OpenAI
+      provider: GenAI.Provider.OpenAI,
+      encoder: GenAI.Provider.OpenAI.Encoder
     }
   end
 
   def gpt_4() do
     %GenAI.Model{
       model: "gpt-4",
-      provider: GenAI.Provider.OpenAI
+      provider: GenAI.Provider.OpenAI,
+      encoder: GenAI.Provider.OpenAI.Encoder
     }
   end
 
   def gpt_4_turbo() do
     %GenAI.Model{
       model: "gpt-4-turbo",
-      provider: GenAI.Provider.OpenAI
+      provider: GenAI.Provider.OpenAI,
+      encoder: GenAI.Provider.OpenAI.Encoder
     }
   end
 
   def gpt_4_turbo_preview() do
     %GenAI.Model{
       model: "gpt-4-turbo-preview",
-      provider: GenAI.Provider.OpenAI
+      provider: GenAI.Provider.OpenAI,
+      encoder: GenAI.Provider.OpenAI.Encoder
     }
   end
 
   def gpt_4_vision() do
     %GenAI.Model{
       model: "gpt-4",
-      provider: GenAI.Provider.OpenAI
+      provider: GenAI.Provider.OpenAI,
+      encoder: GenAI.Provider.OpenAI.Encoder
     }
   end
 
@@ -71,14 +79,16 @@ defmodule GenAI.Provider.OpenAI.Models do
   def gpt_4o() do
     %GenAI.Model{
       model: "gpt-4o",
-      provider: GenAI.Provider.OpenAI
+      provider: GenAI.Provider.OpenAI,
+      encoder: GenAI.Provider.OpenAI.Encoder
     }
   end
 
   def gpt_4o_mini() do
     %GenAI.Model{
       model: "gpt-4o-mini",
-      provider: GenAI.Provider.OpenAI
+      provider: GenAI.Provider.OpenAI,
+      encoder: GenAI.Provider.OpenAI.Encoder
     }
   end
 

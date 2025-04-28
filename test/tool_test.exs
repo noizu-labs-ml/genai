@@ -5,7 +5,7 @@ defmodule GenAI.ToolTest do
 
   describe "Tool Parsing" do
     test "tool from yaml - long" do
-      {:ok, sut} = GenAI.Tool.Function.from_yaml(
+      {:ok, sut} = GenAI.Tool.from_yaml(
         """
         type: function
         function:
@@ -37,7 +37,7 @@ defmodule GenAI.ToolTest do
     end
 
     test "tool from json - long" do
-      {:ok, sut} = GenAI.Tool.Function.from_json(
+      {:ok, sut} = GenAI.Tool.from_json(
         """
         {
             "type": "function",
@@ -72,7 +72,7 @@ defmodule GenAI.ToolTest do
     end
 
     test "Jason.encode" do
-      {:ok, sut} = GenAI.Tool.Function.from_json(
+      {:ok, sut} = GenAI.Tool.from_json(
         """
         {
             "type": "function",
