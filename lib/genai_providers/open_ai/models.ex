@@ -8,8 +8,7 @@ defmodule GenAI.Provider.OpenAI.Models do
   def load_metadata(_) do
     :ok
   end
-
-
+  
   # TODO allow local meta data merge
   def list(options \\ nil) do
     headers = GenAI.Provider.OpenAI.headers(options)
@@ -26,73 +25,45 @@ defmodule GenAI.Provider.OpenAI.Models do
       end
     end
   end
-
-  def gpt_3_5_turbo() do
+  
+  def model(model) do
     %GenAI.Model{
-      model: "gpt-3.5-turbo",
+      model: model,
       provider: GenAI.Provider.OpenAI,
       encoder: GenAI.Provider.OpenAI.Encoder
     }
   end
+  
+  def gpt_3_5_turbo(), do: model("gpt-3.5-turbo")
+  def gpt_3_5_turbo_16k(), do: model("gpt-3.5-turbo-16k")
+  
+  def gpt_4(), do: model("gpt-4")
+  def gpt_4_turbo(), do: model("gpt-4-turbo")
+  def gpt_4_vision(), do: model("gpt-4-vision")
+  
+  def gpt_4_1(), do: model("gpt-4.1")
+  def gpt_4_1(), do: model("gpt-4.1-nano")
+  
+  def gpt_4o(), do: model("gpt-4o")
+  def gpt_4o_audio(), do: model("gpt-4o-audio-preview")
+  def gpt_4o_mini(), do: model("gpt-4o-mini")
+  def gpt_4o_mini_audio(), do: model("gpt-4o-mini-audio-preview")
+  def gpt_4o_realtime(), do: model("gpt-4o-realtime-preview")
+  def gpt_4o_mini_realtime(), do: model("gpt-4o-mini-realtime-preview")
+  def gtp_4o_mini_tts(), do: model("gpt-4o-mini-tts")
+  
+  def chatgpt_4o(), do: model("chatgpt-4o-latest")
+  
+  def gpt_o1(), do: model("o1")
+  def gpt_o1_mini(), do: model("o1-mini")
+  def gpt_o1_pro(), do: model("o1-pro")
+  
+  def gpt_o3(), do: model("o3")
+  def gpt_o3_mini(), do: model("o3-mini")
+  
+  def gpt_o4_mini(), do: model("o4-mini")
 
-  def gpt_3_5_turbo_16k() do
-    %GenAI.Model{
-      model: "gpt-3.5-turbo",
-      provider: GenAI.Provider.OpenAI,
-      encoder: GenAI.Provider.OpenAI.Encoder
-    }
-  end
-
-  def gpt_4() do
-    %GenAI.Model{
-      model: "gpt-4",
-      provider: GenAI.Provider.OpenAI,
-      encoder: GenAI.Provider.OpenAI.Encoder
-    }
-  end
-
-  def gpt_4_turbo() do
-    %GenAI.Model{
-      model: "gpt-4-turbo",
-      provider: GenAI.Provider.OpenAI,
-      encoder: GenAI.Provider.OpenAI.Encoder
-    }
-  end
-
-  def gpt_4_turbo_preview() do
-    %GenAI.Model{
-      model: "gpt-4-turbo-preview",
-      provider: GenAI.Provider.OpenAI,
-      encoder: GenAI.Provider.OpenAI.Encoder
-    }
-  end
-
-  def gpt_4_vision() do
-    %GenAI.Model{
-      model: "gpt-4",
-      provider: GenAI.Provider.OpenAI,
-      encoder: GenAI.Provider.OpenAI.Encoder
-    }
-  end
-
-
-  def gpt_4o() do
-    %GenAI.Model{
-      model: "gpt-4o",
-      provider: GenAI.Provider.OpenAI,
-      encoder: GenAI.Provider.OpenAI.Encoder
-    }
-  end
-
-  def gpt_4o_mini() do
-    %GenAI.Model{
-      model: "gpt-4o-mini",
-      provider: GenAI.Provider.OpenAI,
-      encoder: GenAI.Provider.OpenAI.Encoder
-    }
-  end
-
-
+  
 
   #=============================================
   # Private Methods
