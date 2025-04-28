@@ -1,5 +1,5 @@
 defmodule GenAI.Provider.XAI.Models do
-  @api_base "https://api.x.ai"
+  @base_url "https://api.x.ai"
   @model_metadata_provider (Application.compile_env(:genai, :xai)[:metadata_provider] || GenAI.ModelMetadata.DefaultProvider)
 
   import GenAI.InferenceProvider.Helpers
@@ -12,7 +12,7 @@ defmodule GenAI.Provider.XAI.Models do
   # TODO allow local meta data merge
   def list(options \\ nil) do
     headers = GenAI.Provider.XAI.headers(options)
-    call = api_call(:get, "#{@api_base}/v1/models", headers)
+    call = api_call(:get, "#{@base_url}/v1/models", headers)
     with {:ok, %Finch.Response{status: 200, body: body}} <- call,
          {:ok, json} <- Jason.decode(body, keys: :atoms) do
 

@@ -2,8 +2,8 @@ defmodule GenAI.Provider.XAI do
   @moduledoc """
   Module for interacting with the XAI API.
   """
-  @base_url "https://api.openai.com"
-  @config_key :openai
+  @base_url "https://api.x.ai"
+  @config_key :xai
   use GenAI.InferenceProviderBehaviour
 
   #------------------

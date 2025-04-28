@@ -17,3 +17,6 @@ config :genai, :openai,
 
 config :genai, :anthropic,
        api_key: System.get_env("ANTHROPIC_API_KEY")
+
+config :genai, :xai,
+       api_key: System.get_env("XAI_API_KEY")
