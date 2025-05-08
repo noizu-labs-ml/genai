@@ -3,7 +3,7 @@ defmodule GenAI.Provider.Groq do
   This module implements the GenAI provider for Groq AI.
   """
   
-  @base_url "https://api.mistral.ai"
+  @base_url "https://api.groq.com/openai"
   use GenAI.InferenceProviderBehaviour
   
   @doc """

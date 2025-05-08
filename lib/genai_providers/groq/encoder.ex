@@ -1,5 +1,5 @@
 defmodule GenAI.Provider.Groq.Encoder do
-  @base_url "https://api.mistral.ai"
+  @base_url "https://api.groq.com/openai"
   use GenAI.Model.EncoderBehaviour
   
   def default_hyper_params(model, settings, session, context, options)
