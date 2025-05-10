@@ -16,7 +16,7 @@ Warning - This update may break existing code.
 - Updated internal structure to allow for more advanced use cases such as prompt loops/fitness checks,
 added support for how to handel local models, etc.
 
-## v0.1.0 - Split into core and extension libraries.
+## v0.1.0 - Split into core and extension libraries
 To use local llama you must replace 
 
 ```
