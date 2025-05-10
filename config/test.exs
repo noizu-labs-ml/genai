@@ -20,3 +20,6 @@ config :genai, :anthropic,
 
 config :genai, :xai,
        api_key: System.get_env("XAI_API_KEY")
+
+config :genai, :deepseek,
+       api_key: System.get_env("DEEPSEEK_API_KEY")
