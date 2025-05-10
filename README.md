@@ -1,13 +1,8 @@
-# Contributing
-Please feel free to submit an feature request/issues/clarification items you ahve under Issues! ^_^. 
-
------
-
 GenAI Library
 ====
 GenAI Elixir Library: A Framework for Interacting with Generative AI
 
-**Version:** 0.0.3
+**Version:** 0.2.3
 
 This repository contains an Elixir library for interacting with various generative AI providers and models through a common interface. The library is designed to be flexible, extensible, and easy to use.
 
@@ -18,8 +13,17 @@ It currently supports:
 - Mistral
 - Groq
 - OpenAI
+- DeepSeek
+- XAI
+
+and partial media in/out support for models that support it. 
 
 with pending (soon to be added) support for hugging face, ollama, dx and media generation. 
+
+# Core Libary 
+See [https://hexdocs.pm/genai_core/api-reference.html](GenAI Core docs) for the libraries underpinning this product.
+and genai_local for local gguf support.
+
 
 # Value Proposition
 

@@ -13,7 +13,7 @@ defmodule GenAI.MixProject do
       deps: deps(),
       elixirc_paths: elixirc_paths(Mix.env()),
       docs: [
-        main: "GenAI",
+        main: "readme",
         extras: [
           "README.md",
           "CHANGELOG.md",
