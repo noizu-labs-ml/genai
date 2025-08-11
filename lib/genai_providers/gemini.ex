@@ -4,8 +4,7 @@ defmodule GenAI.Provider.Gemini do
   """
   @base_url "https://generativelanguage.googleapis.com"
   use GenAI.InferenceProviderBehaviour
-  
-  
+
   defp expand_settings(settings) do
     config_settings = Application.get_env(:genai, config_key(), [])
     %{settings: settings, config_settings: config_settings}
@@ -19,11 +18,12 @@ defmodule GenAI.Provider.Gemini do
   def models(settings \\ []) do
     headers = headers(settings)
     settings = expand_settings(settings)
-    
+
     {:ok, api_key} = GenAI.Provider.Gemini.Encoder.api_key(settings)
     url = "#{@base_url}/v1beta/models?key=#{api_key}"
-    
+
     call = api_call(:get, url, headers)
+
     with {:ok, %Finch.Response{status: 200, body: body}} <- call,
          {:ok, json} <- Jason.decode(body, keys: :atoms) do
       with %{models: models} <- json do
@@ -34,7 +34,7 @@ defmodule GenAI.Provider.Gemini do
   end
 
   # Converts a JSON representation of a Mistral model to a `GenAI.Model` struct.
-  defp model_from_json( %{name: "models/" <> model_name} = json) do
+  defp model_from_json(%{name: "models/" <> model_name} = json) do
     %GenAI.Model{
       model: model_name,
       provider: GenAI.Provider.Gemini,
@@ -42,5 +42,4 @@ defmodule GenAI.Provider.Gemini do
       details: json
     }
   end
-  
 end

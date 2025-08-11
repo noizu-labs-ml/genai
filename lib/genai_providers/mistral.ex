@@ -4,7 +4,6 @@ defmodule GenAI.Provider.Mistral do
   """
   @base_url "https://api.mistral.ai"
   use GenAI.InferenceProviderBehaviour
-  
 
   @doc """
   Retrieves a list of available Mistral models.

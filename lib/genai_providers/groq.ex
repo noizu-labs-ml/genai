@@ -2,10 +2,10 @@ defmodule GenAI.Provider.Groq do
   @moduledoc """
   This module implements the GenAI provider for Groq AI.
   """
-  
+
   @base_url "https://api.groq.com/openai"
   use GenAI.InferenceProviderBehaviour
-  
+
   @doc """
   Retrieves a list of available Groq models.
 
@@ -36,7 +36,4 @@ defmodule GenAI.Provider.Groq do
       details: json
     }
   end
-
-
-
 end

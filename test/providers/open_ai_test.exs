@@ -11,6 +11,7 @@ defmodule GenAI.Provider.OpenAITest do
 
   describe "OpenAI Provider" do
 
+    @tag :live
     test "Model And Model Database Binding" do
         {:ok, _} = GenAI.Provider.OpenAI.Models.list()
     end

@@ -1,6 +1,6 @@
 defmodule GenAI.Provider.DeepSeekTest do
   use ExUnit.Case
-  import GenAI.Test.Support.Common
+
   @moduletag provider: :deepseek
   
   
@@ -23,9 +23,8 @@ defmodule GenAI.Provider.DeepSeekTest do
                |> GenAI.with_message(%GenAI.Message{role: :user, content: "What is the movie \"2001: A Space Odyssey\" about and who directed it?"})
       {:ok, sut} = GenAI.run(thread)
       first_choice = sut.choices |> hd()
-      [reasoning_content, text_content] = first_choice.message.content
+      [_reasoning_content, text_content] = first_choice.message.content
       assert text_content.text =~ "Stanley Kubrick"
-      IO.inspect(sut)
     end
     
   end

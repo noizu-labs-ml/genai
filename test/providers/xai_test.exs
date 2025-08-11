@@ -1,6 +1,6 @@
 defmodule GenAI.Provider.XAITest do
   use ExUnit.Case
-  import GenAI.Test.Support.Common
+
   @moduletag provider: :xai
   
   
@@ -24,7 +24,6 @@ defmodule GenAI.Provider.XAITest do
       {:ok, sut} = GenAI.run(thread)
       response = sut.choices |> hd()
       assert response.message.content =~ "Stanley Kubrick"
-      IO.inspect(response)
     end
     
   end

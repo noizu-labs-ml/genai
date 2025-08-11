@@ -68,11 +68,6 @@ defmodule GenAI.Provider.AnthropicTest do
             trailers: []
           }}
       end)
-# GenAI.Message.ToolCall do
-      #  defstruct id: nil,
-      #            type: :function,
-      #            tool_name: nil,
-      #            arguments: %{}
       {:ok, response} = GenAI.Provider.Anthropic.chat(
         [
           %GenAI.Message{role: :user, content: "Tell me a random fact about cats using a tool call."},

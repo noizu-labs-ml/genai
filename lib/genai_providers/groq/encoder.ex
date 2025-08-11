@@ -1,9 +1,10 @@
 defmodule GenAI.Provider.Groq.Encoder do
   @base_url "https://api.groq.com/openai"
   use GenAI.Model.EncoderBehaviour
-  
+
   def default_hyper_params(model, settings, session, context, options)
-  def default_hyper_params(model, settings, session, context, options) do
+
+  def default_hyper_params(_model, _settings, _session, _context, _options) do
     x = [
       hyper_param(name: :frequency_penalty),
       hyper_param(name: :logit_bias),
@@ -23,12 +24,16 @@ defmodule GenAI.Provider.Groq.Encoder do
       hyper_param(name: :stream, type: :boolean),
       hyper_param(name: :stream_options),
       hyper_param(name: :temperature),
-      hyper_param(name: :tool_choice, type: :string, sentinel: fn(_, body, _, _) -> body[:tools] && true end),
+      hyper_param(
+        name: :tool_choice,
+        type: :string,
+        sentinel: fn _, body, _, _ -> body[:tools] && true end
+      ),
       hyper_param(name: :top_logprobs),
       hyper_param(name: :top_p),
-      hyper_param(name: :user),
+      hyper_param(name: :user)
     ]
+
     {:ok, x}
   end
-
 end
