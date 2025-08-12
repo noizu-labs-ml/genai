@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-GenAI is an Elixir library (v0.2.3) providing a unified interface for multiple generative AI providers including Anthropic, OpenAI, Google Gemini, Mistral, Groq, XAI, and DeepSeek. The library uses protocol-based design for extensibility and OTP supervision for reliability.
+GenAI is an Elixir library (v0.2.3) providing a unified interface for multiple generative AI providers including Anthropic, OpenAI, Google Gemini, Mistral, Groq, XAI, DeepSeek, and Ollama. The library uses protocol-based design for extensibility and OTP supervision for reliability.
 
 ## Essential Commands
 
@@ -97,6 +97,7 @@ All providers use `GenAI.Message` structs with standardized roles:
 - **Gemini**: Requires safety settings, uses "parts" for content
 - **Groq**: Fast inference, OpenAI-compatible format
 - **XAI/DeepSeek**: Recently added, OpenAI-compatible implementations
+- **Ollama**: Local LLM inference, supports various open-source models
 
 ## Testing Strategy
 
@@ -115,6 +116,7 @@ API keys are configured via environment variables:
 - `GROQ_API_KEY`
 - `XAI_API_KEY`
 - `DEEPSEEK_API_KEY`
+- `OLLAMA_BASE_URL` (optional, defaults to http://localhost:11434)
 
 ## Common Development Tasks
 
