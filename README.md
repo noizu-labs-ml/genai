@@ -18,8 +18,11 @@ It currently supports:
 - Mistral
 - Groq
 - OpenAI
+- XAI
+- DeepSeek
+- Ollama (local LLM inference)
 
-with pending (soon to be added) support for hugging face, ollama, dx and media generation. 
+with pending (soon to be added) support for hugging face, dx and media generation. 
 
 # Value Proposition
 
@@ -31,7 +34,7 @@ The GenAI lib exposes and extends (such as master prompt instructions to extend 
 
 * **Protocol-based design:** Allows for easy integration of new providers and message types.
 * **Modular structure:** Well-organized code for improved maintainability and clarity.
-* **Support for multiple providers:** Currently supports OpenAI, Anthropic, Mistral, and Gemini.
+* **Support for multiple providers:** Currently supports OpenAI, Anthropic, Mistral, Gemini, Groq, XAI, DeepSeek, and Ollama.
 * **Tool integration:** Enables extending the capabilities of the framework by integrating external tools, even with models that don't have native tool support, through system prompts and custom parsing.
 * **Dynamic chat chain support:** Allows for building complex conversational AI systems with multiple steps and dynamic model selection.
 

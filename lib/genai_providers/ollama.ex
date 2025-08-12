@@ -1,9 +1,10 @@
-defmodule GenAI.Provider.OpenAI do
+defmodule GenAI.Provider.Ollama do
   @moduledoc """
-  Module for interacting with the OpenAI API.
+  Module for interacting with the Ollama API.
+  Ollama provides local LLM inference with various open-source models.
   """
-  @base_url "https://api.openai.com"
-  @config_key :openai
+  @base_url "http://localhost:11434"
+  @config_key :ollama
   use GenAI.InferenceProviderBehaviour
 
   # ------------------
@@ -11,15 +12,16 @@ defmodule GenAI.Provider.OpenAI do
   # models/1
   # ------------------
   @doc """
-  Retrieves a list of models supported by the OpenAI API for given user.
+  Retrieves a list of models available on the local Ollama instance.
   """
   def models(settings \\ []) do
     headers = headers(settings)
-    call = api_call(:get, "#{@base_url}/v1/models", headers)
+    base_url = settings[:base_url] || @base_url
+    call = api_call(:get, "#{base_url}/api/tags", headers)
 
     with {:ok, %Finch.Response{status: 200, body: body}} <- call,
          {:ok, json} <- Jason.decode(body, keys: :atoms) do
-      with %{data: models, object: "list"} <- json do
+      with %{models: models} <- json do
         models =
           models
           |> Enum.map(&model_from_json/1)
@@ -33,7 +35,7 @@ defmodule GenAI.Provider.OpenAI do
 
   defp model_from_json(json) do
     %GenAI.Model{
-      model: json[:id],
+      model: json[:name],
       provider: __MODULE__,
       details: json
     }

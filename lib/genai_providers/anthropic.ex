@@ -2,10 +2,10 @@ defmodule GenAI.Provider.Anthropic do
   @moduledoc """
   This module implements the GenAI provider for Groq AI.
   """
-  
+
   @base_url "https://api.anthropic.com"
   use GenAI.InferenceProviderBehaviour
-  
+
   @doc """
   Retrieves a list of available Groq models.
 
@@ -36,7 +36,4 @@ defmodule GenAI.Provider.Anthropic do
       details: json
     }
   end
-
-
-
 end
