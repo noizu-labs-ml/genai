@@ -45,7 +45,7 @@ The GenAI lib exposes and extends (such as master prompt instructions to extend 
 ```elixir
 def deps do
   [
-    {:genai, "~> 0.0.1"}
+    {:genai, "~> 0.2"}
   ]
 end
 ```
