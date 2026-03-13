@@ -93,19 +93,19 @@ defmodule GenAI.MixProject do
     [
       # {:dep_from_hexpm, "~> 0.3.0"},
       # {:dep_from_git, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"}
-      {:genai_core, "~> 0.2"},
+      {:genai_core, "~> 0.2.3"},
       # {:genai_core, github: "noizu-labs-ml/genai-core", branch: "develop"},
       {:floki, ">= 0.30.0"},
       {:elixir_uuid, "~> 1.2"},
-      {:shortuuid, "~> 3.0"},
+      {:shortuuid, "~> 4.0"},
       {:junit_formatter, "~> 3.3", only: [:test]},
       # Documentation Provider
-      {:ex_doc, "~> 0.28.3", only: [:dev, :test], optional: true, runtime: false},
+      {:ex_doc, "~> 0.40", only: [:dev, :test], optional: true, runtime: false},
       {:finch, "~> 0.15"},
       {:jason, "~> 1.2"},
-      {:ymlr, "~> 4.0"},
-      {:yaml_elixir, "~> 2.9.0"},
-      {:mimic, "~> 1.0.0", only: :test},
+      {:ymlr, "~> 5.0"},
+      {:yaml_elixir, "~> 2.9"},
+      {:mimic, "~> 2.3", only: :test},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
       {:sweet_xml, "~> 0.7", only: :test}
     ]

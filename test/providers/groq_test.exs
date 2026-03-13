@@ -75,7 +75,7 @@ defmodule GenAI.Provider.GroqTest do
           %GenAI.Message{role: :user, content: "Say Hello."},
         ],
         nil,
-        [model: GenAI.Provider.Groq.Models.llama3_8b().model ]
+        [model: GenAI.Provider.Groq.Models.llama3_1_8b().model ]
       )
       assert response.provider == GenAI.Provider.Groq
       assert response.model == "llama3-8b-8192"

@@ -45,7 +45,15 @@ defmodule GenAI.Provider.OpenAI.Models do
   def gpt_4_turbo(), do: model("gpt-4-turbo")
   def gpt_4_vision(), do: model("gpt-4-vision")
 
+  def gpt_5_4(), do: model("gpt-5.4")
+  def gpt_5_4_pro(), do: model("gpt-5.4-pro")
+  def gpt_5_2(), do: model("gpt-5.2")
+  def gpt_5(), do: model("gpt-5")
+  def gpt_5_mini(), do: model("gpt-5-mini")
+  def gpt_5_nano(), do: model("gpt-5-nano")
+
   def gpt_4_1(), do: model("gpt-4.1")
+  def gpt_4_1_mini(), do: model("gpt-4.1-mini")
   def gpt_4_1_nano(), do: model("gpt-4.1-nano")
 
   def gpt_4o(), do: model("gpt-4o")

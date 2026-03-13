@@ -40,34 +40,31 @@ defmodule GenAI.Provider.Ollama.Models do
   end
 
   # Common Ollama models
+  def llama4(), do: model("llama4")
   def llama3_2(), do: model("llama3.2")
   def llama3_2_vision(), do: model("llama3.2-vision")
   def llama3_1(), do: model("llama3.1")
   def llama3(), do: model("llama3")
-  def llama2(), do: model("llama2")
 
   def mistral(), do: model("mistral")
   def mixtral(), do: model("mixtral")
 
+  def gemma3(), do: model("gemma3")
   def gemma2(), do: model("gemma2")
-  def gemma(), do: model("gemma")
 
+  def qwen3(), do: model("qwen3")
   def qwen2_5(), do: model("qwen2.5")
-  def qwen2(), do: model("qwen2")
 
+  def phi4(), do: model("phi4")
   def phi3(), do: model("phi3")
-  def phi(), do: model("phi")
 
+  def deepseek_r1(), do: model("deepseek-r1")
   def deepseek_coder_v2(), do: model("deepseek-coder-v2")
 
   def codellama(), do: model("codellama")
   def starcoder2(), do: model("starcoder2")
 
   def llava(), do: model("llava")
-
-  def neural_chat(), do: model("neural-chat")
-
-  def openhermes(), do: model("openhermes")
 
   # =============================================
   # Private Methods

@@ -38,6 +38,13 @@ defmodule GenAI.Provider.XAI.Models do
     }
   end
 
+  def grok_4_2_beta(), do: model("grok-4.20-beta")
+  def grok_4_1_fast_reasoning(), do: model("grok-4-1-fast-reasoning")
+  def grok_4_1_fast(), do: model("grok-4-1-fast-non-reasoning")
+  def grok_4(), do: model("grok-4")
+  def grok_4_fast_reasoning(), do: model("grok-4-fast-reasoning")
+  def grok_code_fast(), do: model("grok-code-fast-1")
+
   def grok_3(), do: model("grok-3")
   def grok_3_fast(), do: model("grok-3-fast")
   def grok_3_mini(), do: model("grok-3-mini")

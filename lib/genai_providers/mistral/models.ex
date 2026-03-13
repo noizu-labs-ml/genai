@@ -34,7 +34,14 @@ defmodule GenAI.Provider.Mistral.Models do
   # --------------------------
   #
   # --------------------------
-  def pixstral(), do: model("pixtral-large-latest  ")
+  def pixtral(), do: model("pixtral-large-latest")
+
+  # --------------------------
+  #
+  # --------------------------
+  def magistral_medium(), do: model("magistral-medium-latest")
+
+  def magistral_small(), do: model("magistral-small-latest")
 
   # --------------------------
   #
@@ -46,5 +53,5 @@ defmodule GenAI.Provider.Mistral.Models do
   # --------------------------
   def ministral_3b(), do: model("ministral-3b-latest")
 
-  def ministral_8b(), do: model("ministral-87b-latest")
+  def ministral_8b(), do: model("ministral-8b-latest")
 end
