@@ -7,7 +7,7 @@ defmodule GenAI.MixProject do
       name: "Noizu Labs, GenAI Wrapper",
       description: description(),
       package: package(),
-      version: "0.3.0",
+      version: "0.3.1",
       elixir: "~> 1.16",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
@@ -88,12 +88,22 @@ defmodule GenAI.MixProject do
   defp elixirc_paths(:test), do: ["lib", "test/support"]
   defp elixirc_paths(_), do: ["lib"]
 
+  # genai_core is co-developed in this monorepo. Default to the published Hex release
+  # (publish-safe); set GENAI_CORE_PATH to build against a local checkout — needed while
+  # consuming unreleased genai-core changes (e.g. the ADR-016 media framework).
+  defp genai_core_dep do
+    case System.get_env("GENAI_CORE_PATH") do
+      nil -> {:genai_core, "~> 0.3.1"}
+      path -> {:genai_core, path: path, override: true}
+    end
+  end
+
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
       # {:dep_from_hexpm, "~> 0.3.0"},
       # {:dep_from_git, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"}
-      {:genai_core, "~> 0.3.0"},
+      genai_core_dep(),
       # {:genai_core, github: "noizu-labs-ml/genai-core", branch: "develop"},
       {:floki, ">= 0.30.0"},
       {:elixir_uuid, "~> 1.2"},

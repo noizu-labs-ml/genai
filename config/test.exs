@@ -23,3 +23,9 @@ config :genai, :xai,
 
 config :genai, :deepseek,
        api_key: System.get_env("DEEPSEEK_API_KEY")
+
+config :genai, :zai,
+       api_key: System.get_env("ZAI_API_KEY")
+
+config :genai, :cerebras,
+       api_key: System.get_env("CEREBRAS_API_KEY")
