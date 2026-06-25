@@ -34,8 +34,8 @@ defmodule GenAI.Provider.OpenAICompatibleProvidersTest do
     end
 
     test "model/1 wires provider + encoder" do
-      m = Cerebras.Models.llama_3_3_70b()
-      assert m.model == "llama-3.3-70b"
+      m = Cerebras.Models.gpt_oss_120b()
+      assert m.model == "gpt-oss-120b"
       assert m.provider == GenAI.Provider.Cerebras
       assert m.encoder == GenAI.Provider.Cerebras.Encoder
     end

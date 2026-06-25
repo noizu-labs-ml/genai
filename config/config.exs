@@ -13,10 +13,15 @@ config :genai, :local_llama,
 
 # Media-generation provider registry (ADR-016 / ede43647). The capability Router
 # (GenAI.Media.Router) enumerates these to route a GenAI.Media.Request to a provider
-# that declares its (input, output) modality. Consumers can override per-environment.
+# that declares its (input, output) modality. Specific providers come before the LiteLLM
+# proxy so they win for modalities both can serve. Consumers can override per-environment.
 config :genai, :media_providers, [
   GenAI.Provider.OpenAI.Image,
-  GenAI.Provider.Gemini.Image
+  GenAI.Provider.Gemini.Image,
+  GenAI.Provider.OpenAI.Speech,
+  GenAI.Provider.OpenAI.Transcription,
+  GenAI.Provider.Suno,
+  GenAI.Provider.LiteLLM.Media
 ]
 
 # Import environment specific config. This must remain at the bottom

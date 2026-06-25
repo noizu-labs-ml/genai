@@ -12,7 +12,7 @@ defmodule GenAI.Provider.Gemini.Image do
   clause (dmitri N1) reused by vision + edit; this module is the text->image cut.
   """
   @base_url "https://generativelanguage.googleapis.com/v1beta/models"
-  @default_model "imagen-3.0-generate-002"
+  @default_model "imagen-4.0-generate-001"
   @config_key :gemini_image
   use GenAI.InferenceProviderBehaviour
 

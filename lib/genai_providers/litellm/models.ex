@@ -1,6 +1,5 @@
-defmodule GenAI.Provider.ZAI.Models do
-  @base_url "https://api.z.ai/api/paas/v4"
-  @model_metadata_provider Application.compile_env(:genai, :zai)[:metadata_provider] ||
+defmodule GenAI.Provider.LiteLLM.Models do
+  @model_metadata_provider Application.compile_env(:genai, :litellm)[:metadata_provider] ||
                              GenAI.ModelMetadata.DefaultProvider
 
   import GenAI.InferenceProvider.Helpers
@@ -11,10 +10,11 @@ defmodule GenAI.Provider.ZAI.Models do
     :ok
   end
 
-  # TODO allow local meta data merge
+  # LiteLLM proxies arbitrary upstream models under deployment-defined names — there are no
+  # fixed presets. Use `model/1` with the name your proxy exposes, or `list/1` to enumerate.
   def list(options \\ nil) do
-    headers = GenAI.Provider.ZAI.headers(options)
-    call = api_call(:get, "#{@base_url}/models", headers)
+    headers = GenAI.Provider.LiteLLM.headers(options)
+    call = api_call(:get, "#{GenAI.Provider.LiteLLM.base_url()}/v1/models", headers)
 
     with {:ok, %Finch.Response{status: 200, body: body}} <- call,
          {:ok, json} <- Jason.decode(body, keys: :atoms) do
@@ -29,24 +29,10 @@ defmodule GenAI.Provider.ZAI.Models do
   def model(model) do
     %GenAI.Model{
       model: model,
-      provider: GenAI.Provider.ZAI,
-      encoder: GenAI.Provider.ZAI.Encoder
+      provider: GenAI.Provider.LiteLLM,
+      encoder: GenAI.Provider.LiteLLM.Encoder
     }
   end
-
-  # GLM family — verified live against /api/paas/v4/models (2026-06-25).
-
-  # GLM-5.x (flagship)
-  def glm_5_2(), do: model("glm-5.2")
-  def glm_5_1(), do: model("glm-5.1")
-  def glm_5_turbo(), do: model("glm-5-turbo")
-  def glm_5(), do: model("glm-5")
-
-  # GLM-4.x
-  def glm_4_7(), do: model("glm-4.7")
-  def glm_4_6(), do: model("glm-4.6")
-  def glm_4_5(), do: model("glm-4.5")
-  def glm_4_5_air(), do: model("glm-4.5-air")
 
   # =============================================
   # Private Methods
@@ -55,7 +41,7 @@ defmodule GenAI.Provider.ZAI.Models do
     {:ok, entry} =
       GenAI.ModelMetadata.ProviderBehaviour.get(
         @model_metadata_provider,
-        GenAI.Provider.ZAI,
+        GenAI.Provider.LiteLLM,
         json[:id]
       )
 

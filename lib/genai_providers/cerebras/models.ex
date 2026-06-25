@@ -34,14 +34,9 @@ defmodule GenAI.Provider.Cerebras.Models do
     }
   end
 
-  # Cerebras-hosted models (https://inference-docs.cerebras.ai/)
-  def llama_3_3_70b(), do: model("llama-3.3-70b")
-  def llama_3_1_8b(), do: model("llama3.1-8b")
-  def llama_4_scout_17b(), do: model("llama-4-scout-17b-16e-instruct")
-  def llama_4_maverick_17b(), do: model("llama-4-maverick-17b-128e-instruct")
-  def qwen_3_32b(), do: model("qwen-3-32b")
-  def qwen_3_235b(), do: model("qwen-3-235b-a22b-instruct-2507")
+  # Cerebras-hosted models — verified live against /v1/models (2026-06-25).
   def gpt_oss_120b(), do: model("gpt-oss-120b")
+  def zai_glm_4_7(), do: model("zai-glm-4.7")
 
   # =============================================
   # Private Methods

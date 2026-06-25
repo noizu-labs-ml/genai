@@ -16,6 +16,7 @@ defmodule GenAI.Provider.OpenAI.Image do
 
   alias GenAI.Media.Request
   alias GenAI.Provider.MediaHelpers, as: H
+  alias GenAI.Provider.Media.OpenAICompat
 
   @impl GenAI.InferenceProviderBehaviour
   def supported_modalities, do: [%{input: [:text], output: :image, mode: :sync}]
@@ -23,25 +24,7 @@ defmodule GenAI.Provider.OpenAI.Image do
   @impl GenAI.InferenceProviderBehaviour
   def generate_media(%Request{output: :image} = req, _options) do
     with {:ok, key} <- H.require_key(req, "OPENAI_API_KEY") do
-      body = %{
-        model: req.model || "gpt-image-1",
-        prompt: H.prompt_text(req.prompt),
-        size: req.settings[:size] || "1024x1024",
-        n: 1
-      }
-
-      headers = [{"authorization", "Bearer #{key}"}, {"content-type", "application/json"}]
-
-      case api_call(:post, "#{@base_url}/v1/images/generations", headers, body) do
-        {:ok, %Finch.Response{status: 200, body: resp}} ->
-          H.decode_image(resp, ["data", H.access0(), "b64_json"])
-
-        {:ok, %Finch.Response{status: status, body: resp}} ->
-          {:error, {:http_error, status, resp}}
-
-        {:error, reason} ->
-          {:error, {:request_failed, reason}}
-      end
+      OpenAICompat.image(@base_url, key, req)
     end
   end
 

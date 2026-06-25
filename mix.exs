@@ -93,7 +93,7 @@ defmodule GenAI.MixProject do
   # consuming unreleased genai-core changes (e.g. the ADR-016 media framework).
   defp genai_core_dep do
     case System.get_env("GENAI_CORE_PATH") do
-      nil -> {:genai_core, "~> 0.3.1"}
+      nil -> {:genai_core, "~> 0.3.2"}
       path -> {:genai_core, path: path, override: true}
     end
   end
