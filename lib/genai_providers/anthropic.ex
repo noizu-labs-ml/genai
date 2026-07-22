@@ -11,6 +11,7 @@ defmodule GenAI.Provider.Anthropic do
 
   This function calls the Groq API to retrieve a list of models and returns them as a list of `GenAI.Model` structs.
   """
+  # ⟦𓈐𓅐𓀤𓉓⟧ models :: Retrieves a list of available Groq models.
   def models(settings \\ []) do
     headers = headers(settings)
     call = api_call(:get, "#{@base_url}/v1/models", headers)

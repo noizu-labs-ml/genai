@@ -6,6 +6,7 @@ defmodule GenAI.Application do
   use Application
 
   @impl true
+  # ⟦𓍨𓀆𓄣𓁌⟧ start :: auto-generated pointer for public function start
   def start(_type, _args) do
     children = [
       {Finch, name: GenAI.Finch}

@@ -20,9 +20,11 @@ defmodule GenAI.Provider.Gemini.Image do
   alias GenAI.Provider.MediaHelpers, as: H
 
   @impl GenAI.InferenceProviderBehaviour
+  # ⟦𓆏𓌬𓎚𓈷⟧ supported_modalities :: auto-generated pointer for public function supported_modalities
   def supported_modalities, do: [%{input: [:text], output: :image, mode: :sync}]
 
   @impl GenAI.InferenceProviderBehaviour
+  # ⟦𓁳𓐟𓇒𓉬⟧ generate_media :: auto-generated pointer for public function generate_media
   def generate_media(%Request{output: :image} = req, _options) do
     with {:ok, key} <- H.require_key(req, "GEMINI_API_KEY") do
       model = req.model || @default_model

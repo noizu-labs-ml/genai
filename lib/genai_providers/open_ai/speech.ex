@@ -16,9 +16,11 @@ defmodule GenAI.Provider.OpenAI.Speech do
   alias GenAI.Provider.Media.OpenAICompat
 
   @impl GenAI.InferenceProviderBehaviour
+  # ⟦𓉳𓉫𓀚𓅢⟧ supported_modalities :: auto-generated pointer for public function supported_modalities
   def supported_modalities, do: [%{input: [:text], output: :speech, mode: :sync}]
 
   @impl GenAI.InferenceProviderBehaviour
+  # ⟦𓇰𓎔𓀿𓂎⟧ generate_media :: auto-generated pointer for public function generate_media
   def generate_media(%Request{output: :speech} = req, _options) do
     with {:ok, key} <- H.require_key(req, "OPENAI_API_KEY") do
       OpenAICompat.speech(@base_url, key, req)

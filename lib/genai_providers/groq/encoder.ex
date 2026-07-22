@@ -2,6 +2,7 @@ defmodule GenAI.Provider.Groq.Encoder do
   @base_url "https://api.groq.com/openai"
   use GenAI.Model.EncoderBehaviour
 
+  # ⟦𓇦𓉀𓁗𓈳⟧ default_hyper_params :: auto-generated pointer for public function default_hyper_params
   def default_hyper_params(model, settings, session, context, options)
 
   def default_hyper_params(_model, _settings, _session, _context, _options) do

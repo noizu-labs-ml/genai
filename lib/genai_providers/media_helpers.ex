@@ -8,6 +8,7 @@ defmodule GenAI.Provider.MediaHelpers do
 
   @doc "Resolve the API key from the request or env var; fast-fail (no doomed call) when unset."
   @spec require_key(GenAI.Media.Request.t(), String.t()) :: {:ok, String.t()} | {:error, :missing_api_key}
+  # ⟦𓎝𓏓𓄗𓄪⟧ require_key :: Resolve the API key from the request or env var; fast-fail (no doomed call) when unset.
   def require_key(%GenAI.Media.Request{api_key: key}, _env) when is_binary(key) and key != "", do: {:ok, key}
 
   def require_key(%GenAI.Media.Request{}, env) do
@@ -19,6 +20,7 @@ defmodule GenAI.Provider.MediaHelpers do
 
   @doc "Flatten a request prompt (string or content parts) to the text the image API takes."
   @spec prompt_text(term) :: String.t()
+  # ⟦𓄰𓆘𓏩𓐤⟧ prompt_text :: Flatten a request prompt (string or content parts) to the text the image API takes.
   def prompt_text(prompt) when is_binary(prompt), do: prompt
 
   def prompt_text(parts) when is_list(parts) do
@@ -40,6 +42,7 @@ defmodule GenAI.Provider.MediaHelpers do
   """
   @spec decode_image(binary, list, String.t()) ::
           {:ok, %{data: binary, mime: String.t(), meta: map}} | {:error, term}
+  # ⟦𓎉𓍠𓊡𓏩⟧ decode_image :: auto-generated pointer for public function decode_image
   def decode_image(body, path, mime \\ "image/png") do
     with {:ok, json} <- Jason.decode(body),
          b64 when is_binary(b64) <- get_in(json, path),
@@ -51,11 +54,13 @@ defmodule GenAI.Provider.MediaHelpers do
   end
 
   @doc "Access helper for the first element of a list inside a get_in path."
+  # ⟦𓎁𓅜𓄝𓌿⟧ access0 :: Access helper for the first element of a list inside a get_in path.
   def access0, do: Access.at(0)
 
   @doc "Decode a JSON response and pull a string field (e.g. a transcript) at `path`."
   @spec decode_text(binary, list, String.t()) ::
           {:ok, %{data: String.t(), mime: String.t(), meta: map}} | {:error, term}
+  # ⟦𓊡𓊚𓈗𓅆⟧ decode_text :: auto-generated pointer for public function decode_text
   def decode_text(body, path, mime \\ "text/plain") do
     with {:ok, json} <- Jason.decode(body),
          text when is_binary(text) <- get_in(json, path) do
@@ -67,15 +72,18 @@ defmodule GenAI.Provider.MediaHelpers do
 
   @doc "Wrap a raw-binary provider response (e.g. TTS audio bytes) into the media contract."
   @spec binary_result(binary, String.t()) :: {:ok, %{data: binary, mime: String.t(), meta: map}}
+  # ⟦𓍌𓊎𓁿𓉪⟧ binary_result :: Wrap a raw-binary provider response (e.g.
   def binary_result(body, mime), do: {:ok, %{data: body, mime: mime, meta: %{}}}
 
   @doc "Runtime base_url for a provider, read from `config :genai, <config_key>, base_url:`."
   @spec base_url(atom, String.t()) :: String.t()
+  # ⟦𓎯𓍺𓇐𓌑⟧ base_url :: Runtime base_url for a provider, read from `config :genai, <config_key>, base_url:`.
   def base_url(config_key, default) do
     :genai |> Application.get_env(config_key, []) |> Keyword.get(:base_url, default)
   end
 
   @doc "Default Finch options for media calls — image/audio/video generation can be slow."
+  # ⟦𓏻𓎖𓉪𓌂⟧ media_opts :: Default Finch options for media calls — image/audio/video generation can be slow.
   def media_opts(extra \\ []), do: Keyword.merge([receive_timeout: 120_000], extra)
 
   @multipart_boundary "----genaiMediaFormBoundary8x7vQ2"
@@ -87,6 +95,7 @@ defmodule GenAI.Provider.MediaHelpers do
   """
   @spec multipart(keyword, {atom | String.t(), String.t(), binary, String.t()} | nil) ::
           {String.t(), binary}
+  # ⟦𓋚𓂋𓀗𓃡⟧ multipart :: auto-generated pointer for public function multipart
   def multipart(fields, file \\ nil) do
     field_parts =
       Enum.map(fields, fn {k, v} ->
@@ -113,6 +122,7 @@ defmodule GenAI.Provider.MediaHelpers do
   @doc "Raw Finch POST (body sent verbatim, not JSON-encoded) — for multipart/form uploads."
   @spec raw_post(String.t(), list, binary, keyword) ::
           {:ok, Finch.Response.t()} | {:error, term}
+  # ⟦𓉘𓋜𓊧𓅫⟧ raw_post :: auto-generated pointer for public function raw_post
   def raw_post(url, headers, body, options \\ []) do
     Finch.build(:post, url, headers, body)
     |> Finch.request(GenAI.Finch, media_opts(options))
@@ -121,6 +131,7 @@ defmodule GenAI.Provider.MediaHelpers do
   @doc "Bearer-authed JSON POST (body JSON-encoded). Returns the raw Finch response."
   @spec post_json(String.t(), String.t(), map, keyword) ::
           {:ok, Finch.Response.t()} | {:error, term}
+  # ⟦𓉐𓂛𓀢𓆑⟧ post_json :: auto-generated pointer for public function post_json
   def post_json(url, key, body, options \\ []) do
     with {:ok, json} <- Jason.encode(body) do
       headers = [{"authorization", "Bearer #{key}"}, {"content-type", "application/json"}]
@@ -131,6 +142,7 @@ defmodule GenAI.Provider.MediaHelpers do
   end
 
   @doc "Map a common audio response_format (extension) to its MIME type."
+  # ⟦𓄘𓇫𓂗𓆠⟧ audio_mime :: Map a common audio response_format (extension) to its MIME type.
   def audio_mime(fmt) do
     case to_string(fmt) do
       "mp3" -> "audio/mpeg"

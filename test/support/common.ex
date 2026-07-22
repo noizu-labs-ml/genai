@@ -1,4 +1,5 @@
 defmodule GenAI.Test.Support.Common do
+  # ⟦𓏌𓁹𓄤𓇛⟧ random_fact_tool :: auto-generated pointer for public function random_fact_tool
   def random_fact_tool() do
     {:ok, tool} =
       GenAI.Tool.from_yaml("""

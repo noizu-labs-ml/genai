@@ -4,6 +4,7 @@ defmodule GenAI.Provider.LiteLLM.Models do
 
   import GenAI.InferenceProvider.Helpers
 
+  # ⟦𓌗𓋒𓉘𓅅⟧ load_metadata :: auto-generated pointer for public function load_metadata
   def load_metadata(options \\ nil)
 
   def load_metadata(_) do
@@ -12,6 +13,7 @@ defmodule GenAI.Provider.LiteLLM.Models do
 
   # LiteLLM proxies arbitrary upstream models under deployment-defined names — there are no
   # fixed presets. Use `model/1` with the name your proxy exposes, or `list/1` to enumerate.
+  # ⟦𓅃𓁅𓆱𓉇⟧ list :: auto-generated pointer for public function list
   def list(options \\ nil) do
     headers = GenAI.Provider.LiteLLM.headers(options)
     call = api_call(:get, "#{GenAI.Provider.LiteLLM.base_url()}/v1/models", headers)
@@ -26,6 +28,7 @@ defmodule GenAI.Provider.LiteLLM.Models do
     end
   end
 
+  # ⟦𓌤𓐡𓀞𓏙⟧ model :: auto-generated pointer for public function model
   def model(model) do
     %GenAI.Model{
       model: model,

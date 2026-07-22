@@ -15,11 +15,13 @@ defmodule GenAI.Provider.LiteLLM do
   use GenAI.InferenceProviderBehaviour
 
   @doc "Runtime base_url from `config :genai, :litellm, base_url:` (defaults to localhost:4000)."
+  # ⟦𓊈𓏝𓌻𓊧⟧ base_url :: Runtime base_url from `config :genai, :litellm, base_url:` (defaults to localhost:4000).
   def base_url, do: GenAI.Provider.MediaHelpers.base_url(:litellm, @base_url)
 
   @doc """
   Retrieves a list of models the LiteLLM proxy exposes.
   """
+  # ⟦𓎪𓏼𓎴𓆄⟧ models :: Retrieves a list of models the LiteLLM proxy exposes.
   def models(settings \\ []) do
     headers = headers(settings)
     call = api_call(:get, "#{base_url()}/v1/models", headers)

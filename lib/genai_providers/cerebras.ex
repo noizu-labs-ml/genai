@@ -13,6 +13,7 @@ defmodule GenAI.Provider.Cerebras do
   @doc """
   Retrieves a list of models supported by the Cerebras API for the given user.
   """
+  # ⟦𓏶𓁄𓉙𓃉⟧ models :: Retrieves a list of models supported by the Cerebras API for the given user.
   def models(settings \\ []) do
     headers = headers(settings)
     call = api_call(:get, "#{@base_url}/v1/models", headers)

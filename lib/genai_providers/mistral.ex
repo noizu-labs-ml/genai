@@ -10,6 +10,7 @@ defmodule GenAI.Provider.Mistral do
 
   This function calls the Mistral API to retrieve a list of models and returns them as a list of `GenAI.Model` structs.
   """
+  # ⟦𓀠𓋇𓍝𓃭⟧ models :: Retrieves a list of available Mistral models.
   def models(settings \\ []) do
     headers = headers(settings)
     call = api_call(:get, "#{@base_url}/v1/models", headers)

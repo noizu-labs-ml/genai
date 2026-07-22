@@ -14,6 +14,7 @@ defmodule GenAI.Provider.ZAI do
   @doc """
   Retrieves a list of models supported by the Z.AI API for the given user.
   """
+  # ⟦𓆰𓊓𓁲𓆷⟧ models :: Retrieves a list of models supported by the Z.AI API for the given user.
   def models(settings \\ []) do
     headers = headers(settings)
     call = api_call(:get, "#{@base_url}/models", headers)

@@ -19,9 +19,11 @@ defmodule GenAI.Provider.OpenAI.Image do
   alias GenAI.Provider.Media.OpenAICompat
 
   @impl GenAI.InferenceProviderBehaviour
+  # ⟦𓂒𓐑𓌈𓇐⟧ supported_modalities :: auto-generated pointer for public function supported_modalities
   def supported_modalities, do: [%{input: [:text], output: :image, mode: :sync}]
 
   @impl GenAI.InferenceProviderBehaviour
+  # ⟦𓉥𓐟𓍑𓁽⟧ generate_media :: auto-generated pointer for public function generate_media
   def generate_media(%Request{output: :image} = req, _options) do
     with {:ok, key} <- H.require_key(req, "OPENAI_API_KEY") do
       OpenAICompat.image(@base_url, key, req)

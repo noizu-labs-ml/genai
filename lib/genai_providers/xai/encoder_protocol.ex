@@ -6,6 +6,7 @@ defprotocol GenAI.Provider.XAI.EncoderProtocol do
   and most cases you can simply cast it to generic known type and then invoke the protocol
   again.
   """
+  # ⟦𓅐𓄄𓅔𓅥⟧ encode :: auto-generated pointer for public function encode
   def encode(subject, model, session, context, options)
 end
 
@@ -31,6 +32,7 @@ end
 # GenAI.Message
 # -----------------------------
 defimpl GenAI.Provider.XAI.EncoderProtocol, for: GenAI.Message do
+  # ⟦𓊶𓄰𓁐𓅇⟧ content :: auto-generated pointer for public function content
   def content(content)
 
   def content(content) when is_bitstring(content) do
@@ -81,6 +83,7 @@ end
 # GenAI.Message.ToolUsage
 # -----------------------------
 defimpl GenAI.Provider.XAI.EncoderProtocol, for: GenAI.Message.ToolUsage do
+  # ⟦𓆗𓋡𓈟𓊽⟧ encode_call :: auto-generated pointer for public function encode_call
   def encode_call(%GenAI.Message.ToolCall{
         id: id,
         type: type,

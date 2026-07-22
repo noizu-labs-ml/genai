@@ -14,6 +14,7 @@ defmodule GenAI.Provider.Media.OpenAICompat do
   alias GenAI.Provider.MediaHelpers, as: H
 
   @doc "text -> image (gpt-image-1 / DALL·E compatible)."
+  # ⟦𓃲𓌗𓊏𓁖⟧ image :: text -> image (gpt-image-1 / DALL·E compatible).
   def image(base_url, key, %Request{} = req) do
     body = %{
       model: req.model || "gpt-image-2",
@@ -28,6 +29,7 @@ defmodule GenAI.Provider.Media.OpenAICompat do
   end
 
   @doc "text -> speech (TTS); returns raw audio bytes with the right MIME."
+  # ⟦𓇾𓈀𓋵𓄎⟧ speech :: text -> speech (TTS); returns raw audio bytes with the right MIME.
   def speech(base_url, key, %Request{} = req) do
     fmt = to_string(req.settings[:format] || "mp3")
 
@@ -44,6 +46,7 @@ defmodule GenAI.Provider.Media.OpenAICompat do
   end
 
   @doc "speech -> text (transcription). Audio bytes ride in `req.settings[:audio]`."
+  # ⟦𓊾𓄛𓈪𓈷⟧ transcription :: speech -> text (transcription).
   def transcription(base_url, key, %Request{} = req) do
     case req.settings[:audio] do
       audio when is_binary(audio) ->

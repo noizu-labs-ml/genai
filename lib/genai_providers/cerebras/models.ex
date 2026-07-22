@@ -5,6 +5,7 @@ defmodule GenAI.Provider.Cerebras.Models do
 
   import GenAI.InferenceProvider.Helpers
 
+  # ⟦𓈗𓂓𓁞𓂟⟧ load_metadata :: auto-generated pointer for public function load_metadata
   def load_metadata(options \\ nil)
 
   def load_metadata(_) do
@@ -12,6 +13,7 @@ defmodule GenAI.Provider.Cerebras.Models do
   end
 
   # TODO allow local meta data merge
+  # ⟦𓉡𓄰𓆚𓇓⟧ list :: auto-generated pointer for public function list
   def list(options \\ nil) do
     headers = GenAI.Provider.Cerebras.headers(options)
     call = api_call(:get, "#{@base_url}/v1/models", headers)
@@ -26,6 +28,7 @@ defmodule GenAI.Provider.Cerebras.Models do
     end
   end
 
+  # ⟦𓆡𓇏𓈨𓂿⟧ model :: auto-generated pointer for public function model
   def model(model) do
     %GenAI.Model{
       model: model,
@@ -35,7 +38,9 @@ defmodule GenAI.Provider.Cerebras.Models do
   end
 
   # Cerebras-hosted models — verified live against /v1/models (2026-06-25).
+  # ⟦𓈘𓋍𓌑𓍒⟧ gpt_oss_120b :: auto-generated pointer for public function gpt_oss_120b
   def gpt_oss_120b(), do: model("gpt-oss-120b")
+  # ⟦𓊄𓍂𓅱𓁮⟧ zai_glm_4_7 :: auto-generated pointer for public function zai_glm_4_7
   def zai_glm_4_7(), do: model("zai-glm-4.7")
 
   # =============================================

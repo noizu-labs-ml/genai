@@ -6,6 +6,7 @@ defprotocol GenAI.Provider.Groq.EncoderProtocol do
   and most cases you can simply cast it to generic known type and then invoke the protocol
   again.
   """
+  # ⟦𓅟𓍙𓂛𓐘⟧ encode :: auto-generated pointer for public function encode
   def encode(subject, model, session, context, options)
 end
 
@@ -31,6 +32,7 @@ end
 # GenAI.Message
 # -----------------------------
 defimpl GenAI.Provider.Groq.EncoderProtocol, for: GenAI.Message do
+  # ⟦𓅨𓍾𓏥𓎑⟧ content :: auto-generated pointer for public function content
   def content(content)
 
   def content(content) when is_bitstring(content) do
@@ -86,6 +88,7 @@ end
 # GenAI.Message.ToolUsage
 # -----------------------------
 defimpl GenAI.Provider.Groq.EncoderProtocol, for: GenAI.Message.ToolUsage do
+  # ⟦𓌪𓅐𓈼𓇙⟧ encode_call :: auto-generated pointer for public function encode_call
   def encode_call(%GenAI.Message.ToolCall{
         id: id,
         type: type,

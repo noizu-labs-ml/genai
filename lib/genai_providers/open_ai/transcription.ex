@@ -20,9 +20,11 @@ defmodule GenAI.Provider.OpenAI.Transcription do
   alias GenAI.Provider.Media.OpenAICompat
 
   @impl GenAI.InferenceProviderBehaviour
+  # ⟦𓀡𓅜𓐈𓊸⟧ supported_modalities :: auto-generated pointer for public function supported_modalities
   def supported_modalities, do: [%{input: [:speech], output: :text, mode: :sync}]
 
   @impl GenAI.InferenceProviderBehaviour
+  # ⟦𓎌𓃋𓎿𓆀⟧ generate_media :: auto-generated pointer for public function generate_media
   def generate_media(%Request{output: :text} = req, _options) do
     with {:ok, key} <- H.require_key(req, "OPENAI_API_KEY") do
       OpenAICompat.transcription(@base_url, key, req)

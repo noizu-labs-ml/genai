@@ -20,6 +20,7 @@ defmodule GenAI.Provider.Suno do
   alias GenAI.Provider.MediaHelpers, as: H
 
   @impl GenAI.InferenceProviderBehaviour
+  # ⟦𓄢𓇔𓄿𓉼⟧ supported_modalities :: auto-generated pointer for public function supported_modalities
   def supported_modalities do
     [
       %{input: [:text], output: :music, mode: :async},
@@ -28,6 +29,7 @@ defmodule GenAI.Provider.Suno do
   end
 
   @impl GenAI.InferenceProviderBehaviour
+  # ⟦𓁔𓄘𓃑𓋝⟧ generate_media :: auto-generated pointer for public function generate_media
   def generate_media(%Request{output: out} = req, _options) when out in [:music, :sfx] do
     with {:ok, key} <- H.require_key(req, "SUNO_API_KEY") do
       base = H.base_url(:suno, @default_base_url)

@@ -5,6 +5,7 @@ defmodule GenAI.Provider.Gemini.Encoder do
   # --------------------------------------------
   #
   # --------------------------------------------
+  # ⟦𓊊𓆈𓏝𓐔⟧ api_key :: auto-generated pointer for public function api_key
   def api_key(settings, options \\ []) do
     search_scope = [
       options,
@@ -29,6 +30,7 @@ defmodule GenAI.Provider.Gemini.Encoder do
   # --------------------------------------------
   #
   # --------------------------------------------
+  # ⟦𓋓𓊀𓂮𓆤⟧ endpoint :: auto-generated pointer for public function endpoint
   def endpoint(model, settings, session, context, options)
 
   def endpoint(model, settings, session, _, options) do
@@ -42,11 +44,13 @@ defmodule GenAI.Provider.Gemini.Encoder do
   # --------------------------------------------
   #
   # --------------------------------------------
+  # ⟦𓂌𓍾𓉐𓊢⟧ headers :: auto-generated pointer for public function headers
   def headers(_model, _settings, session, _context, _options) do
     headers = [{"content-type", "application/json"}]
     {:ok, {headers, session}}
   end
 
+  # ⟦𓉥𓌚𓐇𓁉⟧ default_hyper_params :: auto-generated pointer for public function default_hyper_params
   def default_hyper_params(model, settings, session, context, options)
 
   def default_hyper_params(_model, _settings, _session, _context, _options) do
@@ -66,6 +70,7 @@ defmodule GenAI.Provider.Gemini.Encoder do
   # ---------------------------------
   # @todo support response modalities
   @doc "Prepare request body to be passed to inference call."
+  # ⟦𓀎𓍅𓋂𓁌⟧ request_body :: Prepare request body to be passed to inference call.
   def request_body(model, messages, tools, settings, session, context, options)
 
   def request_body(model, messages, tools, settings, session, context, options) do
@@ -121,6 +126,7 @@ defmodule GenAI.Provider.Gemini.Encoder do
   #
   # --------------------------------------------
 
+  # ⟦𓀻𓏄𓃲𓌄⟧ completion_response :: auto-generated pointer for public function completion_response
   def completion_response(json, model, settings, session, context, options)
 
   def completion_response(json, model, settings, session, context, options) do
@@ -148,6 +154,7 @@ defmodule GenAI.Provider.Gemini.Encoder do
     end
   end
 
+  # ⟦𓆧𓄢𓋅𓇶⟧ completion_choices :: auto-generated pointer for public function completion_choices
   def completion_choices(id, json, model, settings, session, context, options)
 
   def completion_choices(
@@ -173,6 +180,7 @@ defmodule GenAI.Provider.Gemini.Encoder do
     end
   end
 
+  # ⟦𓂖𓍋𓆀𓍓⟧ completion_choice :: auto-generated pointer for public function completion_choice
   def completion_choice(id, json, model, settings, session, context, options)
 
   def completion_choice(
@@ -211,6 +219,7 @@ defmodule GenAI.Provider.Gemini.Encoder do
     "call_#{short_uuid}"
   end
 
+  # ⟦𓊪𓎒𓇴𓊁⟧ completion_message :: auto-generated pointer for public function completion_message
   def completion_message(%{parts: content}) when is_bitstring(content) do
     Enum.map([content], &completion_content/1)
   end
@@ -219,6 +228,7 @@ defmodule GenAI.Provider.Gemini.Encoder do
     Enum.map(content, &completion_content/1)
   end
 
+  # ⟦𓋕𓉰𓅣𓂫⟧ completion_content :: auto-generated pointer for public function completion_content
   def completion_content(json)
 
   def completion_content(%{functionCall: %{name: tool_name, args: arguments}} = json) do

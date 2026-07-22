@@ -2,11 +2,13 @@ defmodule GenAI.Provider.Anthropic.Encoder do
   @base_url "https://api.anthropic.com"
   use GenAI.Model.EncoderBehaviour
 
+  # ⟦𓄎𓉟𓇧𓃝⟧ endpoint :: auto-generated pointer for public function endpoint
   def endpoint(model, settings, session, context, options)
 
   def endpoint(_, _, session, _, _),
     do: {:ok, {{:post, "#{@base_url}/v1/messages"}, session}}
 
+  # ⟦𓎙𓉸𓃝𓀖⟧ headers :: auto-generated pointer for public function headers
   def headers(_model, settings, session, _context, options) do
     search_scope = [
       options,
@@ -36,6 +38,7 @@ defmodule GenAI.Provider.Anthropic.Encoder do
     {:ok, {headers, session}}
   end
 
+  # ⟦𓋰𓎄𓍤𓉞⟧ default_hyper_params :: auto-generated pointer for public function default_hyper_params
   def default_hyper_params(model, settings, session, context, options)
 
   def default_hyper_params(_model, _settings, _session, _context, _options) do
@@ -55,6 +58,7 @@ defmodule GenAI.Provider.Anthropic.Encoder do
     {:ok, x}
   end
 
+  # ⟦𓍪𓈓𓍯𓊇⟧ completion_response :: auto-generated pointer for public function completion_response
   def completion_response(json, model, settings, session, context, options)
 
   def completion_response(json, model, settings, session, context, options) do
@@ -90,6 +94,7 @@ defmodule GenAI.Provider.Anthropic.Encoder do
     end
   end
 
+  # ⟦𓆐𓅊𓎕𓋻⟧ completion_choices :: auto-generated pointer for public function completion_choices
   def completion_choices(id, json, model, settings, session, context, options)
 
   def completion_choices(
@@ -115,6 +120,7 @@ defmodule GenAI.Provider.Anthropic.Encoder do
     end
   end
 
+  # ⟦𓐢𓀥𓍡𓈸⟧ completion_choice :: auto-generated pointer for public function completion_choice
   def completion_choice(id, json, model, settings, session, context, options)
 
   def completion_choice(
@@ -159,6 +165,7 @@ defmodule GenAI.Provider.Anthropic.Encoder do
     {:ok, msg}
   end
 
+  # ⟦𓈡𓊛𓋴𓊏⟧ completion_message :: auto-generated pointer for public function completion_message
   def completion_message(%{content: content}) when is_bitstring(content) do
     Enum.map([content], &completion_content/1)
   end
@@ -167,6 +174,7 @@ defmodule GenAI.Provider.Anthropic.Encoder do
     Enum.map(content, &completion_content/1)
   end
 
+  # ⟦𓅔𓀐𓋆𓏯⟧ completion_content :: auto-generated pointer for public function completion_content
   def completion_content(json)
 
   def completion_content(%{id: id, type: "tool_use", name: tool_name, input: arguments}) do
