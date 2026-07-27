@@ -49,6 +49,18 @@ defimpl GenAI.Provider.OpenAI.EncoderProtocol, for: GenAI.Message do
     %{type: :image_url, image_url: %{url: base64}}
   end
 
+  def content(%GenAI.Message.Content.AudioContent{} = content) do
+    {:ok, encoded} = GenAI.Message.Content.AudioContent.base64(content.resource, content.options)
+
+    %{
+      type: :input_audio,
+      input_audio: %{
+        data: encoded,
+        format: to_string(content.type || :wav)
+      }
+    }
+  end
+
   def encode(subject, _model, session, _context, _options) do
     encoded =
       case subject.content do

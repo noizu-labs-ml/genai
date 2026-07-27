@@ -7,6 +7,7 @@ defmodule GenAI.Provider.Media.OpenAICompat do
     * `image/3`         - POST `{base}/v1/images/generations`   -> b64_json image bytes
     * `speech/3`        - POST `{base}/v1/audio/speech`         -> raw audio bytes (TTS)
     * `transcription/3` - POST `{base}/v1/audio/transcriptions` (multipart) -> transcript (STT)
+    * `audio_chat/3`    - POST `{base}/v1/chat/completions` with gpt-audio -> spoken reply
 
   Each returns the shared media contract `{:ok, %{data, mime, meta}}` | `{:error, term}`.
   """
@@ -70,12 +71,135 @@ defmodule GenAI.Provider.Media.OpenAICompat do
     end
   end
 
+  @doc "text/audio -> speech using OpenAI audio-capable chat completions."
+  # ⟦𓎣𓁻𓏥𓈭⟧ audio_chat :: text/audio -> speech using OpenAI audio-capable chat completions.
+  def audio_chat(base_url, key, %Request{} = req) do
+    fmt = to_string(req.settings[:format] || "wav")
+
+    body =
+      %{
+        model: req.model || "gpt-audio-1.5",
+        modalities: ["text", "audio"],
+        audio: %{
+          voice: to_string(req.settings[:voice] || "alloy"),
+          format: fmt
+        },
+        messages: audio_messages(req)
+      }
+      |> maybe_put_map(:store, req.settings[:store])
+      |> maybe_put_map(:metadata, req.settings[:metadata])
+
+    "#{base_url}/v1/chat/completions"
+    |> H.post_json(key, body)
+    |> handle(fn resp -> decode_audio_chat(resp, H.audio_mime(fmt)) end)
+  end
+
   # ---- internals ----
 
   defp handle({:ok, %Finch.Response{status: 200, body: resp}}, on_200), do: on_200.(resp)
-  defp handle({:ok, %Finch.Response{status: status, body: resp}}, _), do: {:error, {:http_error, status, resp}}
+
+  defp handle({:ok, %Finch.Response{status: status, body: resp}}, _),
+    do: {:error, {:http_error, status, resp}}
+
   defp handle({:error, reason}, _), do: {:error, {:request_failed, reason}}
 
   defp maybe_put(fields, _key, nil), do: fields
   defp maybe_put(fields, key, value), do: fields ++ [{key, to_string(value)}]
+
+  defp maybe_put_map(map, _key, nil), do: map
+  defp maybe_put_map(map, key, value), do: Map.put(map, key, value)
+
+  defp audio_messages(%Request{settings: %{messages: messages}}) when is_list(messages),
+    do: messages
+
+  defp audio_messages(%Request{} = req) do
+    user_content = audio_user_content(req)
+
+    system_messages =
+      case req.settings[:instructions] do
+        nil -> []
+        instructions -> [%{role: "system", content: to_string(instructions)}]
+      end
+
+    system_messages ++ [%{role: "user", content: user_content}]
+  end
+
+  defp audio_user_content(%Request{} = req) do
+    text = H.prompt_text(req.prompt)
+
+    case audio_input(req) do
+      nil ->
+        blank_to_default(text, "")
+
+      %{data: data, format: format} ->
+        [
+          %{type: "text", text: blank_to_default(text, "Respond to this audio.")},
+          %{type: "input_audio", input_audio: %{data: data, format: format}}
+        ]
+    end
+  end
+
+  defp audio_input(%Request{settings: settings, prompt: prompt}) do
+    cond do
+      is_binary(settings[:audio]) ->
+        %{
+          data: Base.encode64(settings[:audio]),
+          format: input_audio_format(settings)
+        }
+
+      audio = audio_content(prompt) ->
+        {:ok, encoded} = GenAI.Message.Content.AudioContent.base64(audio.resource, audio.options)
+        %{data: encoded, format: to_string(audio.type || input_audio_format(settings))}
+
+      true ->
+        nil
+    end
+  end
+
+  defp audio_content(parts) when is_list(parts) do
+    Enum.find(parts, &match?(%GenAI.Message.Content.AudioContent{}, &1))
+  end
+
+  defp audio_content(_), do: nil
+
+  defp input_audio_format(settings) do
+    cond do
+      settings[:input_format] ->
+        to_string(settings[:input_format])
+
+      settings[:filename] ->
+        settings[:filename]
+        |> Path.extname()
+        |> String.trim_leading(".")
+        |> blank_to_default("wav")
+
+      true ->
+        "wav"
+    end
+  end
+
+  defp blank_to_default("", default), do: default
+  defp blank_to_default(nil, default), do: default
+  defp blank_to_default(value, _default), do: to_string(value)
+
+  defp decode_audio_chat(body, mime) do
+    with {:ok, json} <- Jason.decode(body),
+         message when is_map(message) <- get_in(json, ["choices", H.access0(), "message"]),
+         audio when is_map(audio) <- message["audio"],
+         data when is_binary(data) <- audio["data"],
+         {:ok, bytes} <- Base.decode64(data) do
+      {:ok,
+       %{
+         data: bytes,
+         mime: mime,
+         meta: %{
+           text: message["content"] || audio["transcript"],
+           transcript: audio["transcript"],
+           response: json
+         }
+       }}
+    else
+      _ -> {:error, :unexpected_response}
+    end
+  end
 end

@@ -8,8 +8,8 @@
 import Config
 
 config :genai, :local_llama,
-       enabled: true,
-       otp_app: :genai
+  enabled: true,
+  otp_app: :genai
 
 # Media-generation provider registry (ADR-016 / ede43647). The capability Router
 # (GenAI.Media.Router) enumerates these to route a GenAI.Media.Request to a provider
@@ -18,6 +18,7 @@ config :genai, :local_llama,
 config :genai, :media_providers, [
   GenAI.Provider.OpenAI.Image,
   GenAI.Provider.Gemini.Image,
+  GenAI.Provider.OpenAI.Audio,
   GenAI.Provider.OpenAI.Speech,
   GenAI.Provider.OpenAI.Transcription,
   GenAI.Provider.Suno,
