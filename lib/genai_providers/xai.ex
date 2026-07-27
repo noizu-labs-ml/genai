@@ -13,6 +13,7 @@ defmodule GenAI.Provider.XAI do
   @doc """
   Retrieves a list of models supported by the OpenAI API for given user.
   """
+  # ⟦𓀨𓄢𓁶𓌷⟧ models :: Retrieves a list of models supported by the OpenAI API for given user.
   def models(settings \\ []) do
     headers = headers(settings)
     call = api_call(:get, "#{@base_url}/v1/models", headers)

@@ -6,14 +6,17 @@ defprotocol GenAI.Provider.Anthropic.EncoderProtocol do
   and most cases you can simply cast it to generic known type and then invoke the protocol
   again.
   """
+  # ⟦𓈸𓅥𓍻𓏣⟧ encode :: auto-generated pointer for public function encode
   def encode(subject, model, session, context, options)
 end
 
 defmodule GenAI.Provider.Anthropic.EncoderProtocolHelper do
+  # ⟦𓇗𓌋𓀑𓂶⟧ system_message_markup :: auto-generated pointer for public function system_message_markup
   def system_message_markup(message) do
     "<|system|>\n" <> message <> "</|system|>"
   end
 
+  # ⟦𓐧𓂢𓋖𓎽⟧ content :: auto-generated pointer for public function content
   def content(content, subject, model, session, context, options)
 
   def content(content, _, _, session, _, options) when is_bitstring(content) do

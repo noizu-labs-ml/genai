@@ -6,6 +6,7 @@ defprotocol GenAI.Provider.OpenAI.EncoderProtocol do
   and most cases you can simply cast it to generic known type and then invoke the protocol
   again.
   """
+  # ⟦𓌠𓈽𓌉𓋖⟧ encode :: auto-generated pointer for public function encode
   def encode(subject, model, session, context, options)
 end
 
@@ -31,6 +32,7 @@ end
 # GenAI.Message
 # -----------------------------
 defimpl GenAI.Provider.OpenAI.EncoderProtocol, for: GenAI.Message do
+  # ⟦𓉘𓆙𓍂𓉺⟧ content :: auto-generated pointer for public function content
   def content(content)
 
   def content(content) when is_bitstring(content) do
@@ -45,6 +47,18 @@ defimpl GenAI.Provider.OpenAI.EncoderProtocol, for: GenAI.Message do
     {:ok, encoded} = GenAI.Message.Content.ImageContent.base64(content)
     base64 = "data:image/#{content.type};base64," <> encoded
     %{type: :image_url, image_url: %{url: base64}}
+  end
+
+  def content(%GenAI.Message.Content.AudioContent{} = content) do
+    {:ok, encoded} = GenAI.Message.Content.AudioContent.base64(content.resource, content.options)
+
+    %{
+      type: :input_audio,
+      input_audio: %{
+        data: encoded,
+        format: to_string(content.type || :wav)
+      }
+    }
   end
 
   def encode(subject, _model, session, _context, _options) do
@@ -81,6 +95,7 @@ end
 # GenAI.Message.ToolUsage
 # -----------------------------
 defimpl GenAI.Provider.OpenAI.EncoderProtocol, for: GenAI.Message.ToolUsage do
+  # ⟦𓈭𓌍𓊱𓎂⟧ encode_call :: auto-generated pointer for public function encode_call
   def encode_call(%GenAI.Message.ToolCall{
         id: id,
         type: type,

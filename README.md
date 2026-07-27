@@ -7,7 +7,7 @@ GenAI Library
 ====
 GenAI Elixir Library: A Framework for Interacting with Generative AI
 
-**Version:** 0.0.3
+**Version:** 0.3.3
 
 This repository contains an Elixir library for interacting with various generative AI providers and models through a common interface. The library is designed to be flexible, extensible, and easy to use.
 
@@ -95,6 +95,33 @@ chat = GenAI.with_message(chat, %GenAI.Message{role: :user, content: "Hello!"})
 # Print the response message
 IO.puts response.choices[0].message.content
 ```
+
+### OpenAI Voice Chat CLI
+
+Run the interactive voice smoke test from this package directory:
+
+```bash
+OPENAI_API_KEY=sk-... mix run examples/openai_voice_chat_cli.exs
+```
+
+The CLI supports typed turns and microphone turns. Text mode only needs `OPENAI_API_KEY`.
+Record mode also needs one local recorder command (`rec`, `ffmpeg`, or `arecord`) and
+playback needs one local player command (`afplay`, `ffplay`, or `aplay`).
+
+Useful overrides:
+
+```bash
+GENAI_VOICE_MODEL=gpt-audio-1.5
+GENAI_VOICE=alloy
+GENAI_AUDIO_FORMAT=wav
+GENAI_RECORD_SECONDS=5
+GENAI_FFMPEG_INPUT_FORMAT=avfoundation
+GENAI_FFMPEG_INPUT=:0
+```
+
+For a typed spoken reply, choose `t`. For a bounded speech-to-speech turn, choose `r`.
+Live low-latency WebRTC/WebSocket Realtime sessions are intentionally outside this sync
+CLI; this example exercises the request-based `GenAI.Provider.OpenAI.Audio` path.
 
 ### Live Book Show Case
 #### Multi Agent Loop

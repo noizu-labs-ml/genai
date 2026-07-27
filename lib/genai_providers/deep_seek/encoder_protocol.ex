@@ -6,6 +6,7 @@ defprotocol GenAI.Provider.DeepSeek.EncoderProtocol do
   and most cases you can simply cast it to generic known type and then invoke the protocol
   again.
   """
+  # ⟦𓅟𓉪𓏘𓁗⟧ encode :: auto-generated pointer for public function encode
   def encode(subject, model, session, context, options)
 end
 
@@ -31,6 +32,7 @@ end
 # GenAI.Message
 # -----------------------------
 defimpl GenAI.Provider.DeepSeek.EncoderProtocol, for: GenAI.Message do
+  # ⟦𓃓𓄟𓉋𓋹⟧ content :: auto-generated pointer for public function content
   def content(content)
 
   def content(content) when is_bitstring(content) do

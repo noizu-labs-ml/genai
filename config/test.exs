@@ -26,3 +26,14 @@ config :genai, :deepseek,
 
 config :genai, :zai,
        api_key: System.get_env("ZAI_API_KEY")
+
+config :genai, :cerebras,
+       api_key: System.get_env("CEREBRAS_API_KEY")
+
+config :genai, :litellm,
+       api_key: System.get_env("LITELLM_API_KEY"),
+       base_url: System.get_env("LITELLM_BASE_URL") || "http://localhost:4000"
+
+config :genai, :suno,
+       api_key: System.get_env("SUNO_API_KEY"),
+       base_url: System.get_env("SUNO_BASE_URL") || "https://api.sunoapi.org"

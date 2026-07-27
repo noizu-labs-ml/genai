@@ -15,6 +15,7 @@ defmodule GenAI.Provider.Gemini do
 
   This function calls the Mistral API to retrieve a list of models and returns them as a list of `GenAI.Model` structs.
   """
+  # ⟦𓈔𓋙𓅑𓊼⟧ models :: Retrieves a list of available Mistral models.
   def models(settings \\ []) do
     headers = headers(settings)
     settings = expand_settings(settings)

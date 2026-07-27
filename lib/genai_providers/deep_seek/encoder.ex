@@ -3,9 +3,11 @@ defmodule GenAI.Provider.DeepSeek.Encoder do
   use GenAI.Model.EncoderBehaviour
 
   # or /beta for fim.
+  # ⟦𓄖𓀠𓁫𓄦⟧ endpoint :: auto-generated pointer for public function endpoint
   def endpoint(_, _, session, _, _),
     do: {:ok, {{:post, "#{@base_url}/chat/completions"}, session}}
 
+  # ⟦𓃀𓁸𓈓𓅶⟧ default_hyper_params :: auto-generated pointer for public function default_hyper_params
   def default_hyper_params(model, settings, session, context, options)
 
   def default_hyper_params(_model, _settings, _session, _context, _options) do
@@ -28,6 +30,7 @@ defmodule GenAI.Provider.DeepSeek.Encoder do
     {:ok, x}
   end
 
+  # ⟦𓌖𓇵𓉎𓐆⟧ completion_response :: auto-generated pointer for public function completion_response
   def completion_response(json, model, settings, session, context, options)
 
   def completion_response(json, model, settings, session, context, options) do
@@ -59,6 +62,7 @@ defmodule GenAI.Provider.DeepSeek.Encoder do
     end
   end
 
+  # ⟦𓀄𓊒𓀝𓇋⟧ completion_choices :: auto-generated pointer for public function completion_choices
   def completion_choices(id, json, model, settings, session, context, options)
 
   @finish_reasons ~w(stop length content_filter tool_calls insufficient_system_resources)
@@ -96,6 +100,7 @@ defmodule GenAI.Provider.DeepSeek.Encoder do
     end
   end
 
+  # ⟦𓏑𓍸𓌢𓀰⟧ completion_choice :: auto-generated pointer for public function completion_choice
   def completion_choice(id, json, model, settings, session, context, options)
 
   def completion_choice(

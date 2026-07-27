@@ -2,6 +2,7 @@ defmodule GenAI.Provider.OpenAI.Encoder do
   @base_url "https://api.openai.com"
   use GenAI.Model.EncoderBehaviour
 
+  # ⟦𓍜𓇸𓐎𓈗⟧ headers :: auto-generated pointer for public function headers
   def headers(model, settings, session, context, options) do
     with {:ok, {headers, session}} <- super(model, settings, session, context, options) do
       search_scope = [

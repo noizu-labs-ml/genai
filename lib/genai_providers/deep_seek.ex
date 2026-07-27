@@ -13,6 +13,7 @@ defmodule GenAI.Provider.DeepSeek do
   @doc """
   Retrieves a list of models supported by the OpenAI API for given user.
   """
+  # ⟦𓁇𓏮𓉆𓐝⟧ models :: Retrieves a list of models supported by the OpenAI API for given user.
   def models(settings \\ []) do
     headers = headers(settings)
     call = api_call(:get, "#{@base_url}/models", headers)

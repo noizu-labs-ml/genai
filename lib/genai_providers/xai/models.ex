@@ -5,6 +5,7 @@ defmodule GenAI.Provider.XAI.Models do
 
   import GenAI.InferenceProvider.Helpers
 
+  # ⟦𓏹𓈖𓃏𓋗⟧ load_metadata :: auto-generated pointer for public function load_metadata
   def load_metadata(options \\ nil)
 
   def load_metadata(_) do
@@ -12,6 +13,7 @@ defmodule GenAI.Provider.XAI.Models do
   end
 
   # TODO allow local meta data merge
+  # ⟦𓍡𓈉𓆏𓄜⟧ list :: auto-generated pointer for public function list
   def list(options \\ nil) do
     headers = GenAI.Provider.XAI.headers(options)
     call = api_call(:get, "#{@base_url}/v1/models", headers)
@@ -30,6 +32,7 @@ defmodule GenAI.Provider.XAI.Models do
     end
   end
 
+  # ⟦𓇤𓋭𓃮𓇩⟧ model :: auto-generated pointer for public function model
   def model(model) do
     %GenAI.Model{
       model: model,
@@ -38,16 +41,26 @@ defmodule GenAI.Provider.XAI.Models do
     }
   end
 
+  # ⟦𓉊𓀠𓋉𓏓⟧ grok_4_2_beta :: auto-generated pointer for public function grok_4_2_beta
   def grok_4_2_beta(), do: model("grok-4.20-beta")
+  # ⟦𓏎𓃜𓀱𓃪⟧ grok_4_1_fast_reasoning :: auto-generated pointer for public function grok_4_1_fast_reasoning
   def grok_4_1_fast_reasoning(), do: model("grok-4-1-fast-reasoning")
+  # ⟦𓎡𓂊𓇣𓇵⟧ grok_4_1_fast :: auto-generated pointer for public function grok_4_1_fast
   def grok_4_1_fast(), do: model("grok-4-1-fast-non-reasoning")
+  # ⟦𓊢𓎗𓀯𓁥⟧ grok_4 :: auto-generated pointer for public function grok_4
   def grok_4(), do: model("grok-4")
+  # ⟦𓈔𓋗𓎚𓁭⟧ grok_4_fast_reasoning :: auto-generated pointer for public function grok_4_fast_reasoning
   def grok_4_fast_reasoning(), do: model("grok-4-fast-reasoning")
+  # ⟦𓁃𓂊𓌸𓆹⟧ grok_code_fast :: auto-generated pointer for public function grok_code_fast
   def grok_code_fast(), do: model("grok-code-fast-1")
 
+  # ⟦𓎜𓆃𓎜𓊋⟧ grok_3 :: auto-generated pointer for public function grok_3
   def grok_3(), do: model("grok-3")
+  # ⟦𓅇𓋏𓇀𓈕⟧ grok_3_fast :: auto-generated pointer for public function grok_3_fast
   def grok_3_fast(), do: model("grok-3-fast")
+  # ⟦𓁋𓆬𓎺𓈤⟧ grok_3_mini :: auto-generated pointer for public function grok_3_mini
   def grok_3_mini(), do: model("grok-3-mini")
+  # ⟦𓊫𓏷𓀦𓋜⟧ grok_3_mini_fast :: auto-generated pointer for public function grok_3_mini_fast
   def grok_3_mini_fast(), do: model("grok-3-mini-fast")
 
   # =============================================
