@@ -22,6 +22,7 @@ config :genai, :media_providers, [
   GenAI.Provider.OpenAI.Speech,
   GenAI.Provider.OpenAI.Transcription,
   GenAI.Provider.Suno,
+  GenAI.Provider.ElevenLabs,
   GenAI.Provider.LiteLLM.Media
 ]
 

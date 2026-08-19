@@ -40,3 +40,6 @@ Update to use revamped core libs.
 ## v0.2.3 
 XAI, and DeepSeek support added. 
 
+
+## v0.3.5
+ElevenLabs media provider added (ADR-016): sync text->speech (`/v1/text-to-speech/{voice_id}`), text->sfx (`/v1/sound-generation`), and text->music (`/v1/music/compose`), `xi-api-key` auth, `ELEVENLABS_API_KEY` env fallback; registered in the default media_providers list. README refreshed (provider list, media generation shipped, ElevenLabs usage example).

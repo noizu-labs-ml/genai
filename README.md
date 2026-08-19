@@ -7,9 +7,9 @@ GenAI Library
 ====
 GenAI Elixir Library: A Framework for Interacting with Generative AI
 
-**Version:** 0.3.3
+**Version:** 0.3.5
 
-This repository contains an Elixir library for interacting with various generative AI providers and models through a common interface. The library is designed to be flexible, extensible, and easy to use.
+This repository contains the provider extensions for an Elixir library interacting with various generative AI providers and models through a common interface. The framework itself (chat threads, media `Request`/`Job`/`Router`, protocols) lives in the separate **genai-core** Hex package (`{:genai_core, "~> 0.3"}`), which this library depends on. The library is designed to be flexible, extensible, and easy to use.
 
 It currently supports: 
 - Local Models via my ex_llama nif wrapper for the llama_cpp rust library 
@@ -20,9 +20,13 @@ It currently supports:
 - OpenAI
 - XAI
 - DeepSeek
+- ZAI
+- Cerebras
 - Ollama (local LLM inference)
+- LiteLLM (OpenAI-compatible proxy)
+- Media generation providers: OpenAI (image / speech / transcription), Gemini (image), Suno (music / SFX, async), ElevenLabs (speech / SFX / music)
 
-with pending (soon to be added) support for hugging face, dx and media generation. 
+Media generation — image, speech, transcription, music, and sound effects — is shipped (ADR-016), not pending: build a `GenAI.Media.Request`, and the capability `GenAI.Media.Router` dispatches it to a registered provider.
 
 # Value Proposition
 
@@ -34,7 +38,8 @@ The GenAI lib exposes and extends (such as master prompt instructions to extend 
 
 * **Protocol-based design:** Allows for easy integration of new providers and message types.
 * **Modular structure:** Well-organized code for improved maintainability and clarity.
-* **Support for multiple providers:** Currently supports OpenAI, Anthropic, Mistral, Gemini, Groq, XAI, DeepSeek, and Ollama.
+* **Support for multiple providers:** Currently supports OpenAI, Anthropic, Mistral, Gemini, Groq, XAI, DeepSeek, ZAI, Cerebras, Ollama, and LiteLLM.
+* **Media generation:** ADR-016 media pipeline (`GenAI.Media.Request` + capability router) covers image generation, speech (TTS), transcription (STT), music, and sound effects across OpenAI, Gemini, Suno, and ElevenLabs.
 * **Tool integration:** Enables extending the capabilities of the framework by integrating external tools, even with models that don't have native tool support, through system prompts and custom parsing.
 * **Dynamic chat chain support:** Allows for building complex conversational AI systems with multiple steps and dynamic model selection.
 
@@ -72,6 +77,8 @@ config :genai, :local_llama,
        otp_app: :my_app_name # used for loading model.ggufs from priv folders. 
 
 ```
+
+Media providers read their key from the request or an env var (e.g. `ELEVENLABS_API_KEY`, `SUNO_API_KEY`); no config entry needed.
 
 3. Start interacting with generative AI models using the provided functions and protocols.
 
@@ -122,6 +129,44 @@ GENAI_FFMPEG_INPUT=:0
 For a typed spoken reply, choose `t`. For a bounded speech-to-speech turn, choose `r`.
 Live low-latency WebRTC/WebSocket Realtime sessions are intentionally outside this sync
 CLI; this example exercises the request-based `GenAI.Provider.OpenAI.Audio` path.
+
+### ElevenLabs Media Generation (speech / SFX / music)
+
+All three ElevenLabs media endpoints are synchronous and return audio bytes in the shared
+`{:ok, %{data, mime, meta}}` contract. Set `ELEVENLABS_API_KEY` (or pass `api_key:` per
+request):
+
+```elixir
+# Text -> speech (default voice Rachel, model eleven_multilingual_v2)
+{:ok, %{data: mp3_bytes, mime: "audio/mpeg"}} =
+  GenAI.generate_media(%GenAI.Media.Request{
+    output: :speech,
+    prompt: "Hello from the GenAI library!",
+    provider: GenAI.Provider.ElevenLabs,
+    settings: %{voice_id: "21m00Tcm4TlvDq8ikWAM"}
+  })
+
+# Text -> sound effect
+{:ok, %{data: sfx_bytes}} =
+  GenAI.generate_media(%GenAI.Media.Request{
+    output: :sfx,
+    prompt: "thunder cracking in the distance",
+    provider: GenAI.Provider.ElevenLabs,
+    settings: %{duration_seconds: 3.5}
+  })
+
+# Text -> music (music_v2 recommended for current-generation quality)
+{:ok, %{data: music_bytes}} =
+  GenAI.generate_media(%GenAI.Media.Request{
+    output: :music,
+    prompt: "an upbeat electronic track with synth leads",
+    provider: GenAI.Provider.ElevenLabs,
+    model: "music_v2",
+    settings: %{music_length_ms: 30_000}
+  })
+```
+
+Omitting `provider:` lets the media Router pick by declared capability.
 
 ### Live Book Show Case
 #### Multi Agent Loop
