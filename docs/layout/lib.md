@@ -40,7 +40,12 @@ lib/
     │   ├── encoder_protocol.ex
     │   └── models.ex
     ├── ollama.ex                   # Ollama provider (local LLMs)
-    └── ollama/
+    ├── ollama/
+    │   ├── encoder.ex
+    │   ├── encoder_protocol.ex
+    │   └── models.ex
+    ├── qwen.ex                     # Qwen / Alibaba DashScope (compatible-mode)
+    └── qwen/
         ├── encoder.ex
         ├── encoder_protocol.ex
         └── models.ex

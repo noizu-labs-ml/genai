@@ -14,7 +14,7 @@ graph TB
     Encoder --> Anthropic[Anthropic Encoder]
     Encoder --> OpenAI[OpenAI Encoder]
     Encoder --> Gemini[Gemini Encoder]
-    Encoder --> Others[Groq / Mistral / xAI / DeepSeek / Ollama]
+    Encoder --> Others[Groq / Mistral / xAI / DeepSeek / ZAI / Cerebras / Qwen / Ollama]
     Anthropic --> Finch[GenAI.Finch HTTP Client]
     OpenAI --> Finch
     Gemini --> Finch
@@ -45,7 +45,7 @@ graph TB
 
 ## Provider Architecture
 
-All 8 providers follow a consistent three-layer pattern. Providers with OpenAI-compatible APIs (Groq, xAI, DeepSeek) share similar encoder structures with minimal customization.
+All chat providers follow a consistent three-layer pattern. Providers with OpenAI-compatible APIs (Groq, xAI, DeepSeek, ZAI, Cerebras, Qwen) share similar encoder structures with minimal customization.
 
 -> *See [arch/providers.md](arch/providers.md) for details*
 

@@ -13,6 +13,7 @@ test/
 │   ├── mistral_test.exs
 │   ├── ollama_test.exs
 │   ├── open_ai_test.exs
+│   ├── qwen_test.exs
 │   └── xai_test.exs
 └── support/                        # Shared test utilities
     └── common.ex                   #   Common test helpers

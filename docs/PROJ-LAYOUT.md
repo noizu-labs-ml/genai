@@ -4,7 +4,7 @@
 genai/
 ├── lib/                            # Source code → [layout/lib.md](layout/lib.md)
 │   ├── application.ex              #   OTP application supervisor (Finch HTTP client)
-│   └── genai_providers/            #   Provider implementations (8 providers)
+│   └── genai_providers/            #   Provider implementations (Anthropic, OpenAI, Gemini, Mistral, Groq, xAI, DeepSeek, ZAI, Cerebras, Qwen, Ollama, LiteLLM, media)
 ├── config/                         # Mix environment configuration
 │   ├── config.exs                  #   Shared config
 │   ├── dev.exs                     #   Dev overrides

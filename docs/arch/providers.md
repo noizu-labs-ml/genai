@@ -55,10 +55,12 @@ A shared `EncoderProtocolHelper` module in each provider handles content-type di
 - Custom auth header (`x-api-key`, `anthropic-version`)
 - Supports vision, tools, thinking content
 
-### OpenAI-compatible (OpenAI, Groq, xAI, DeepSeek)
+### OpenAI-compatible (OpenAI, Groq, xAI, DeepSeek, ZAI, Cerebras, Qwen)
 - Standard Bearer token auth
 - Similar request/response format
 - Groq, xAI, DeepSeek override only `@base_url` and minimal headers
+- ZAI overrides chat path to `/api/paas/v4/chat/completions`
+- Qwen (Alibaba DashScope) defaults to `https://dashscope-intl.aliyuncs.com/compatible-mode/v1`; parses `reasoning_content` and accepts `enable_thinking` / `reasoning_effort`
 
 ### Gemini (unique API)
 - API key passed as URL query parameter

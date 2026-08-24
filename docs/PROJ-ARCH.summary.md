@@ -1,6 +1,6 @@
 # Architecture Summary
 
-**GenAI** — Unified Elixir interface for 8 generative AI providers.
+**GenAI** — Unified Elixir interface for multiple generative AI providers.
 
 ## Core Abstractions (from `genai_core` dependency)
 - `GenAI` — Fluent API with `with_*` settings pipeline
@@ -11,12 +11,12 @@
 
 ## This Repo
 - `GenAI.Application` — OTP supervisor starting Finch HTTP pool
-- 8 provider implementations (Anthropic, OpenAI, Gemini, Mistral, Groq, xAI, DeepSeek, Ollama)
+- Provider implementations (Anthropic, OpenAI, Gemini, Mistral, Groq, xAI, DeepSeek, ZAI, Cerebras, Qwen, Ollama, LiteLLM)
 - Each provider: main module + encoder + models + encoder protocol
 
 ## Provider Families
 - **Anthropic**: Unique API, custom auth, system message markup
-- **OpenAI-compatible**: OpenAI, Groq, xAI, DeepSeek — similar format, different base URLs
+- **OpenAI-compatible**: OpenAI, Groq, xAI, DeepSeek, ZAI, Cerebras, Qwen — similar format, different base URLs
 - **Gemini**: Unique API, key-in-URL, parts-based content
 - **Ollama**: Local inference, configurable base URL
 
