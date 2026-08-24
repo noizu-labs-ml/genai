@@ -24,8 +24,13 @@ config :genai, :cerebras, api_key: System.get_env("CEREBRAS_API_KEY")
 
 config :genai, :qwen,
   api_key: System.get_env("QWEN_API_KEY") || System.get_env("DASHSCOPE_API_KEY"),
+  token_api_key: System.get_env("QWEN_TOKEN_KEY"),
+  token_plan: false,
   base_url:
-    System.get_env("QWEN_BASE_URL") || "https://dashscope-intl.aliyuncs.com/compatible-mode/v1"
+    System.get_env("QWEN_BASE_URL") || "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+  token_plan_base_url:
+    System.get_env("QWEN_TOKEN_BASE_URL") ||
+      "https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1"
 
 config :genai, :litellm,
   api_key: System.get_env("LITELLM_API_KEY"),

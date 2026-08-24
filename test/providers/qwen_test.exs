@@ -4,17 +4,24 @@ defmodule GenAI.Provider.QwenTest do
 
   @moduletag provider: :qwen
 
-  setup do
+  setup context do
     prev = Application.get_env(:genai, :qwen, [])
 
     Application.put_env(
       :genai,
       :qwen,
-      Keyword.merge([api_key: "test-qwen-key"], prev)
+      prev
+      |> Keyword.put(:api_key, prev[:api_key] || "test-qwen-key")
+      |> Keyword.put(:token_api_key, prev[:token_api_key] || "test-qwen-token-key")
     )
 
     on_exit(fn -> Application.put_env(:genai, :qwen, prev) end)
-    :ok
+
+    if context[:token_plan] && System.get_env("QWEN_TOKEN_KEY", "") == "" do
+      {:skip, "QWEN_TOKEN_KEY unset"}
+    else
+      :ok
+    end
   end
 
   describe "Qwen Provider" do
@@ -40,6 +47,34 @@ defmodule GenAI.Provider.QwenTest do
       sut = Enum.find(models, &(&1.model == "qwen3.8-max"))
       assert sut
       assert sut.provider == GenAI.Provider.Qwen
+    end
+
+    test "models token_plan uses token-plan host and token_api_key" do
+      Mimic.expect(Finch, :request, fn request, _, _ ->
+        assert request.host == "token-plan.ap-southeast-1.maas.aliyuncs.com"
+        assert request.path == "/compatible-mode/v1/models"
+
+        auth =
+          Enum.find_value(request.headers, fn
+            {"Authorization", value} -> value
+            {"authorization", value} -> value
+            _ -> nil
+          end)
+
+        assert is_binary(auth) and String.starts_with?(auth, "Bearer ")
+        refute auth == "Bearer test-qwen-key"
+
+        {:ok,
+         %Finch.Response{
+           status: 200,
+           body: ~s({"object":"list","data":[{"id":"qwen3.8-max","object":"model"}]}),
+           headers: [{"content-type", "application/json"}],
+           trailers: []
+         }}
+      end)
+
+      {:ok, models} = GenAI.Provider.Qwen.models(token_plan: true)
+      assert Enum.any?(models, &(&1.model == "qwen3.8-max"))
     end
 
     test "chat - basic completion" do
@@ -300,6 +335,14 @@ defmodule GenAI.Provider.QwenTest do
       {:ok, models} = GenAI.Provider.Qwen.models()
       ids = Enum.map(models, & &1.model)
       assert "qwen3.8-max" in ids
+    end
+
+    @tag :live
+    @tag :token_plan
+    @tag provider: :qwen
+    test "live token-plan models list" do
+      {:ok, models} = GenAI.Provider.Qwen.models(token_plan: true)
+      assert models != []
     end
 
     @tag :live

@@ -5,15 +5,22 @@ defmodule GenAI.Provider.Qwen.Encoder do
   # ⟦𓊛𓇋𓎦𓉐𓍕⟧ stream_decoder :: Decode OpenAI compatible chat.completion.chunk SSE streams.
   def stream_decoder, do: GenAI.StreamHandler.OpenAI
 
-  @doc "Runtime base_url from `config :genai, :qwen, base_url:` (DashScope compatible-mode /v1)."
-  # ⟦𓈀𓋛𓀊𓄪⟧ base_url :: Runtime base_url from config.
-  def base_url, do: GenAI.Provider.MediaHelpers.base_url(:qwen, @base_url)
+  @doc "Compatible-mode root for the active Qwen plan (on-demand vs token plan)."
+  # ⟦𓈀𓋛𓀊𓄪⟧ base_url :: Compatible-mode root for the active Qwen plan.
+  def base_url(settings \\ []), do: GenAI.Provider.Qwen.base_url(settings)
 
   # DashScope compatible-mode is already versioned at `/compatible-mode/v1`, so chat is
   # `/chat/completions` (not the EncoderBehaviour default `/v1/chat/completions`).
   # ⟦𓍗𓈁𓁣𓈶⟧ endpoint :: auto-generated pointer for public function endpoint
-  def endpoint(_model, _settings, session, _context, _options),
-    do: {:ok, {{:post, "#{base_url()}/chat/completions"}, session}}
+  def endpoint(_model, settings, session, _context, _options),
+    do: {:ok, {{:post, "#{base_url(settings)}/chat/completions"}, session}}
+
+  # ⟦𓁏𓁞𓀂𓅰⟧ headers :: Bearer from on-demand api_key or token-plan token_api_key.
+  def headers(_model, settings, session, _context, options) do
+    key = GenAI.Provider.Qwen.api_key(settings, options)
+
+    {:ok, {[{"Authorization", "Bearer #{key}"}, {"content-type", "application/json"}], session}}
+  end
 
   # ⟦𓇦𓉀𓁗𓈳⟧ default_hyper_params :: auto-generated pointer for public function default_hyper_params
   def default_hyper_params(model, settings, session, context, options)

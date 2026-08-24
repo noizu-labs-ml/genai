@@ -41,6 +41,9 @@ Update to use revamped core libs.
 XAI, and DeepSeek support added. 
 
 
+## v0.3.7
+Qwen token-plan mode: `token_plan: true` (or `mode: :token_plan`) switches the OpenAI-compatible host to `https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1` and Bearer auth to `token_api_key` / `QWEN_TOKEN_KEY`. On-demand `QWEN_API_KEY` + dashscope-intl remains the default.
+
 ## v0.3.6
 Qwen / Alibaba Cloud Model Studio (DashScope) chat provider added. OpenAI-compatible endpoint defaults to `https://dashscope-intl.aliyuncs.com/compatible-mode/v1`, Bearer auth from `config :genai, :qwen, api_key:` (`QWEN_API_KEY`, with `DASHSCOPE_API_KEY` fallback). Catalog helpers include `qwen3.8-max`; `models/0` lists the live compatible-mode catalog. Thinking (`reasoning_content`, `enable_thinking`, `reasoning_effort`) and vision image parts are supported.
 

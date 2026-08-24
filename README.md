@@ -7,7 +7,7 @@ GenAI Library
 ====
 GenAI Elixir Library: A Framework for Interacting with Generative AI
 
-**Version:** 0.3.6
+**Version:** 0.3.7
 
 This repository contains the provider extensions for an Elixir library interacting with various generative AI providers and models through a common interface. The framework itself (chat threads, media `Request`/`Job`/`Router`, protocols) lives in the separate **genai-core** Hex package (`{:genai_core, "~> 0.3"}`), which this library depends on. The library is designed to be flexible, extensible, and easy to use.
 
@@ -75,7 +75,10 @@ config :genai, :anthropic,
 
 config :genai, :qwen,
        api_key: System.get_env("QWEN_API_KEY") || System.get_env("DASHSCOPE_API_KEY"),
-       base_url: System.get_env("QWEN_BASE_URL") || "https://dashscope-intl.aliyuncs.com/compatible-mode/v1"
+       token_api_key: System.get_env("QWEN_TOKEN_KEY"),
+       token_plan: false,
+       base_url: System.get_env("QWEN_BASE_URL") || "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+       token_plan_base_url: System.get_env("QWEN_TOKEN_BASE_URL") || "https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1"
 
 config :genai, :local_llama,
        enable: true, # include and build local llama extension and related rustler nifs

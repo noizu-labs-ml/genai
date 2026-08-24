@@ -85,5 +85,25 @@ defmodule GenAI.Provider.OpenAICompatibleProvidersTest do
     test "native_base_url maps compatible-mode host to /api/v1" do
       assert Qwen.native_base_url() == "https://dashscope-intl.aliyuncs.com/api/v1"
     end
+
+    test "token_plan flag selects token-plan host and key" do
+      refute Qwen.token_plan?([])
+      assert Qwen.token_plan?(token_plan: true)
+      assert Qwen.token_plan?(mode: :token_plan)
+
+      assert Qwen.base_url(token_plan: true) ==
+               "https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1"
+
+      settings = %{settings: [token_plan: true]}
+
+      assert {:ok,
+              {{:post,
+                "https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1/chat/completions"},
+               _}} =
+               Qwen.Encoder.endpoint(nil, settings, nil, nil, nil)
+
+      assert Qwen.native_base_url(token_plan: true) ==
+               "https://token-plan.ap-southeast-1.maas.aliyuncs.com/api/v1"
+    end
   end
 end
