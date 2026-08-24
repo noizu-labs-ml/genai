@@ -7,9 +7,11 @@ defmodule GenAI.Provider.MediaHelpers do
   """
 
   @doc "Resolve the API key from the request or env var; fast-fail (no doomed call) when unset."
-  @spec require_key(GenAI.Media.Request.t(), String.t()) :: {:ok, String.t()} | {:error, :missing_api_key}
+  @spec require_key(GenAI.Media.Request.t(), String.t()) ::
+          {:ok, String.t()} | {:error, :missing_api_key}
   # ⟦𓎝𓏓𓄗𓄪⟧ require_key :: Resolve the API key from the request or env var; fast-fail (no doomed call) when unset.
-  def require_key(%GenAI.Media.Request{api_key: key}, _env) when is_binary(key) and key != "", do: {:ok, key}
+  def require_key(%GenAI.Media.Request{api_key: key}, _env) when is_binary(key) and key != "",
+    do: {:ok, key}
 
   def require_key(%GenAI.Media.Request{}, env) do
     case System.get_env(env, "") do
@@ -133,11 +135,31 @@ defmodule GenAI.Provider.MediaHelpers do
           {:ok, Finch.Response.t()} | {:error, term}
   # ⟦𓉐𓂛𓀢𓆑⟧ post_json :: auto-generated pointer for public function post_json
   def post_json(url, key, body, options \\ []) do
+    extra = Keyword.get(options, :headers, [])
+
     with {:ok, json} <- Jason.encode(body) do
-      headers = [{"authorization", "Bearer #{key}"}, {"content-type", "application/json"}]
+      headers =
+        [{"authorization", "Bearer #{key}"}, {"content-type", "application/json"}] ++ extra
 
       Finch.build(:post, url, headers, json)
-      |> Finch.request(GenAI.Finch, media_opts(options))
+      |> Finch.request(GenAI.Finch, media_opts(Keyword.delete(options, :headers)))
+    end
+  end
+
+  @doc "HTTP GET (optional headers). Used to download DashScope result URLs."
+  @spec get(String.t(), list, keyword) :: {:ok, Finch.Response.t()} | {:error, term}
+  def get(url, headers \\ [], options \\ []) do
+    Finch.build(:get, url, headers)
+    |> Finch.request(GenAI.Finch, media_opts(options))
+  end
+
+  @doc "Download a URL to raw bytes (2xx)."
+  @spec download(String.t(), keyword) :: {:ok, binary} | {:error, term}
+  def download(url, options \\ []) do
+    case get(url, [], options) do
+      {:ok, %Finch.Response{status: status, body: body}} when status in 200..299 -> {:ok, body}
+      {:ok, %Finch.Response{status: status, body: body}} -> {:error, {:http_error, status, body}}
+      {:error, reason} -> {:error, reason}
     end
   end
 

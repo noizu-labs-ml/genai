@@ -10,20 +10,35 @@ defmodule GenAI.Provider.ImageProviderTest do
   alias GenAI.Media.Request
   alias GenAI.Provider.OpenAI.Image, as: OpenAIImage
   alias GenAI.Provider.Gemini.Image, as: GeminiImage
+  alias GenAI.Provider.Qwen.Image, as: QwenImage
 
   @png <<137, 80, 78, 71, 13, 10, 26, 10>>
   @png_b64 Base.encode64(@png)
 
   setup do
     # Snapshot + clear keys so no-key tests are deterministic regardless of host env.
-    saved = {System.get_env("OPENAI_API_KEY"), System.get_env("GEMINI_API_KEY")}
+    saved =
+      {System.get_env("OPENAI_API_KEY"), System.get_env("GEMINI_API_KEY"),
+       System.get_env("DASHSCOPE_API_KEY"), System.get_env("QWEN_API_KEY"),
+       System.get_env("QWEN_TOKEN_KEY")}
+
     System.delete_env("OPENAI_API_KEY")
     System.delete_env("GEMINI_API_KEY")
+    System.delete_env("DASHSCOPE_API_KEY")
+    System.delete_env("QWEN_API_KEY")
+    System.delete_env("QWEN_TOKEN_KEY")
 
     on_exit(fn ->
-      {oa, gm} = saved
+      {oa, gm, ds, qk, tk} = saved
       if oa, do: System.put_env("OPENAI_API_KEY", oa), else: System.delete_env("OPENAI_API_KEY")
       if gm, do: System.put_env("GEMINI_API_KEY", gm), else: System.delete_env("GEMINI_API_KEY")
+
+      if ds,
+        do: System.put_env("DASHSCOPE_API_KEY", ds),
+        else: System.delete_env("DASHSCOPE_API_KEY")
+
+      if qk, do: System.put_env("QWEN_API_KEY", qk), else: System.delete_env("QWEN_API_KEY")
+      if tk, do: System.put_env("QWEN_TOKEN_KEY", tk), else: System.delete_env("QWEN_TOKEN_KEY")
     end)
 
     :ok
@@ -37,6 +52,10 @@ defmodule GenAI.Provider.ImageProviderTest do
     test "gemini declares text -> image sync" do
       assert [%{input: [:text], output: :image, mode: :sync}] = GeminiImage.supported_modalities()
     end
+
+    test "qwen declares text -> image sync" do
+      assert [%{input: [:text], output: :image, mode: :sync}] = QwenImage.supported_modalities()
+    end
   end
 
   describe "no key -> fast fail (no network)" do
@@ -48,6 +67,11 @@ defmodule GenAI.Provider.ImageProviderTest do
     test "gemini" do
       assert {:error, :missing_api_key} =
                GeminiImage.generate_media(%Request{output: :image, prompt: "a cat"}, [])
+    end
+
+    test "qwen" do
+      assert {:error, :missing_api_key} =
+               QwenImage.generate_media(%Request{output: :image, prompt: "a cat"}, [])
     end
   end
 
@@ -65,7 +89,10 @@ defmodule GenAI.Provider.ImageProviderTest do
       end)
 
       assert {:ok, %{data: @png, mime: "image/png", meta: %{}}} =
-               OpenAIImage.generate_media(%Request{output: :image, prompt: "a cat", api_key: "sk-x"}, [])
+               OpenAIImage.generate_media(
+                 %Request{output: :image, prompt: "a cat", api_key: "sk-x"},
+                 []
+               )
     end
 
     test "gemini imagen decodes bytesBase64Encoded -> bytes + mime" do
@@ -78,7 +105,10 @@ defmodule GenAI.Provider.ImageProviderTest do
       end)
 
       assert {:ok, %{data: @png, mime: "image/png", meta: %{}}} =
-               GeminiImage.generate_media(%Request{output: :image, prompt: "a cat", api_key: "gm-x"}, [])
+               GeminiImage.generate_media(
+                 %Request{output: :image, prompt: "a cat", api_key: "gm-x"},
+                 []
+               )
     end
 
     test "non-200 surfaces http_error" do
@@ -87,7 +117,10 @@ defmodule GenAI.Provider.ImageProviderTest do
       end)
 
       assert {:error, {:http_error, 401, _}} =
-               OpenAIImage.generate_media(%Request{output: :image, prompt: "x", api_key: "sk-x"}, [])
+               OpenAIImage.generate_media(
+                 %Request{output: :image, prompt: "x", api_key: "sk-x"},
+                 []
+               )
     end
   end
 end

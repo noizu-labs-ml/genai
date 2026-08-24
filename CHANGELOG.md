@@ -41,6 +41,9 @@ Update to use revamped core libs.
 XAI, and DeepSeek support added. 
 
 
+## v0.3.8
+Qwen/DashScope media providers: `GenAI.Provider.Qwen.Image` (qwen-image-3.0), `Qwen.Speech` (qwen3-tts-flash), `Qwen.Video` (wan2.7-t2v async poll). Keys: `DASHSCOPE_API_KEY` / `QWEN_API_KEY` / `QWEN_TOKEN_KEY`. Token-plan host via `settings[:plan] => :token_plan`.
+
 ## v0.3.7
 Qwen token-plan mode: `token_plan: true` (or `mode: :token_plan`) switches the OpenAI-compatible host to `https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1` and Bearer auth to `token_api_key` / `QWEN_TOKEN_KEY`. On-demand `QWEN_API_KEY` + dashscope-intl remains the default.
 

@@ -7,7 +7,7 @@ GenAI Library
 ====
 GenAI Elixir Library: A Framework for Interacting with Generative AI
 
-**Version:** 0.3.7
+**Version:** 0.3.8
 
 This repository contains the provider extensions for an Elixir library interacting with various generative AI providers and models through a common interface. The framework itself (chat threads, media `Request`/`Job`/`Router`, protocols) lives in the separate **genai-core** Hex package (`{:genai_core, "~> 0.3"}`), which this library depends on. The library is designed to be flexible, extensible, and easy to use.
 
