@@ -22,6 +22,12 @@ config :genai, :zai, api_key: System.get_env("ZAI_API_KEY")
 
 config :genai, :cerebras, api_key: System.get_env("CEREBRAS_API_KEY")
 
+config :genai, :openrouter,
+  api_key: System.get_env("OPENROUTER_API_KEY"),
+  http_referer:
+    System.get_env("OPENROUTER_HTTP_REFERER") || "https://github.com/noizu-labs-ml/genai",
+  app_title: System.get_env("OPENROUTER_APP_TITLE") || "Noizu GenAI"
+
 config :genai, :qwen,
   api_key: System.get_env("QWEN_API_KEY") || System.get_env("DASHSCOPE_API_KEY"),
   token_api_key: System.get_env("QWEN_TOKEN_KEY"),

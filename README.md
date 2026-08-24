@@ -7,7 +7,7 @@ GenAI Library
 ====
 GenAI Elixir Library: A Framework for Interacting with Generative AI
 
-**Version:** 0.3.8
+**Version:** 0.3.9
 
 This repository contains the provider extensions for an Elixir library interacting with various generative AI providers and models through a common interface. The framework itself (chat threads, media `Request`/`Job`/`Router`, protocols) lives in the separate **genai-core** Hex package (`{:genai_core, "~> 0.3"}`), which this library depends on. The library is designed to be flexible, extensible, and easy to use.
 
@@ -23,6 +23,7 @@ It currently supports:
 - ZAI
 - Cerebras
 - Qwen (Alibaba Cloud Model Studio / DashScope)
+- OpenRouter (OpenAI-compatible multi-model router)
 - Ollama (local LLM inference)
 - LiteLLM (OpenAI-compatible proxy)
 - Media generation providers: OpenAI (image / speech / transcription), Gemini (image), Suno (music / SFX, async), ElevenLabs (speech / SFX / music)
@@ -39,7 +40,7 @@ The GenAI lib exposes and extends (such as master prompt instructions to extend 
 
 * **Protocol-based design:** Allows for easy integration of new providers and message types.
 * **Modular structure:** Well-organized code for improved maintainability and clarity.
-* **Support for multiple providers:** Currently supports OpenAI, Anthropic, Mistral, Gemini, Groq, XAI, DeepSeek, ZAI, Cerebras, Qwen (Alibaba DashScope), Ollama, and LiteLLM.
+* **Support for multiple providers:** Currently supports OpenAI, Anthropic, Mistral, Gemini, Groq, XAI, DeepSeek, ZAI, Cerebras, Qwen (Alibaba DashScope), OpenRouter, Ollama, and LiteLLM.
 * **Media generation:** ADR-016 media pipeline (`GenAI.Media.Request` + capability router) covers image generation, speech (TTS), transcription (STT), music, and sound effects across OpenAI, Gemini, Suno, and ElevenLabs.
 * **Tool integration:** Enables extending the capabilities of the framework by integrating external tools, even with models that don't have native tool support, through system prompts and custom parsing.
 * **Dynamic chat chain support:** Allows for building complex conversational AI systems with multiple steps and dynamic model selection.

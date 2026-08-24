@@ -41,6 +41,9 @@ Update to use revamped core libs.
 XAI, and DeepSeek support added. 
 
 
+## v0.3.9
+OpenRouter chat provider (`GenAI.Provider.OpenRouter`): OpenAI-compatible `https://openrouter.ai/api/v1`, Bearer `OPENROUTER_API_KEY`, live `GET /models`, optional `HTTP-Referer` / `X-OpenRouter-Title` attribution headers.
+
 ## v0.3.8
 Qwen/DashScope media providers: `GenAI.Provider.Qwen.Image` (qwen-image-3.0), `Qwen.Speech` (qwen3-tts-flash), `Qwen.Video` (wan2.7-t2v async poll). Keys: `DASHSCOPE_API_KEY` / `QWEN_API_KEY` / `QWEN_TOKEN_KEY`. Token-plan host via `settings[:plan] => :token_plan`.
 
