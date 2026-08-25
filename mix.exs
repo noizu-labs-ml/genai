@@ -120,6 +120,16 @@ defmodule GenAI.MixProject do
       {:mimic, "~> 2.3", only: :test},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
       {:sweet_xml, "~> 0.7", only: :test}
-    ]
+    ] ++ noizu_mcp_dev_dep()
+  end
+
+  # Noizu MCP currently requires a newer Elixir than GenAI's supported floor.
+  # Keep the published integration runtime-only; opt into the sibling checkout
+  # when developing or running the in-VM bridge test.
+  defp noizu_mcp_dev_dep do
+    case System.get_env("NOIZU_MCP_PATH") do
+      nil -> []
+      path -> [{:noizu_mcp, path: path, only: [:dev, :test], override: true}]
+    end
   end
 end
