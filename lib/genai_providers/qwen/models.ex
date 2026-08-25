@@ -6,9 +6,6 @@ defmodule GenAI.Provider.Qwen.Models do
   `model/1`. Named helpers cover the current commercial aliases (verified against
   DashScope international when a `QWEN_API_KEY` is available).
   """
-  @model_metadata_provider Application.compile_env(:genai, :qwen)[:metadata_provider] ||
-                             GenAI.ModelMetadata.DefaultProvider
-
   import GenAI.InferenceProvider.Helpers
 
   # ⟦𓄀𓆦𓈌𓏍⟧ load_metadata :: auto-generated pointer for public function load_metadata
@@ -158,10 +155,15 @@ defmodule GenAI.Provider.Qwen.Models do
   # =============================================
   # Private Methods
   # =============================================
+  defp model_metadata_provider do
+    Application.get_env(:genai, :qwen, [])[:metadata_provider] ||
+      GenAI.ModelMetadata.DefaultProvider
+  end
+
   defp model_from_json(json) do
     {:ok, entry} =
       GenAI.ModelMetadata.ProviderBehaviour.get(
-        @model_metadata_provider,
+        model_metadata_provider(),
         GenAI.Provider.Qwen,
         json[:id]
       )

@@ -1,8 +1,5 @@
 defmodule GenAI.Provider.ZAI.Models do
   @base_url "https://api.z.ai/api/paas/v4"
-  @model_metadata_provider Application.compile_env(:genai, :zai)[:metadata_provider] ||
-                             GenAI.ModelMetadata.DefaultProvider
-
   import GenAI.InferenceProvider.Helpers
 
   # ⟦𓍯𓌅𓃒𓂳⟧ load_metadata :: auto-generated pointer for public function load_metadata
@@ -62,10 +59,15 @@ defmodule GenAI.Provider.ZAI.Models do
   # =============================================
   # Private Methods
   # =============================================
+  defp model_metadata_provider do
+    Application.get_env(:genai, :zai, [])[:metadata_provider] ||
+      GenAI.ModelMetadata.DefaultProvider
+  end
+
   defp model_from_json(json) do
     {:ok, entry} =
       GenAI.ModelMetadata.ProviderBehaviour.get(
-        @model_metadata_provider,
+        model_metadata_provider(),
         GenAI.Provider.ZAI,
         json[:id]
       )
