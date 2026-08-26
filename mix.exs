@@ -7,7 +7,7 @@ defmodule GenAI.MixProject do
       name: "Noizu Labs, GenAI Wrapper",
       description: description(),
       package: package(),
-      version: "0.3.10",
+      version: "0.3.11",
       elixir: "~> 1.16",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
@@ -95,7 +95,7 @@ defmodule GenAI.MixProject do
   # consuming unreleased genai-core changes (e.g. the ADR-016 media framework).
   defp genai_core_dep do
     case System.get_env("GENAI_CORE_PATH") do
-      nil -> {:genai_core, "~> 0.3.3"}
+      nil -> {:genai_core, "~> 0.3.4"}
       path -> {:genai_core, path: path, override: true}
     end
   end
@@ -119,17 +119,8 @@ defmodule GenAI.MixProject do
       {:yaml_elixir, "~> 2.9"},
       {:mimic, "~> 2.3", only: :test},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
-      {:sweet_xml, "~> 0.7", only: :test}
-    ] ++ noizu_mcp_dev_dep()
-  end
-
-  # Noizu MCP currently requires a newer Elixir than GenAI's supported floor.
-  # Keep the published integration runtime-only; opt into the sibling checkout
-  # when developing or running the in-VM bridge test.
-  defp noizu_mcp_dev_dep do
-    case System.get_env("NOIZU_MCP_PATH") do
-      nil -> []
-      path -> [{:noizu_mcp, path: path, only: [:dev, :test], override: true}]
-    end
+      {:sweet_xml, "~> 0.7", only: :test},
+      {:noizu_mcp, "~> 0.1.6", optional: true}
+    ]
   end
 end

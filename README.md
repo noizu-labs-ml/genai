@@ -48,11 +48,21 @@ The GenAI lib exposes and extends (such as master prompt instructions to extend 
 ### MCP tool sources
 
 GenAI can register an already supervised `Noizu.MCP.Client` as a tool source.
-The bridge is runtime-only, so applications that do not use MCP do not acquire
-an MCP dependency and GenAI retains its Elixir 1.16 floor.
+The bridge is runtime-only: GenAI lists `:noizu_mcp` as an optional Hex
+dependency (`~> 0.1.6`), so applications that do not use MCP do not acquire it
+and GenAI retains its Elixir 1.16 floor.
 
 Add `:noizu_mcp` in the consuming application, supervise the client there, and
 register it with a stable source id:
+
+```elixir
+def deps do
+  [
+    {:genai, "~> 0.3"},
+    {:noizu_mcp, "~> 0.1.6"}
+  ]
+end
+```
 
 ```elixir
 children = [
@@ -82,10 +92,6 @@ Tool titles, schemas, annotations, and icons are retained in adapter discovery
 metadata. Opaque MCP `_meta` values are omitted unless the server is trusted and
 `include_mcp_meta: true` is passed. GenAI execution telemetry excludes arguments
 and results by default; `include_payloads: true` is an explicit opt-in.
-
-For development against the sibling checkout, set
-`NOIZU_MCP_PATH=../elixir-mcp` (and `GENAI_CORE_PATH=../genai-core` when testing
-unreleased core APIs) before `mix deps.get` or `mix test`.
 
 ### Getting Started
 

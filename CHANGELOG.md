@@ -41,6 +41,11 @@ Update to use revamped core libs.
 XAI, and DeepSeek support added. 
 
 
+## v0.3.11
+MCP tool source adapter (`GenAI.Tool.Source.MCP`) over an already-supervised
+`Noizu.MCP.Client`. Optional Hex dependency `{:noizu_mcp, "~> 0.1.6", optional: true}`.
+`genai_core` bumped to `~> 0.3.4`.
+
 ## v0.3.9
 OpenRouter chat provider (`GenAI.Provider.OpenRouter`): OpenAI-compatible `https://openrouter.ai/api/v1`, Bearer `OPENROUTER_API_KEY`, live `GET /models`, optional `HTTP-Referer` / `X-OpenRouter-Title` attribution headers.
 
