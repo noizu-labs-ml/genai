@@ -1,8 +1,5 @@
 defmodule GenAI.Provider.Ollama.Models do
   @api_base "http://localhost:11434"
-  @model_metadata_provider Application.compile_env(:genai, :ollama)[:metadata_provider] ||
-                             GenAI.ModelMetadata.DefaultProvider
-
   import GenAI.InferenceProvider.Helpers
 
   # ⟦𓈫𓋶𓃉𓍗⟧ load_metadata :: auto-generated pointer for public function load_metadata
@@ -95,10 +92,15 @@ defmodule GenAI.Provider.Ollama.Models do
   # Extract model from api request response.
   # @TODO move into Model module
   # ------------------
+  defp model_metadata_provider do
+    Application.get_env(:genai, :ollama, [])[:metadata_provider] ||
+      GenAI.ModelMetadata.DefaultProvider
+  end
+
   defp model_from_json(json) do
     {:ok, entry} =
       GenAI.ModelMetadata.ProviderBehaviour.get(
-        @model_metadata_provider,
+        model_metadata_provider(),
         GenAI.Provider.Ollama,
         json[:name]
       )

@@ -45,6 +45,54 @@ The GenAI lib exposes and extends (such as master prompt instructions to extend 
 * **Tool integration:** Enables extending the capabilities of the framework by integrating external tools, even with models that don't have native tool support, through system prompts and custom parsing.
 * **Dynamic chat chain support:** Allows for building complex conversational AI systems with multiple steps and dynamic model selection.
 
+### MCP tool sources
+
+GenAI can register an already supervised `Noizu.MCP.Client` as a tool source.
+The bridge is runtime-only: GenAI lists `:noizu_mcp` as an optional Hex
+dependency (`~> 0.1.6`), so applications that do not use MCP do not acquire it
+and GenAI retains its Elixir 1.16 floor.
+
+Add `:noizu_mcp` in the consuming application, supervise the client there, and
+register it with a stable source id:
+
+```elixir
+def deps do
+  [
+    {:genai, "~> 0.3"},
+    {:noizu_mcp, "~> 0.1.6"}
+  ]
+end
+```
+
+```elixir
+children = [
+  {Noizu.MCP.Client,
+   name: MyApp.MCP.Workspace,
+   transport: {:stdio, command: "workspace-mcp", args: []}}
+]
+
+registry = GenAI.Tool.Registry.new(telemetry: &MyApp.Instrumentation.tool_event/3)
+
+{:ok, registry} =
+  GenAI.Tool.Source.MCP.register(
+    registry,
+    :workspace,
+    MyApp.MCP.Workspace,
+    context,
+    telemetry_metadata: %{trace_id: trace_id}
+  )
+
+# The model sees workspace__read_file, workspace__search, etc.
+{:ok, {completion, updated_thread, summary}} =
+  GenAI.run_with_tools(thread, registry, context)
+```
+
+The explicit source id makes the namespace deterministic across VM restarts.
+Tool titles, schemas, annotations, and icons are retained in adapter discovery
+metadata. Opaque MCP `_meta` values are omitted unless the server is trusted and
+`include_mcp_meta: true` is passed. GenAI execution telemetry excludes arguments
+and results by default; `include_payloads: true` is an explicit opt-in.
+
 ### Getting Started
 
 1. Add the `gen_ai` dependency to your `mix.exs` file:

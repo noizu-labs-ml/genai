@@ -1,8 +1,5 @@
 defmodule GenAI.Provider.Cerebras.Models do
   @base_url "https://api.cerebras.ai"
-  @model_metadata_provider Application.compile_env(:genai, :cerebras)[:metadata_provider] ||
-                             GenAI.ModelMetadata.DefaultProvider
-
   import GenAI.InferenceProvider.Helpers
 
   # ⟦𓈗𓂓𓁞𓂟⟧ load_metadata :: auto-generated pointer for public function load_metadata
@@ -46,10 +43,15 @@ defmodule GenAI.Provider.Cerebras.Models do
   # =============================================
   # Private Methods
   # =============================================
+  defp model_metadata_provider do
+    Application.get_env(:genai, :cerebras, [])[:metadata_provider] ||
+      GenAI.ModelMetadata.DefaultProvider
+  end
+
   defp model_from_json(json) do
     {:ok, entry} =
       GenAI.ModelMetadata.ProviderBehaviour.get(
-        @model_metadata_provider,
+        model_metadata_provider(),
         GenAI.Provider.Cerebras,
         json[:id]
       )

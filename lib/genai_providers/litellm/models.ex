@@ -1,7 +1,4 @@
 defmodule GenAI.Provider.LiteLLM.Models do
-  @model_metadata_provider Application.compile_env(:genai, :litellm)[:metadata_provider] ||
-                             GenAI.ModelMetadata.DefaultProvider
-
   import GenAI.InferenceProvider.Helpers
 
   # ⟦𓌗𓋒𓉘𓅅⟧ load_metadata :: auto-generated pointer for public function load_metadata
@@ -40,10 +37,15 @@ defmodule GenAI.Provider.LiteLLM.Models do
   # =============================================
   # Private Methods
   # =============================================
+  defp model_metadata_provider do
+    Application.get_env(:genai, :litellm, [])[:metadata_provider] ||
+      GenAI.ModelMetadata.DefaultProvider
+  end
+
   defp model_from_json(json) do
     {:ok, entry} =
       GenAI.ModelMetadata.ProviderBehaviour.get(
-        @model_metadata_provider,
+        model_metadata_provider(),
         GenAI.Provider.LiteLLM,
         json[:id]
       )

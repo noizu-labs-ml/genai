@@ -5,9 +5,6 @@ defmodule GenAI.Provider.OpenRouter.Models do
   Any id `GET /api/v1/models` returns can be wrapped with `model/1`. Named
   helpers cover common commercial aliases; the live catalog is large and changes.
   """
-  @model_metadata_provider Application.compile_env(:genai, :openrouter)[:metadata_provider] ||
-                             GenAI.ModelMetadata.DefaultProvider
-
   import GenAI.InferenceProvider.Helpers
 
   def load_metadata(_ \\ nil), do: :ok
@@ -43,10 +40,15 @@ defmodule GenAI.Provider.OpenRouter.Models do
   def llama_3_3_70b(), do: model("meta-llama/llama-3.3-70b-instruct")
   def qwen3_8_27b(), do: model("qwen/qwen3.8-27b")
 
+  defp model_metadata_provider do
+    Application.get_env(:genai, :openrouter, [])[:metadata_provider] ||
+      GenAI.ModelMetadata.DefaultProvider
+  end
+
   defp model_from_json(json) do
     {:ok, entry} =
       GenAI.ModelMetadata.ProviderBehaviour.get(
-        @model_metadata_provider,
+        model_metadata_provider(),
         GenAI.Provider.OpenRouter,
         json[:id]
       )

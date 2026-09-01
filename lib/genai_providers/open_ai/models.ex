@@ -1,8 +1,5 @@
 defmodule GenAI.Provider.OpenAI.Models do
   @api_base "https://api.openai.com"
-  @model_metadata_provider Application.compile_env(:genai, :openai)[:metadata_provider] ||
-                             GenAI.ModelMetadata.DefaultProvider
-
   import GenAI.InferenceProvider.Helpers
 
   # ⟦𓋩𓋺𓈜𓃀⟧ load_metadata :: auto-generated pointer for public function load_metadata
@@ -164,10 +161,15 @@ defmodule GenAI.Provider.OpenAI.Models do
   # Extract model from api request response.
   # @TODO move into Model module
   # ------------------
+  defp model_metadata_provider do
+    Application.get_env(:genai, :openai, [])[:metadata_provider] ||
+      GenAI.ModelMetadata.DefaultProvider
+  end
+
   defp model_from_json(json) do
     {:ok, entry} =
       GenAI.ModelMetadata.ProviderBehaviour.get(
-        @model_metadata_provider,
+        model_metadata_provider(),
         GenAI.Provider.OpenAI,
         json[:id]
       )
