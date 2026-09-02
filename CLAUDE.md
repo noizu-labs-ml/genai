@@ -141,3 +141,14 @@ PROVIDER_API_KEY=your-key mix test test/genai_providers/your_provider_test.exs -
 
 ### Debugging HTTP requests
 The library uses Finch for HTTP. To debug requests, check the encoder output and Finch request construction in each provider module.
+
+## Universal Rules (compressed)
+
+- **Trinity Protocol REQUIRED**: each response = Orientation → Friction → Response. Full text: monorepo `protocols/the-trinity-protocol.md` (5 levels up: `../../../../../protocols/`).
+- **No shell in main thread** — delegate to taskers; summarize, never dump raw output.
+- **Worktrees**: all work on worktrees; `epic.<group>` consolidation branches off `develop` for integration testing; feature branches merge into their parent epic via PR + squash flow (provenance); one epic PR replaces per-task PRs.
+- MAIN checkout owns `deps/_build`; worktrees symlink deps (absolute path).
+
+## Monorepo
+
+Ops/deploy/secret tooling docs: `CLAUDE.md` at the trl-infra monorepo root (`../../../../../CLAUDE.md`). Sibling libs: `ai/genai-core` (contracts), `ai/ex_llama`, `ai/genai-approval`. Hex-published — bump `version` + CHANGELOG on release; hex publish discipline (2FA).
