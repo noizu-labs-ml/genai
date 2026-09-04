@@ -1,6 +1,16 @@
-# AGENT.md
+# AGENT.md — genai
 
-This file provides guidance to coding agents (Grok, Codex, Claude, Cursor) when working with code in this repository.
+Guidance for **Codex**, **Grok**, **Cursor**, and other `AGENTS.md` / `AGENT.md` tools.
+
+Claude Code loads [CLAUDE.md](./CLAUDE.md). Same policy; this file is the harness-shaped sibling (numbered MUST first, markdown headings). If both this file and a parent `AGENTS.md` load, **this file wins on conflict**.
+
+## MUST (every turn)
+
+1. **Trinity Protocol REQUIRED**: each response = Orientation → Friction → Response. Full text: monorepo `protocols/the-trinity-protocol.md` (5 levels up: `../../../../../protocols/`).
+2. **No shell in main thread** — delegate to taskers; summarize, never dump raw output.
+3. **Worktrees**: all work on worktrees; `epic.<group>` consolidation branches off `develop` for integration testing; feature branches merge into their parent epic via PR + squash flow (provenance); one epic PR replaces per-task PRs.
+4. MAIN checkout owns `deps/_build`; worktrees symlink deps (absolute path).
+5. **PRs target `develop`.** Never merge or push `main` (CI/CD-only release path).
 
 ## Project Overview
 
@@ -142,13 +152,12 @@ PROVIDER_API_KEY=your-key mix test test/genai_providers/your_provider_test.exs -
 ### Debugging HTTP requests
 The library uses Finch for HTTP. To debug requests, check the encoder output and Finch request construction in each provider module.
 
-## Universal Rules (compressed)
-
-- **Trinity Protocol REQUIRED**: each response = Orientation → Friction → Response. Full text: monorepo `protocols/the-trinity-protocol.md` (5 levels up: `../../../../../protocols/`).
-- **No shell in main thread** — delegate to taskers; summarize, never dump raw output.
-- **Worktrees**: all work on worktrees; `epic.<group>` consolidation branches off `develop` for integration testing; feature branches merge into their parent epic via PR + squash flow (provenance); one epic PR replaces per-task PRs.
-- MAIN checkout owns `deps/_build`; worktrees symlink deps (absolute path).
-
 ## Monorepo
 
 Ops/deploy/secret tooling docs: `CLAUDE.md` at the trl-infra monorepo root (`../../../../../CLAUDE.md`). Sibling libs: `ai/genai-core` (contracts), `ai/ex_llama`, `ai/genai-approval`. Hex-published — bump `version` + CHANGELOG on release; hex publish discipline (2FA).
+
+## Branch & PR Policy
+
+- Submodules sit on **`develop`** — keep your checkout on `develop`.
+- All PRs target **`develop`** (feature/bug/task branches fork from `develop`).
+- **`main` is CI/CD-only**: CI/CD automation performs all merges into `main` (release path). Never merge to or push `main` by hand.
