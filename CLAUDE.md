@@ -152,3 +152,9 @@ The library uses Finch for HTTP. To debug requests, check the encoder output and
 ## Monorepo
 
 Ops/deploy/secret tooling docs: `CLAUDE.md` at the trl-infra monorepo root (`../../../../../CLAUDE.md`). Sibling libs: `ai/genai-core` (contracts), `ai/ex_llama`, `ai/genai-approval`. Hex-published — bump `version` + CHANGELOG on release; hex publish discipline (2FA).
+
+## Branch & PR Policy
+
+- Submodules sit on **`develop`** — keep your checkout on `develop`.
+- All PRs target **`develop`** (feature/bug/task branches fork from `develop`).
+- **`main` is CI/CD-only**: CI/CD automation performs all merges into `main` (release path). Never merge to or push `main` by hand.
