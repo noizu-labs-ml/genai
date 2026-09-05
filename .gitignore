@@ -33,3 +33,6 @@ genai-*.tar
 # Temporary files, for example, from tests.
 /tmp/
 .aider*
+
+# Canonical worktree placement
+.claude/worktrees/
