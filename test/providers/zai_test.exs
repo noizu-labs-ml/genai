@@ -61,7 +61,7 @@ defmodule GenAI.Provider.ZAITest do
         {:ok,
          %Finch.Response{
            status: 200,
-           body: ~s({
+           body: ~S({
   "id": "chatcmpl-zai-tool123",
   "object": "chat.completion",
   "created": 1713700001,
@@ -113,8 +113,8 @@ defmodule GenAI.Provider.ZAITest do
       assert choice.index == 0
       assert choice.message.__struct__ == GenAI.Message.ToolUsage
       [tc] = choice.message.tool_calls
-      assert tc.tool_name == "random_fact"
-      assert tc.arguments[:subject] == "cats"
+      assert tc.function.name == "random_fact"
+      assert tc.function.arguments[:subject] == "cats"
     end
 
     test "chat - with function call response" do
@@ -122,7 +122,7 @@ defmodule GenAI.Provider.ZAITest do
         {:ok,
          %Finch.Response{
            status: 200,
-           body: ~s({
+           body: ~S({
   "id": "chatcmpl-zai-tool456",
   "object": "chat.completion",
   "created": 1713700002,
