@@ -41,6 +41,11 @@ Update to use revamped core libs.
 XAI, and DeepSeek support added. 
 
 
+## v0.4.1
+Optional `noizu_mcp` dependency constraint raised from `~> 0.1.6` to `~> 0.5.0`
+(0.5.1+). Resolves the version-solving conflict for apps that require
+`genai ~> 0.4.0` together with `noizu_mcp ~> 0.5.x`.
+
 ## v0.4.0 - Anthropic Prompt Caching
 - Response parsing: Anthropic `usage.cache_read_input_tokens` / `usage.cache_creation_input_tokens`;
 Gemini `usageMetadata` (prompt/candidates/total/`cachedContentTokenCount`) instead of empty usage.

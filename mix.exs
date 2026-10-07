@@ -7,7 +7,7 @@ defmodule GenAI.MixProject do
       name: "Noizu Labs, GenAI Wrapper",
       description: description(),
       package: package(),
-      version: "0.4.0",
+      version: "0.4.1",
       elixir: "~> 1.16",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
@@ -120,7 +120,7 @@ defmodule GenAI.MixProject do
       {:mimic, "~> 2.3", only: :test},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
       {:sweet_xml, "~> 0.7", only: :test},
-      {:noizu_mcp, "~> 0.1.6", optional: true}
+      {:noizu_mcp, "~> 0.5.0", optional: true}
     ]
   end
 end
