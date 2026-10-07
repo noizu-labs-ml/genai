@@ -37,3 +37,66 @@ jobs:
       run: mix deps.get
     - name: Run tests
       run: mix test
+
+
+ci-timing:
+  # PR-run timing tracker (fleet standard). Warn-only: never blocks.
+  # Thresholds are repo/org Variables PR_STEP_MAX_MINUTES / PR_RUN_MAX_MINUTES, defaults 4/7.
+  needs: [build]
+  if: github.event_name == 'pull_request'
+  runs-on: ubuntu-latest
+  permissions:
+    actions: read
+  steps:
+    - name: Track timing thresholds
+      env:
+        GH_TOKEN: ${{ github.token }}
+        REPO: ${{ github.repository }}
+        RUN_ID: ${{ github.run_id }}
+        RUN_STARTED_AT: ${{ github.run_started_at }}
+        STEP_MAX_MIN: ${{ vars.PR_STEP_MAX_MINUTES || '4' }}
+        RUN_MAX_MIN: ${{ vars.PR_RUN_MAX_MINUTES || '7' }}
+      run: |
+        set -euo pipefail
+        SUMMARY="$GITHUB_STEP_SUMMARY"
+        jobs_json=""
+        for i in 1 2 3; do
+          jobs_json=$(curl -sf -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/$REPO/actions/runs/$RUN_ID/jobs?per_page=100") && break
+          sleep 5
+        done
+        [ -n "$jobs_json" ] || { echo "::warning title=CI timing::could not fetch run jobs"; exit 0; }
+        {
+          echo "## CI timing (thresholds: step ${STEP_MAX_MIN}m / run ${RUN_MAX_MIN}m)"
+          echo
+          echo "| job | step | duration | status |"
+          echo "|---|---|---|---|"
+        } >> "$SUMMARY"
+        flagged=0
+        steps_sum=0
+        while IFS=$'\t' read -r job step start end; do
+          [ -n "$job" ] || continue
+          s=$(date -d "$start" +%s); e=$(date -d "$end" +%s)
+          dur=$((e - s)); thr=$((STEP_MAX_MIN * 60))
+          steps_sum=$((steps_sum + dur))
+          if [ "$dur" -gt "$thr" ]; then
+            flagged=$((flagged + 1))
+            echo "::warning title=CI timing::\"$step\" (job: $job) took $((dur / 60))m$((dur % 60))s — over the ${STEP_MAX_MIN}m step threshold"
+            echo "| \`$job\` | \`$step\` | $((dur / 60))m$((dur % 60))s | ⚠️ over ${STEP_MAX_MIN}m |" >> "$SUMMARY"
+          else
+            echo "| \`$job\` | \`$step\` | $((dur / 60))m$((dur % 60))s | ok |" >> "$SUMMARY"
+          fi
+        done < <(echo "$jobs_json" | jq -r '
+          .jobs[] | select(.name | test("^(build)$")) | .name as $job |
+          .steps[] | select(.status == "completed" and .conclusion != "skipped" and .conclusion != null) |
+          [$job, .name, .started_at, .completed_at] | @tsv')
+        start=$(date -d "$RUN_STARTED_AT" +%s); now=$(date +%s)
+        wall=$((now - start)); run_thr=$((RUN_MAX_MIN * 60))
+        echo
+        echo "| **steps sum** | test jobs, work only | $((steps_sum / 60))m$((steps_sum % 60))s | $( [ "$steps_sum" -gt "$run_thr" ] && echo "⚠️ over ${RUN_MAX_MIN}m" || echo ok) |" >> "$SUMMARY"
+        echo "| **wall clock** | queue + work | $((wall / 60))m$((wall % 60))s | info |" >> "$SUMMARY"
+        if [ "$steps_sum" -gt "$run_thr" ]; then
+          echo "::warning title=CI timing::acceptance steps sum to $((steps_sum / 60))m$((steps_sum % 60))s — over the ${RUN_MAX_MIN}m run threshold (wall clock: $((wall / 60))m)"
+        fi
+        echo; echo "_${flagged} step(s) over threshold._" >> "$SUMMARY"
