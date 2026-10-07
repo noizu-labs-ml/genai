@@ -41,6 +41,14 @@ Update to use revamped core libs.
 XAI, and DeepSeek support added. 
 
 
+## v0.4.0 - Anthropic Prompt Caching
+- Response parsing: Anthropic `usage.cache_read_input_tokens` / `usage.cache_creation_input_tokens`;
+Gemini `usageMetadata` (prompt/candidates/total/`cachedContentTokenCount`) instead of empty usage.
+- Request side (Anthropic): `with_setting(thread, :cache_control, :ephemeral)` wraps the system
+prompt as an ephemeral cache breakpoint; `TextContent.cache_control` marks individual content
+blocks; the Anthropic 4-breakpoint cap is enforced with a warning.
+- `genai_core` bumped to `~> 0.3.5`.
+
 ## v0.3.11
 MCP tool source adapter (`GenAI.Tool.Source.MCP`) over an already-supervised
 `Noizu.MCP.Client`. Optional Hex dependency `{:noizu_mcp, "~> 0.1.6", optional: true}`.

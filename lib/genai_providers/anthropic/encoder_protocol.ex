@@ -30,7 +30,7 @@ defmodule GenAI.Provider.Anthropic.EncoderProtocolHelper do
 
   def content(
         %GenAI.Message.Content.TextContent{type: type, system: system_content, text: text} =
-          _______content,
+          content_struct,
         _,
         _,
         session,
@@ -40,12 +40,27 @@ defmodule GenAI.Provider.Anthropic.EncoderProtocolHelper do
     system_type = type in [:input, :prompt]
     system_message = options[:system_message]
 
+    cache_control = if content_struct.cache_control, do: %{type: "ephemeral"}, else: nil
+
     cond do
-      !system_type -> {%{type: :text, text: text}, session}
-      !(system_message || system_content) -> {%{type: :text, text: text}, session}
-      :else -> {%{type: :text, text: system_message_markup(text)}, session}
+      !system_type ->
+        block = %{type: :text, text: text}
+        {maybe_put_cache_control(block, cache_control), session}
+
+      !(system_message || system_content) ->
+        block = %{type: :text, text: text}
+        {maybe_put_cache_control(block, cache_control), session}
+
+      :else ->
+        {%{type: :text, text: system_message_markup(text)}, session}
     end
   end
+
+  # ⟦𓍛𓎛𓊪𓆗⟧ maybe_put_cache_control :: Attach an ephemeral cache_control marker when one was requested.
+  defp maybe_put_cache_control(block, nil), do: block
+
+  defp maybe_put_cache_control(block, cache_control),
+    do: Map.put(block, :cache_control, cache_control)
 
   def content(%GenAI.Message.Content.ImageContent{} = content, _, _, session, _, _) do
     {:ok, encoded} = GenAI.Message.Content.ImageContent.base64(content)
