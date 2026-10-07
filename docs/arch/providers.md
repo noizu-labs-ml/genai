@@ -55,12 +55,14 @@ A shared `EncoderProtocolHelper` module in each provider handles content-type di
 - Custom auth header (`x-api-key`, `anthropic-version`)
 - Supports vision, tools, thinking content
 
-### OpenAI-compatible (OpenAI, Groq, xAI, DeepSeek, ZAI, Cerebras, Qwen)
+### OpenAI-compatible (OpenAI, Groq, xAI, DeepSeek, ZAI, Cerebras, Qwen, OpenRouter, LiteLLM)
 - Standard Bearer token auth
 - Similar request/response format
 - Groq, xAI, DeepSeek override only `@base_url` and minimal headers
 - ZAI overrides chat path to `/api/paas/v4/chat/completions`
 - Qwen (Alibaba DashScope) defaults to `https://dashscope-intl.aliyuncs.com/compatible-mode/v1`; `token_plan: true` uses the Singapore token-plan host + `QWEN_TOKEN_KEY`; parses `reasoning_content` and accepts `enable_thinking` / `reasoning_effort`
+- OpenRouter adds attribution headers (`http_referer`, `app_title` from config)
+- LiteLLM targets a self-hosted/managed LiteLLM gateway (`base_url` configurable, default `http://localhost:4000`)
 
 ### Gemini (unique API)
 - API key passed as URL query parameter
@@ -70,6 +72,17 @@ A shared `EncoderProtocolHelper` module in each provider handles content-type di
 ### Ollama (local)
 - Configurable `@base_url` (default `localhost:11434`)
 - Uses `/api/tags` for model listing (not `/v1/models`)
+
+## Media & Voice Providers
+
+Beyond chat, several providers expose capability modules used by `GenAI.Media.Router` (see `config :genai, :media_providers`):
+
+- **OpenAI**: `image.ex`, `speech.ex`, `audio.ex`, `transcription.ex`
+- **Gemini**: `image.ex`
+- **Qwen**: `image.ex`, `speech.ex`, `video.ex` (+ `dashscope.ex` host/credential handling)
+- **LiteLLM**: `media.ex` — gateway fallback for modalities without a direct provider
+- **Suno** (`suno.ex`) and **ElevenLabs** (`eleven_labs.ex`): flat single-module providers (music, voice) — no encoder/models directory
+- `media_helpers.ex` and `media/openai_compat.ex` hold shared plumbing (polling, OpenAI-compatible media API calls)
 
 ## Settings Resolution
 
