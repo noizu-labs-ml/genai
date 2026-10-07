@@ -140,13 +140,23 @@ defmodule GenAI.Provider.Gemini.Encoder do
         |> Enum.map(&completion_choices(id, &1, model, settings, session, context, options))
         |> Enum.map(fn {:ok, x} -> x end)
 
+      usage_meta = json[:usageMetadata] || []
+
+      usage =
+        GenAI.ChatCompletion.Usage.new(
+          prompt_tokens: usage_meta[:promptTokenCount] || 0,
+          completion_tokens: usage_meta[:candidatesTokenCount] || 0,
+          total_tokens: usage_meta[:totalTokenCount] || 0,
+          cache_read_input_tokens: usage_meta[:cachedContentTokenCount]
+        )
+
       completion =
         GenAI.ChatCompletion.from_json(
           id: id,
           model: model_name,
           provider: provider,
           choices: choices,
-          usage: GenAI.ChatCompletion.Usage.new([]),
+          usage: usage,
           details: json
         )
 

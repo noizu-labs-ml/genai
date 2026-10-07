@@ -1,5 +1,6 @@
 defmodule GenAI.Provider.Anthropic.Encoder do
   @base_url "https://api.anthropic.com"
+  require Logger
   use GenAI.Model.EncoderBehaviour
 
   # ⟦𓄎𓉟𓇧𓃝⟧ endpoint :: auto-generated pointer for public function endpoint
@@ -58,6 +59,105 @@ defmodule GenAI.Provider.Anthropic.Encoder do
     {:ok, x}
   end
 
+  # ---------------------------------
+  # prompt caching
+  # ---------------------------------
+  @max_cache_breakpoints 4
+
+  # ⟦𓎙𓊝𓋹𓍯⟧ request_body :: auto-generated pointer for public function request_body
+  def request_body(model, messages, tools, settings, session, context, options) do
+    with {:ok, {body, session}} <-
+           super(model, messages, tools, settings, session, context, options) do
+      body =
+        body
+        |> apply_system_cache_control(settings)
+        |> enforce_cache_breakpoint_cap()
+
+      {:ok, {body, session}}
+    end
+  end
+
+  # ⟦𓊃𓏏𓎛𓆑⟧ apply_system_cache_control :: Mark the system prompt as a cache breakpoint when the :cache_control setting is :ephemeral.
+  defp apply_system_cache_control(body, settings) do
+    enabled? =
+      [
+        settings[:settings],
+        settings[:model_settings],
+        settings[:provider_settings],
+        settings[:config_settings]
+      ]
+      |> Enum.any?(&(&1 && &1[:cache_control] == :ephemeral))
+
+    case {enabled?, body[:system]} do
+      {true, text} when is_binary(text) ->
+        Map.put(body, :system, [%{type: "text", text: text, cache_control: %{type: "ephemeral"}}])
+
+      {true, blocks} when is_list(blocks) and blocks != [] ->
+        {init, [last | rest]} = Enum.split(blocks, -1)
+
+        last =
+          if is_map(last) and not is_map_key(last, :cache_control),
+            do: Map.put(last, :cache_control, %{type: "ephemeral"}),
+            else: last
+
+        Map.put(body, :system, init ++ [last | rest])
+
+      _ ->
+        body
+    end
+  end
+
+  # ⟦𓍝𓎕𓋴𓇋⟧ enforce_cache_breakpoint_cap :: Anthropic allows at most 4 cache breakpoints; keep the first 4 and warn about the rest.
+  defp enforce_cache_breakpoint_cap(%{system: system} = body) when is_list(system) do
+    {system, used} = cap_blocks(system, 0)
+
+    {messages, _} =
+      Enum.map_reduce(body[:messages] || [], used, fn
+        message, used when is_map(message) and is_list(message.content) ->
+          {content, used} = cap_blocks(message.content, used)
+          {%{message | content: content}, used}
+
+        message, used ->
+          {message, used}
+      end)
+
+    body
+    |> Map.put(:messages, messages)
+    |> Map.put(:system, system)
+  end
+
+  defp enforce_cache_breakpoint_cap(body) do
+    {messages, _} =
+      Enum.map_reduce(body[:messages] || [], 0, fn
+        message, used when is_map(message) and is_list(message.content) ->
+          {content, used} = cap_blocks(message.content, used)
+          {%{message | content: content}, used}
+
+        message, used ->
+          {message, used}
+      end)
+
+    Map.put(body, :messages, messages)
+  end
+
+  defp cap_blocks(blocks, used) do
+    Enum.map_reduce(blocks, used, fn
+      block, used when is_map(block) and is_map_key(block, :cache_control) ->
+        if used < @max_cache_breakpoints do
+          {block, used + 1}
+        else
+          Logger.warning(
+            "Anthropic prompt caching: more than #{@max_cache_breakpoints} cache breakpoints requested; dropping extras (keep the first #{@max_cache_breakpoints})."
+          )
+
+          {Map.delete(block, :cache_control), used}
+        end
+
+      block, used ->
+        {block, used}
+    end)
+  end
+
   # ⟦𓍪𓈓𓍯𓊇⟧ completion_response :: auto-generated pointer for public function completion_response
   def completion_response(json, model, settings, session, context, options)
 
@@ -78,7 +178,9 @@ defmodule GenAI.Provider.Anthropic.Encoder do
         GenAI.ChatCompletion.Usage.new(
           prompt_tokens: prompt_tokens,
           total_tokens: prompt_tokens + completion_tokens,
-          completion_tokens: completion_tokens
+          completion_tokens: completion_tokens,
+          cache_read_input_tokens: json[:usage][:cache_read_input_tokens],
+          cache_creation_input_tokens: json[:usage][:cache_creation_input_tokens]
         )
 
       completion =
