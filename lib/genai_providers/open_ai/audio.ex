@@ -17,11 +17,11 @@ defmodule GenAI.Provider.OpenAI.Audio do
   alias GenAI.Provider.MediaHelpers, as: H
 
   @impl GenAI.InferenceProviderBehaviour
-  # ⟦𓎧𓇵𓌟𓏚⟧ supported_modalities :: auto-generated pointer for public function supported_modalities
+  # <REMOVED UUID HERE> supported_modalities :: auto-generated pointer for public function supported_modalities
   def supported_modalities, do: [%{input: [:text, :speech], output: :speech, mode: :sync}]
 
   @impl GenAI.InferenceProviderBehaviour
-  # ⟦𓇺𓁹𓂔𓐅⟧ generate_media :: auto-generated pointer for public function generate_media
+  # <REMOVED UUID HERE> generate_media :: auto-generated pointer for public function generate_media
   def generate_media(%Request{output: :speech} = req, _options) do
     with {:ok, key} <- H.require_key(req, "OPENAI_API_KEY") do
       OpenAICompat.audio_chat(@base_url, key, req)

@@ -3,13 +3,13 @@ defmodule GenAI.Provider.Anthropic.Encoder do
   require Logger
   use GenAI.Model.EncoderBehaviour
 
-  # ⟦𓄎𓉟𓇧𓃝⟧ endpoint :: auto-generated pointer for public function endpoint
+  # <REMOVED UUID HERE> endpoint :: auto-generated pointer for public function endpoint
   def endpoint(model, settings, session, context, options)
 
   def endpoint(_, _, session, _, _),
     do: {:ok, {{:post, "#{@base_url}/v1/messages"}, session}}
 
-  # ⟦𓎙𓉸𓃝𓀖⟧ headers :: auto-generated pointer for public function headers
+  # <REMOVED UUID HERE> headers :: auto-generated pointer for public function headers
   def headers(_model, settings, session, _context, options) do
     search_scope = [
       options,
@@ -39,7 +39,7 @@ defmodule GenAI.Provider.Anthropic.Encoder do
     {:ok, {headers, session}}
   end
 
-  # ⟦𓋰𓎄𓍤𓉞⟧ default_hyper_params :: auto-generated pointer for public function default_hyper_params
+  # <REMOVED UUID HERE> default_hyper_params :: auto-generated pointer for public function default_hyper_params
   def default_hyper_params(model, settings, session, context, options)
 
   def default_hyper_params(_model, _settings, _session, _context, _options) do
@@ -64,7 +64,7 @@ defmodule GenAI.Provider.Anthropic.Encoder do
   # ---------------------------------
   @max_cache_breakpoints 4
 
-  # ⟦𓎙𓊝𓋹𓍯⟧ request_body :: auto-generated pointer for public function request_body
+  # <REMOVED UUID HERE> request_body :: auto-generated pointer for public function request_body
   def request_body(model, messages, tools, settings, session, context, options) do
     with {:ok, {body, session}} <-
            super(model, messages, tools, settings, session, context, options) do
@@ -77,7 +77,7 @@ defmodule GenAI.Provider.Anthropic.Encoder do
     end
   end
 
-  # ⟦𓊃𓏏𓎛𓆑⟧ apply_system_cache_control :: Mark the system prompt as a cache breakpoint when the :cache_control setting is :ephemeral.
+  # <REMOVED UUID HERE> apply_system_cache_control :: Mark the system prompt as a cache breakpoint when the :cache_control setting is :ephemeral.
   defp apply_system_cache_control(body, settings) do
     enabled? =
       [
@@ -107,7 +107,7 @@ defmodule GenAI.Provider.Anthropic.Encoder do
     end
   end
 
-  # ⟦𓍝𓎕𓋴𓇋⟧ enforce_cache_breakpoint_cap :: Anthropic allows at most 4 cache breakpoints; keep the first 4 and warn about the rest.
+  # <REMOVED UUID HERE> enforce_cache_breakpoint_cap :: Anthropic allows at most 4 cache breakpoints; keep the first 4 and warn about the rest.
   defp enforce_cache_breakpoint_cap(%{system: system} = body) when is_list(system) do
     {system, used} = cap_blocks(system, 0)
 
@@ -158,7 +158,7 @@ defmodule GenAI.Provider.Anthropic.Encoder do
     end)
   end
 
-  # ⟦𓍪𓈓𓍯𓊇⟧ completion_response :: auto-generated pointer for public function completion_response
+  # <REMOVED UUID HERE> completion_response :: auto-generated pointer for public function completion_response
   def completion_response(json, model, settings, session, context, options)
 
   def completion_response(json, model, settings, session, context, options) do
@@ -196,7 +196,7 @@ defmodule GenAI.Provider.Anthropic.Encoder do
     end
   end
 
-  # ⟦𓆐𓅊𓎕𓋻⟧ completion_choices :: auto-generated pointer for public function completion_choices
+  # <REMOVED UUID HERE> completion_choices :: auto-generated pointer for public function completion_choices
   def completion_choices(id, json, model, settings, session, context, options)
 
   def completion_choices(
@@ -222,7 +222,7 @@ defmodule GenAI.Provider.Anthropic.Encoder do
     end
   end
 
-  # ⟦𓐢𓀥𓍡𓈸⟧ completion_choice :: auto-generated pointer for public function completion_choice
+  # <REMOVED UUID HERE> completion_choice :: auto-generated pointer for public function completion_choice
   def completion_choice(id, json, model, settings, session, context, options)
 
   def completion_choice(
@@ -267,7 +267,7 @@ defmodule GenAI.Provider.Anthropic.Encoder do
     {:ok, msg}
   end
 
-  # ⟦𓈡𓊛𓋴𓊏⟧ completion_message :: auto-generated pointer for public function completion_message
+  # <REMOVED UUID HERE> completion_message :: auto-generated pointer for public function completion_message
   def completion_message(%{content: content}) when is_bitstring(content) do
     Enum.map([content], &completion_content/1)
   end
@@ -276,7 +276,7 @@ defmodule GenAI.Provider.Anthropic.Encoder do
     Enum.map(content, &completion_content/1)
   end
 
-  # ⟦𓅔𓀐𓋆𓏯⟧ completion_content :: auto-generated pointer for public function completion_content
+  # <REMOVED UUID HERE> completion_content :: auto-generated pointer for public function completion_content
   def completion_content(json)
 
   def completion_content(%{id: id, type: "tool_use", name: tool_name, input: arguments}) do
