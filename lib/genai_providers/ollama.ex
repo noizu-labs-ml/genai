@@ -14,7 +14,7 @@ defmodule GenAI.Provider.Ollama do
   @doc """
   Retrieves a list of models available on the local Ollama instance.
   """
-  # ⟦𓏪𓀂𓀿𓁮⟧ models :: Retrieves a list of models available on the local Ollama instance.
+  # <REMOVED UUID HERE> models :: Retrieves a list of models available on the local Ollama instance.
   def models(settings \\ []) do
     headers = headers(settings)
     base_url = settings[:base_url] || @base_url

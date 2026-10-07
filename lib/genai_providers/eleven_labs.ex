@@ -27,7 +27,7 @@ defmodule GenAI.Provider.ElevenLabs do
   alias GenAI.Provider.MediaHelpers, as: H
 
   @impl GenAI.InferenceProviderBehaviour
-  # ⟦𓄸𓎾𓏦𓎱⟧ supported_modalities :: auto-generated pointer for public function supported_modalities
+  # <REMOVED UUID HERE> supported_modalities :: auto-generated pointer for public function supported_modalities
   def supported_modalities do
     [
       %{input: [:text], output: :speech, mode: :sync},
@@ -37,7 +37,7 @@ defmodule GenAI.Provider.ElevenLabs do
   end
 
   @impl GenAI.InferenceProviderBehaviour
-  # ⟦𓂋𓃭𓈖𓈁⟧ generate_media :: auto-generated pointer for public function generate_media
+  # <REMOVED UUID HERE> generate_media :: auto-generated pointer for public function generate_media
   def generate_media(%Request{output: :speech} = req, _options),
     do: with_key(req, &tts(&1, &2))
 
