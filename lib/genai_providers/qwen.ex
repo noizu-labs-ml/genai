@@ -21,7 +21,7 @@ defmodule GenAI.Provider.Qwen do
   @doc """
   True when token-plan mode is set (`token_plan: true` or `mode: :token_plan`).
   """
-  # ⟦𓊈𓏝𓌻𓊧⟧ token_plan? :: True when token-plan mode is set.
+  # <REMOVED UUID HERE> token_plan? :: True when token-plan mode is set.
   def token_plan?(settings \\ [])
 
   def token_plan?(settings) do
@@ -35,7 +35,7 @@ defmodule GenAI.Provider.Qwen do
   Compatible-mode root URL. Token-plan mode selects the token-plan host; an explicit
   per-request `:base_url` still wins.
   """
-  # ⟦𓎯𓍺𓇐𓌑⟧ base_url :: Compatible-mode root URL for the active plan.
+  # <REMOVED UUID HERE> base_url :: Compatible-mode root URL for the active plan.
   def base_url(settings \\ [])
 
   def base_url(settings) do
@@ -54,7 +54,7 @@ defmodule GenAI.Provider.Qwen do
   end
 
   @doc "Bearer token for the active plan (`api_key` on-demand, `token_api_key` on token plan)."
-  # ⟦𓏲𓁑𓉉𓂝⟧ api_key :: Bearer token for the active plan.
+  # <REMOVED UUID HERE> api_key :: Bearer token for the active plan.
   def api_key(settings \\ [], options \\ [])
 
   def api_key(settings, options) do
@@ -83,7 +83,7 @@ defmodule GenAI.Provider.Qwen do
 
   Used by `catalog/1` — the OpenAI-compatible `/models` list omits video and some audio ids.
   """
-  # ⟦𓈀𓋛𓀊𓄪⟧ native_base_url :: Native Model Studio API root derived from compatible-mode base_url.
+  # <REMOVED UUID HERE> native_base_url :: Native Model Studio API root derived from compatible-mode base_url.
   def native_base_url(settings \\ [])
 
   def native_base_url(settings) do
@@ -105,7 +105,7 @@ defmodule GenAI.Provider.Qwen do
   @doc """
   Retrieves a list of models supported by the DashScope compatible-mode API.
   """
-  # ⟦𓏶𓁄𓉙𓃉⟧ models :: Retrieves a list of models supported by the DashScope compatible-mode API.
+  # <REMOVED UUID HERE> models :: Retrieves a list of models supported by the DashScope compatible-mode API.
   def models(settings \\ []) do
     headers = headers(settings)
     call = api_call(:get, "#{base_url(settings)}/models", headers)
@@ -131,7 +131,7 @@ defmodule GenAI.Provider.Qwen do
   - `:capabilities` — string or list, e.g. `"TR"` or `["TG", "Reasoning"]`
   - `:providers` — string or list, e.g. `"qwen"`
   """
-  # ⟦𓆰𓊓𓁲𓆷⟧ catalog :: Full Model Studio catalog via native GET /api/v1/models.
+  # <REMOVED UUID HERE> catalog :: Full Model Studio catalog via native GET /api/v1/models.
   def catalog(settings \\ []) do
     page_size = settings[:page_size] || 100
     language = settings[:language] || "en-US"

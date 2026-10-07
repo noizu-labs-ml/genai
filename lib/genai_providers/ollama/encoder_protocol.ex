@@ -8,7 +8,7 @@ defprotocol GenAI.Provider.Ollama.EncoderProtocol do
   
   Ollama uses a similar format to OpenAI but with some differences.
   """
-  # ⟦𓊊𓐍𓉤𓃇⟧ encode :: auto-generated pointer for public function encode
+  # <REMOVED UUID HERE> encode :: auto-generated pointer for public function encode
   def encode(subject, model, session, context, options)
 end
 
@@ -35,7 +35,7 @@ end
 # GenAI.Message
 # -----------------------------
 defimpl GenAI.Provider.Ollama.EncoderProtocol, for: GenAI.Message do
-  # ⟦𓆉𓂐𓋛𓍎⟧ content :: auto-generated pointer for public function content
+  # <REMOVED UUID HERE> content :: auto-generated pointer for public function content
   def content(content)
 
   def content(content) when is_bitstring(content) do
@@ -104,7 +104,7 @@ end
 # GenAI.Message.ToolUsage
 # -----------------------------
 defimpl GenAI.Provider.Ollama.EncoderProtocol, for: GenAI.Message.ToolUsage do
-  # ⟦𓊘𓃴𓈚𓄴⟧ encode_call :: auto-generated pointer for public function encode_call
+  # <REMOVED UUID HERE> encode_call :: auto-generated pointer for public function encode_call
   def encode_call(%GenAI.Message.ToolCall{
         id: _id,
         type: _type,

@@ -25,7 +25,7 @@ defmodule GenAI.Provider.LiteLLM.Media do
   alias GenAI.Provider.Media.OpenAICompat
 
   @impl GenAI.InferenceProviderBehaviour
-  # ⟦𓇌𓃫𓁽𓁕⟧ supported_modalities :: auto-generated pointer for public function supported_modalities
+  # <REMOVED UUID HERE> supported_modalities :: auto-generated pointer for public function supported_modalities
   def supported_modalities do
     [
       %{input: [:text], output: :image, mode: :sync},
@@ -38,7 +38,7 @@ defmodule GenAI.Provider.LiteLLM.Media do
   end
 
   @impl GenAI.InferenceProviderBehaviour
-  # ⟦𓍨𓇏𓂱𓀷⟧ generate_media :: auto-generated pointer for public function generate_media
+  # <REMOVED UUID HERE> generate_media :: auto-generated pointer for public function generate_media
   def generate_media(%Request{output: out} = req, options) do
     with {:ok, key} <- H.require_key(req, "LITELLM_API_KEY") do
       base = H.base_url(:litellm, @default_base_url)

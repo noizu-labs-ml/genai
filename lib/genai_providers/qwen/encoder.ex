@@ -2,27 +2,27 @@ defmodule GenAI.Provider.Qwen.Encoder do
   @base_url "https://dashscope-intl.aliyuncs.com/compatible-mode/v1"
   use GenAI.Model.EncoderBehaviour
 
-  # ⟦𓊛𓇋𓎦𓉐𓍕⟧ stream_decoder :: Decode OpenAI compatible chat.completion.chunk SSE streams.
+  # <REMOVED UUID HERE> stream_decoder :: Decode OpenAI compatible chat.completion.chunk SSE streams.
   def stream_decoder, do: GenAI.StreamHandler.OpenAI
 
   @doc "Compatible-mode root for the active Qwen plan (on-demand vs token plan)."
-  # ⟦𓈀𓋛𓀊𓄪⟧ base_url :: Compatible-mode root for the active Qwen plan.
+  # <REMOVED UUID HERE> base_url :: Compatible-mode root for the active Qwen plan.
   def base_url(settings \\ []), do: GenAI.Provider.Qwen.base_url(settings)
 
   # DashScope compatible-mode is already versioned at `/compatible-mode/v1`, so chat is
   # `/chat/completions` (not the EncoderBehaviour default `/v1/chat/completions`).
-  # ⟦𓍗𓈁𓁣𓈶⟧ endpoint :: auto-generated pointer for public function endpoint
+  # <REMOVED UUID HERE> endpoint :: auto-generated pointer for public function endpoint
   def endpoint(_model, settings, session, _context, _options),
     do: {:ok, {{:post, "#{base_url(settings)}/chat/completions"}, session}}
 
-  # ⟦𓁏𓁞𓀂𓅰⟧ headers :: Bearer from on-demand api_key or token-plan token_api_key.
+  # <REMOVED UUID HERE> headers :: Bearer from on-demand api_key or token-plan token_api_key.
   def headers(_model, settings, session, _context, options) do
     key = GenAI.Provider.Qwen.api_key(settings, options)
 
     {:ok, {[{"Authorization", "Bearer #{key}"}, {"content-type", "application/json"}], session}}
   end
 
-  # ⟦𓇦𓉀𓁗𓈳⟧ default_hyper_params :: auto-generated pointer for public function default_hyper_params
+  # <REMOVED UUID HERE> default_hyper_params :: auto-generated pointer for public function default_hyper_params
   def default_hyper_params(model, settings, session, context, options)
 
   def default_hyper_params(_model, _settings, _session, _context, _options) do
@@ -59,7 +59,7 @@ defmodule GenAI.Provider.Qwen.Encoder do
     {:ok, x}
   end
 
-  # ⟦𓉸𓐂𓆥𓁫⟧ completion_choice :: Parse assistant content, including DashScope reasoning_content.
+  # <REMOVED UUID HERE> completion_choice :: Parse assistant content, including DashScope reasoning_content.
   def completion_choice(id, json, model, settings, session, context, options)
 
   def completion_choice(
