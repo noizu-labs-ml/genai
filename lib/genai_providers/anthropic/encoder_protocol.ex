@@ -57,9 +57,9 @@ defmodule GenAI.Provider.Anthropic.EncoderProtocolHelper do
   end
 
   # ⟦𓍛𓎛𓊪𓆗⟧ maybe_put_cache_control :: Attach an ephemeral cache_control marker when one was requested.
-  def maybe_put_cache_control(block, nil), do: block
+  defp maybe_put_cache_control(block, nil), do: block
 
-  def maybe_put_cache_control(block, cache_control),
+  defp maybe_put_cache_control(block, cache_control),
     do: Map.put(block, :cache_control, cache_control)
 
   def content(%GenAI.Message.Content.ImageContent{} = content, _, _, session, _, _) do

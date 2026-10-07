@@ -281,7 +281,12 @@ defmodule GenAI.Provider.AnthropicTest do
     end
 
     test "cache_control setting wraps system prompt as ephemeral breakpoint" do
-      settings = %{settings: [system_prompt: "You are helpful.", cache_control: :ephemeral], model_settings: [], provider_settings: [], config_settings: []}
+      settings = %{
+        settings: [system_prompt: "You are helpful.", cache_control: :ephemeral],
+        model_settings: [],
+        provider_settings: [],
+        config_settings: []
+      }
 
       {:ok, {body, _session}} =
         GenAI.Provider.Anthropic.Encoder.request_body(
@@ -300,7 +305,12 @@ defmodule GenAI.Provider.AnthropicTest do
     end
 
     test "no cache_control setting leaves system prompt untouched" do
-      settings = %{settings: [system_prompt: "You are helpful."], model_settings: [], provider_settings: [], config_settings: []}
+      settings = %{
+        settings: [system_prompt: "You are helpful."],
+        model_settings: [],
+        provider_settings: [],
+        config_settings: []
+      }
 
       {:ok, {body, _session}} =
         GenAI.Provider.Anthropic.Encoder.request_body(
@@ -338,6 +348,55 @@ defmodule GenAI.Provider.AnthropicTest do
       kept = Enum.count(user.content, &Map.has_key?(&1, :cache_control))
       assert kept == 4
       assert Enum.count(user.content) == 6
+    end
+
+    test "binary system prompt is left intact when only message blocks carry breakpoints" do
+      blocks =
+        for i <- 1..6, do: %{type: :text, text: "block #{i}", cache_control: %{type: "ephemeral"}}
+
+      messages = [%{role: :user, content: blocks}]
+
+      settings = %{
+        settings: [system_prompt: "You are helpful."],
+        model_settings: [],
+        provider_settings: [],
+        config_settings: []
+      }
+
+      {:ok, {body, _session}} =
+        GenAI.Provider.Anthropic.Encoder.request_body(
+          caching_model(),
+          messages,
+          [],
+          settings,
+          nil,
+          nil,
+          nil
+        )
+
+      assert body.system == "You are helpful."
+    end
+
+    test "no system prompt key is left untouched when cache_control is set" do
+      settings = %{
+        settings: [cache_control: :ephemeral],
+        model_settings: [],
+        provider_settings: [],
+        config_settings: []
+      }
+
+      {:ok, {body, _session}} =
+        GenAI.Provider.Anthropic.Encoder.request_body(
+          caching_model(),
+          [%{role: :user, content: [%{type: :text, text: "hi"}]}],
+          [],
+          settings,
+          nil,
+          nil,
+          nil
+        )
+
+      refute Map.has_key?(body, :system)
     end
 
     test "TextContent with cache_control serializes an ephemeral breakpoint" do

@@ -92,31 +92,52 @@ defmodule GenAI.Provider.Anthropic.Encoder do
       {true, text} when is_binary(text) ->
         Map.put(body, :system, [%{type: "text", text: text, cache_control: %{type: "ephemeral"}}])
 
+      {true, blocks} when is_list(blocks) and blocks != [] ->
+        {init, [last | rest]} = Enum.split(blocks, -1)
+
+        last =
+          if is_map(last) and not is_map_key(last, :cache_control),
+            do: Map.put(last, :cache_control, %{type: "ephemeral"}),
+            else: last
+
+        Map.put(body, :system, init ++ [last | rest])
+
       _ ->
         body
     end
   end
 
   # ⟦𓍝𓎕𓋴𓇋⟧ enforce_cache_breakpoint_cap :: Anthropic allows at most 4 cache breakpoints; keep the first 4 and warn about the rest.
-  defp enforce_cache_breakpoint_cap(body) do
-    {system, used} = cap_blocks(List.wrap(body[:system]), 0)
+  defp enforce_cache_breakpoint_cap(%{system: system} = body) when is_list(system) do
+    {system, used} = cap_blocks(system, 0)
 
     {messages, _} =
       Enum.map_reduce(body[:messages] || [], used, fn
-        message, used when is_map(message) ->
-          {content, used} = cap_blocks(List.wrap(message.content), used)
+        message, used when is_map(message) and is_list(message.content) ->
+          {content, used} = cap_blocks(message.content, used)
           {%{message | content: content}, used}
 
         message, used ->
           {message, used}
       end)
 
-    body =
-      body
-      |> Map.put(:messages, messages)
-      |> then(&if is_list(body[:system]) || used > 0, do: Map.put(&1, :system, system), else: &1)
-
     body
+    |> Map.put(:messages, messages)
+    |> Map.put(:system, system)
+  end
+
+  defp enforce_cache_breakpoint_cap(body) do
+    {messages, _} =
+      Enum.map_reduce(body[:messages] || [], 0, fn
+        message, used when is_map(message) and is_list(message.content) ->
+          {content, used} = cap_blocks(message.content, used)
+          {%{message | content: content}, used}
+
+        message, used ->
+          {message, used}
+      end)
+
+    Map.put(body, :messages, messages)
   end
 
   defp cap_blocks(blocks, used) do
