@@ -22,6 +22,26 @@ defmodule GenAI.Provider.Qwen.Encoder do
     {:ok, {[{"Authorization", "Bearer #{key}"}, {"content-type", "application/json"}], session}}
   end
 
+  # Put nonempty tools into the body before conditional tool_choice parameters
+  # are evaluated. Core's legacy default only inserts an empty tools list.
+  def request_body(model, messages, tools, settings, session, context, options) do
+    with {:ok, name} <- GenAI.ModelProtocol.name(model),
+         {:ok, params} <- hyper_params(model, settings, session, context, options) do
+      body = %{model: name, messages: messages, tools: tools || []}
+
+      body =
+        GenAI.Model.Encoder.DefaultProvider.apply_hyper_params_and_adjust(
+          __MODULE__,
+          body,
+          params,
+          model,
+          settings
+        )
+
+      {:ok, {body, session}}
+    end
+  end
+
   # <REMOVED UUID HERE> default_hyper_params :: auto-generated pointer for public function default_hyper_params
   def default_hyper_params(model, settings, session, context, options)
 

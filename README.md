@@ -674,3 +674,12 @@ Contributions are welcome! Please see the `CONTRIBUTING.md` file for guidelines.
 ### License
 
 This library is released under the MIT License.
+# Classifier integration
+
+GenAI 0.5.0 adds hosted Jev, Alibaba System One and an optional local Jev-Omni
+adapter. See [classifier providers](docs/classifier-providers.md) for pinned Core 0.4.0
+source, local overrides, result semantics and explicit live-test prerequisites.
+
+## Native DashScope generation
+
+Use `GenAI.Provider.Qwen.Models.native(model_id)` for native DashScope text generation, or `native(model_id, api: :multimodal)` for native multimodal models. Set `QWEN_NATIVE_BASE_URL` to the regional workspace `/api/v1` base. Existing `Qwen.Models.model/1` keeps compatible-mode. See [setup and format conversions](docs/dashscope-native.md).

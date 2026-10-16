@@ -1,4 +1,8 @@
 defmodule GenAI.Provider.Qwen do
+  @doc "Run a decision on the explicitly configured workspace System One endpoint."
+  defdelegate classify(request, options \\ []), to: GenAI.Provider.Qwen.Classifier
+  defdelegate classifier_capabilities(), to: GenAI.Provider.Qwen.Classifier
+
   @moduledoc """
   Module for interacting with Alibaba Cloud Model Studio (DashScope) Qwen models.
 

@@ -1,4 +1,7 @@
 defmodule GenAI.Provider.Qwen.Models do
+  @doc "Alibaba classifier model; requires a workspace decision_base_url, rather than the chat endpoint."
+  def decision_model_preview, do: model("decision-model-preview")
+
   @moduledoc """
   Convenience constructors for Alibaba Cloud Model Studio (DashScope) Qwen models.
 
@@ -37,6 +40,16 @@ defmodule GenAI.Provider.Qwen.Models do
       model: model,
       provider: GenAI.Provider.Qwen,
       encoder: GenAI.Provider.Qwen.Encoder
+    }
+  end
+
+  @doc "Native DashScope model. api: :multimodal selects native multimodal parts and endpoint."
+  def native(model, options \\ []) do
+    %GenAI.Model{
+      model: model,
+      provider: GenAI.Provider.Qwen.Native,
+      encoder: GenAI.Provider.Qwen.Native.Encoder,
+      details: %{native_api: options[:api] || :text}
     }
   end
 
