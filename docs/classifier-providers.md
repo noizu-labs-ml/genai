@@ -59,10 +59,10 @@ metadata; usage retains only nonnegative integer counts.
 The loaded `model_id` must match the request's model reference. Supply the same
 custom name to `Local.load(..., model_id: name)` and `Local.model(name)` when
 using a different local identity; the backend's load default is the GGUF path.
-This integration was validated against ExLLama implementation commit
-`cf7520d1633c2f9b433cb7772a535f7050baf92d` with the real Q8 Jev-Omni backbone
-and trained decision head. Install that source explicitly when testing the
-co-developed local integration; ordinary GenAI compilation remains native-free.
+The native implementation was validated with the real Q8 Jev-Omni backbone
+and trained decision head. For source integration, install merged ExLLama commit
+`d9a9d96a76a17c0e3cb8bd62177bfe9e979006f2`; its Core dependency matches the
+merged Core source above. Ordinary GenAI compilation remains native-free.
 
 ## Verification commands and present limits
 
