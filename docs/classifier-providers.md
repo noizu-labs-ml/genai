@@ -1,7 +1,7 @@
 # Classifier providers
 
 GenAI 0.5.0 requires Core 0.4.0. Until Core is published, normal source checkouts
-use immutable Git commit `00c75545b83b7e02005ca70a3c9969d51b516d65`.
+use immutable Git commit `1ccad392d252811f652da41624f16b83ac237912`.
 Set `GENAI_CORE_PATH` to override it with a local classifier Core checkout.
 Before publishing this GenAI version to Hex, switch the dependency to released
 Core `~> 0.4.0`; source testing and PRs do not require publication.
@@ -102,7 +102,7 @@ cases also passed (three live cases, six other-provider cases excluded).
 The local run used matching model identity, GPU layers 99, context 2048 and
 batch/microbatch 256, and retained all history/correlated-tool/one-turn checks.
 CI checks out Core commit
-`00c75545b83b7e02005ca70a3c9969d51b516d65` into `.ci/genai-core` and sets
+`1ccad392d252811f652da41624f16b83ac237912` into `.ci/genai-core` and sets
 `GENAI_CORE_PATH`, rather than silently using an old/default Core version.
 No package publication is required for source-path testing.
 
