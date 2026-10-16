@@ -1,7 +1,7 @@
 # Classifier providers
 
 GenAI 0.5.0 requires Core 0.4.0. Until Core is published, normal source checkouts
-use merged Core Git commit `a98208599ab003f6ef1cc8ffdb01e91d01d5331b`.
+use merged Core Git commit `8e311fb18d14e72d32570ae4677bdb52b870f232`.
 Set `GENAI_CORE_PATH` to override it with a local classifier Core checkout.
 Before publishing this GenAI version to Hex, switch the dependency to released
 Core `~> 0.4.0`; source testing and PRs do not require publication.
@@ -61,8 +61,15 @@ custom name to `Local.load(..., model_id: name)` and `Local.model(name)` when
 using a different local identity; the backend's load default is the GGUF path.
 The native implementation was validated with the real Q8 Jev-Omni backbone
 and trained decision head. For source integration, install merged ExLLama commit
-`d9a9d96a76a17c0e3cb8bd62177bfe9e979006f2`; its Core dependency matches the
-merged Core source above. Ordinary GenAI compilation remains native-free.
+`d9a9d96a76a17c0e3cb8bd62177bfe9e979006f2`. GenAI's direct Core dependency
+uses `override: true`, so it takes precedence over ExLLama's older compatible
+Core source pin when the optional backend is enabled. Ordinary GenAI compilation
+remains native-free.
+
+When another application installs GenAI and ExLLama as sibling dependencies,
+declare the same merged Core Git source above in that application's own
+`deps/0` with `override: true`. Mix gives parent declarations precedence;
+an override inside one sibling does not resolve competing sibling source pins.
 
 ## Verification commands and present limits
 
@@ -102,7 +109,7 @@ cases also passed (three live cases, six other-provider cases excluded).
 The local run used matching model identity, GPU layers 99, context 2048 and
 batch/microbatch 256, and retained all history/correlated-tool/one-turn checks.
 CI checks out Core commit
-`a98208599ab003f6ef1cc8ffdb01e91d01d5331b` into `.ci/genai-core` and sets
+`8e311fb18d14e72d32570ae4677bdb52b870f232` into `.ci/genai-core` and sets
 `GENAI_CORE_PATH`, rather than silently using an old/default Core version.
 No package publication is required for source-path testing.
 

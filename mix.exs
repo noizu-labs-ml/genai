@@ -26,7 +26,8 @@ defmodule GenAI.MixProject do
           "CONTRIBUTING.md",
           "LICENSE",
           "docs/classifier-providers.md",
-          "docs/dashscope-native.md"
+          "docs/dashscope-native.md",
+          "docs/fork-threads.md"
         ]
       ],
       dialyzer: [
@@ -112,7 +113,8 @@ defmodule GenAI.MixProject do
       nil ->
         {:genai_core, "~> 0.4.0",
          git: "https://github.com/noizu-labs-ml/genai-core.git",
-         ref: "a98208599ab003f6ef1cc8ffdb01e91d01d5331b"}
+         ref: "8e311fb18d14e72d32570ae4677bdb52b870f232",
+         override: true}
 
       path ->
         {:genai_core, path: path, override: true}

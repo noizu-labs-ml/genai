@@ -282,7 +282,7 @@ defmodule GenAI.ClassifierProvidersLiveTest do
 
       branches =
         case fork do
-          {:fork, branches} -> branches
+          %GenAI.Thread.Fork{branches: branches} -> branches
           _ -> flunk("fork setup: invalid branch shape")
         end
 
