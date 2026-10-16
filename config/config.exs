@@ -7,6 +7,17 @@
 # General application configuration
 import Config
 
+config :genai, :jev,
+  api_key: System.get_env("JEV_API_KEY") || System.get_env("TYPESAFE_API_KEY"),
+  base_url: System.get_env("JEV_BASE_URL") || "https://api.typesafe.ai/v1"
+
+# The workspace-specific URL is intentionally not a published default.
+config :genai, :qwen,
+  api_key: System.get_env("QWEN_API_KEY") || System.get_env("DASHSCOPE_API_KEY"),
+  token_api_key: System.get_env("QWEN_TOKEN_KEY"),
+  decision_base_url: System.get_env("QWEN_DECISION_BASE_URL"),
+  native_base_url: System.get_env("QWEN_NATIVE_BASE_URL")
+
 config :genai, :local_llama,
   enabled: true,
   otp_app: :genai
@@ -32,3 +43,9 @@ config :genai, :media_providers, [
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
 import_config "#{config_env()}.exs"
+
+# Optional developer overrides live outside published defaults and are gitignored.
+# Load after the environment configuration so local endpoints take effect in dev/test.
+if config_env() in [:dev, :test] and File.exists?(Path.join(__DIR__, "local.exs")) do
+  import_config "local.exs"
+end

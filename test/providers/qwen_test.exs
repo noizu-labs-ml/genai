@@ -1,6 +1,10 @@
 defmodule GenAI.Provider.QwenTest do
   use ExUnit.Case
+  use Mimic
   import GenAI.Test.Support.Common
+
+  setup :set_mimic_private
+  setup :verify_on_exit!
 
   @moduletag provider: :qwen
 
@@ -11,8 +15,8 @@ defmodule GenAI.Provider.QwenTest do
       :genai,
       :qwen,
       prev
-      |> Keyword.put(:api_key, prev[:api_key] || "test-qwen-key")
-      |> Keyword.put(:token_api_key, prev[:token_api_key] || "test-qwen-token-key")
+      |> Keyword.put(:api_key, "test-qwen-key")
+      |> Keyword.put(:token_api_key, "test-qwen-token-key")
     )
 
     on_exit(fn -> Application.put_env(:genai, :qwen, prev) end)

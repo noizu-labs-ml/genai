@@ -7,9 +7,13 @@ defmodule GenAI.MixProject do
       name: "Noizu Labs, GenAI Wrapper",
       description: description(),
       package: package(),
-      version: "0.4.1",
+      version: "0.5.0",
       elixir: "~> 1.16",
       start_permanent: Mix.env() == :prod,
+      # Worktrees use absolute cache symlinks. Let Mix calculate asset links
+      # from the physical cache paths, rather than the deeper worktree alias.
+      deps_path: cache_path("deps"),
+      build_path: cache_path("_build"),
       deps: deps(),
       elixirc_paths: elixirc_paths(Mix.env()),
       docs: [
@@ -20,7 +24,9 @@ defmodule GenAI.MixProject do
           "CHANGELOG.md",
           "TODO.md",
           "CONTRIBUTING.md",
-          "LICENSE"
+          "LICENSE",
+          "docs/classifier-providers.md",
+          "docs/dashscope-native.md"
         ]
       ],
       dialyzer: [
@@ -33,6 +39,13 @@ defmodule GenAI.MixProject do
         ignore_modules: []
       ]
     ]
+  end
+
+  defp cache_path(name) do
+    case File.read_link(Path.join(__DIR__, name)) do
+      {:ok, target} -> Path.expand(target, __DIR__)
+      _ -> name
+    end
   end
 
   defp description() do
@@ -51,6 +64,7 @@ defmodule GenAI.MixProject do
       },
       files: [
         "lib",
+        "docs",
         "examples",
         "BOOK.md",
         "CONTRIBUTING.md",
@@ -90,13 +104,18 @@ defmodule GenAI.MixProject do
   defp elixirc_paths(:test), do: ["lib", "test/support"]
   defp elixirc_paths(_), do: ["lib"]
 
-  # genai_core is co-developed in this monorepo. Default to the published Hex release
-  # (publish-safe); set GENAI_CORE_PATH to build against a local checkout — needed while
-  # consuming unreleased genai-core changes (e.g. the ADR-016 media framework).
+  # Core 0.4.0 is co-developed and not yet published. Normal source checkouts
+  # use this immutable merged commit; GENAI_CORE_PATH remains a local/CI override.
+  # Switch to the released Hex constraint before publishing this GenAI version.
   defp genai_core_dep do
     case System.get_env("GENAI_CORE_PATH") do
-      nil -> {:genai_core, "~> 0.3.5"}
-      path -> {:genai_core, path: path, override: true}
+      nil ->
+        {:genai_core, "~> 0.4.0",
+         git: "https://github.com/noizu-labs-ml/genai-core.git",
+         ref: "a98208599ab003f6ef1cc8ffdb01e91d01d5331b"}
+
+      path ->
+        {:genai_core, path: path, override: true}
     end
   end
 
@@ -121,6 +140,15 @@ defmodule GenAI.MixProject do
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
       {:sweet_xml, "~> 0.7", only: :test},
       {:noizu_mcp, "~> 0.5.0", optional: true}
-    ]
+    ] ++ local_classifier_dep()
+  end
+
+  # Native compilation is an explicit source-integration opt-in. Published
+  # GenAI consumers can instead install ExLLama in their own applications.
+  defp local_classifier_dep do
+    case System.get_env("GENAI_EX_LLAMA_PATH") do
+      nil -> []
+      path -> [{:ex_llama, path: path, optional: true, override: true}]
+    end
   end
 end
