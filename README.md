@@ -45,6 +45,11 @@ The GenAI lib exposes and extends (such as master prompt instructions to extend 
 * **Tool integration:** Enables extending the capabilities of the framework by integrating external tools, even with models that don't have native tool support, through system prompts and custom parsing.
 * **Dynamic chat chain support:** Allows for building complex conversational AI systems with multiple steps and dynamic model selection.
 
+Forked conversations are protocol-backed `GenAI.Thread.Fork` values. Run,
+stream, and tool-loop operations preserve each branch's settings and continuation,
+and return ordered results identified by their full branch paths. See
+[Forked conversation threads](docs/fork-threads.md) for return shapes and examples.
+
 ### MCP tool sources
 
 GenAI can register an already supervised `Noizu.MCP.Client` as a tool source.

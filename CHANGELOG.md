@@ -3,6 +3,7 @@ Change Log
 All notable changes to this project will be documented in this file.
 
 ## v0.5.0 - Classifiers and native DashScope (2026-10-17)
+- Integrate protocol-backed fork threads, branch-keyed provider/tool-loop results and stream events; pin merged fork Core with an optional ExLLama dependency override and verify native/compatible Standard/Session continuations — [PR #24](https://github.com/noizu-labs-ml/genai/pull/24) → `develop` (opened 2026-10-17; pending merge).
 - Add hosted Jev/Alibaba classifiers, optional local Jev-Omni and native DashScope generation; pin merged Core with required JSON/YAML dependencies, isolate fixture mocks, reject incomplete native streams and malformed tool collections, and normalize replayed tool arguments — [PR #23](https://github.com/noizu-labs-ml/genai/pull/23) → `develop` (merged 2026-10-17; source `67b3b45`).
 
 ## v0.0.1 - Initial Release

@@ -29,7 +29,7 @@ jobs:
       uses: actions/checkout@v4
       with:
         repository: noizu-labs-ml/genai-core
-        ref: a98208599ab003f6ef1cc8ffdb01e91d01d5331b
+        ref: 8e311fb18d14e72d32570ae4677bdb52b870f232
         path: .ci/genai-core
     - name: Set up Elixir
       uses: erlef/setup-beam@61e01a43a562a89bfc54c7f9a378ff67b03e4a21 # v1.16.0
@@ -49,6 +49,7 @@ jobs:
       run: >-
         mix test test/genai_providers/classifier_providers_test.exs
         test/genai_providers/qwen_native_test.exs test/providers/qwen_test.exs
+        test/genai_providers/fork_thread_test.exs
         --exclude live --exclude advanced
     - name: Run release-branch tests
       if: github.base_ref != 'develop' && github.ref_name != 'develop'

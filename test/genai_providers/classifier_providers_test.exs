@@ -548,7 +548,7 @@ defmodule GenAI.ClassifierProvidersTest do
     thread = GenAI.chat(:session) |> GenAI.with_message(original)
     {:ok, pipeline} = GenAI.Pipeline.new(thread)
 
-    {:fork, branches} =
+    %GenAI.Thread.Fork{branches: branches} =
       GenAI.Pipeline.fork(
         pipeline,
         Enum.map(["helpful", "unhelpful"], fn id ->
