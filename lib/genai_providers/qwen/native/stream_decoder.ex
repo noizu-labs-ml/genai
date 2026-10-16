@@ -92,8 +92,13 @@ defmodule GenAI.Provider.Qwen.Native.StreamHandler do
            GenAI.StreamHandler.Default.begin_stream(nil, session, context, own_options),
          {:ok, observer} <- observer(requested, session, context, options) do
       {:ok,
-       {{%{acc: acc, framing: SSE.new(), observer: observer, request_id: nil}, &handle_event/2},
-        session}}
+       {{%{
+           acc: acc,
+           framing: SSE.new(),
+           observer: observer,
+           request_id: nil,
+           received_choice: false
+         }, &handle_event/2}, session}}
     end
   end
 
@@ -125,7 +130,12 @@ defmodule GenAI.Provider.Qwen.Native.StreamHandler do
         frame.data != "" ->
           with {:ok, json} <- Jason.decode(frame.data),
                {:ok, converted} <- StreamDecoder.chunk(json) do
-            state = %{state | request_id: Response.get(json, :request_id) || state.request_id}
+            state = %{
+              state
+              | request_id: Response.get(json, :request_id) || state.request_id,
+                received_choice: state.received_choice || converted.choices != []
+            }
+
             event = {:data, "data: " <> Jason.encode!(converted) <> "\n\n"}
             {action, state} = dispatch(event, state)
             if action == :halt, do: {:halt, {action, state}}, else: {:cont, {action, state}}
@@ -161,8 +171,13 @@ defmodule GenAI.Provider.Qwen.Native.StreamHandler do
 
   def finish(state) do
     case handle_event({:data, "\n\n"}, state) do
-      {_, %{acc: %{error: nil}} = state} -> completion(state)
-      {_, %{acc: %{error: error}}} -> {:error, error}
+      {_, %{acc: %{error: nil}} = state} ->
+        if state.received_choice and (state.acc.completed or not is_nil(state.acc.finish)),
+          do: completion(state),
+          else: {:error, :incomplete_native_stream}
+
+      {_, %{acc: %{error: error}}} ->
+        {:error, error}
     end
   end
 

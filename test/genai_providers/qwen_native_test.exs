@@ -305,6 +305,21 @@ defmodule GenAI.QwenNativeTest do
              hd(completion.choices).message.content
   end
 
+  test "imported tool-call JSON objects are encoded once and invalid arguments reject" do
+    for arguments <- [%{"x" => 1}, "{\"x\":1}"] do
+      call = %GenAI.Message.ToolCall{id: "imported", tool_name: "lookup", arguments: arguments}
+      message = GenAI.Message.ToolUsage.new(role: :assistant, content: nil, tool_calls: [call])
+      assert {:ok, encoded} = Messages.encode(message)
+      assert Jason.decode!(hd(encoded.tool_calls).function.arguments) == %{"x" => 1}
+    end
+
+    for arguments <- ["not json", "[]", "42", "\"text\""] do
+      call = %GenAI.Message.ToolCall{id: "imported", tool_name: "lookup", arguments: arguments}
+      message = GenAI.Message.ToolUsage.new(role: :assistant, content: nil, tool_calls: [call])
+      assert {:error, :invalid_native_tool_call} = Messages.encode(message)
+    end
+  end
+
   test "completion tool arguments stay string keys and malformed output returns typed errors" do
     p =
       packet(%{
@@ -452,6 +467,43 @@ defmodule GenAI.QwenNativeTest do
     assert {:error, {:dashscope_http_error, 401}} = StreamHandler.finish(state)
   end
 
+  test "empty, usage-only and prematurely closed native streams are not completed responses" do
+    usage_only = %{usage: %{input_tokens: 1, output_tokens: 0, total_tokens: 1}}
+    partial = put_in(packet(), [:output, :choices, Access.at(0), :finish_reason], nil)
+
+    assert {:error, :incomplete_native_stream} = StreamHandler.finish(start_stream())
+
+    for payload <- [usage_only, partial] do
+      assert {:cont, state} =
+               StreamHandler.handle_event(
+                 {:data, "data: " <> Jason.encode!(payload) <> "\n\n"},
+                 start_stream()
+               )
+
+      assert {:error, :incomplete_native_stream} = StreamHandler.finish(state)
+    end
+
+    assert {:cont, state} =
+             StreamHandler.handle_event({:data, "data: [DONE]\n\n"}, start_stream())
+
+    assert {:error, :incomplete_native_stream} = StreamHandler.finish(state)
+  end
+
+  test "an explicitly finished empty native choice is valid without DONE" do
+    payload = packet(%{role: "assistant", content: ""})
+
+    assert {:cont, state} =
+             StreamHandler.handle_event(
+               {:data, "data: " <> Jason.encode!(payload) <> "\n\n"},
+               start_stream()
+             )
+
+    assert {:ok, acc} = StreamHandler.finish(state)
+    assert acc.completed
+    assert acc.finish == :stop
+    assert hd(acc.completion.choices).message.content == []
+  end
+
   test "max token controls and false preserve_thinking are explicit native parameters" do
     assert {:ok, {body, _}} =
              Encoder.request_body(
@@ -567,13 +619,19 @@ defmodule GenAI.QwenNativeTest do
   end
 
   test "repeated cumulative usage updates replace counts rather than adding" do
+    {:cont, initial} =
+      StreamHandler.handle_event(
+        {:data, "data: " <> Jason.encode!(packet()) <> "\n\n"},
+        start_stream()
+      )
+
     state =
       Enum.reduce(
         [
           %{input_tokens: 3, output_tokens: 1, total_tokens: 4},
           %{input_tokens: 3, output_tokens: 4, total_tokens: 7}
         ],
-        start_stream(),
+        initial,
         fn usage, state ->
           {:cont, state} =
             StreamHandler.handle_event(
@@ -625,6 +683,30 @@ defmodule GenAI.QwenNativeTest do
     result = GenAI.run(thread(), nil, [])
     assert result == {:error, {:dashscope_http_error, 401}}
     refute inspect(result) =~ "private"
+  end
+
+  test "GenAI.run rejects non-list wire tool calls without raising or leaking the body" do
+    for calls <- [%{private: "must not appear"}, "private scalar", false, 42] do
+      payload = packet(%{role: "assistant", content: "", tool_calls: calls})
+
+      expect(Finch, :request, fn _, _, _ ->
+        {:ok, %Finch.Response{status: 200, body: Jason.encode!(payload)}}
+      end)
+
+      assert {:error, :invalid_native_tool_call} = GenAI.run(thread(), nil, [])
+    end
+  end
+
+  test "GenAI.stream returns a typed error for HTTP200 closed before a terminal choice" do
+    partial = put_in(packet(), [:output, :choices, Access.at(0), :finish_reason], nil)
+
+    expect(Finch, :stream_while, fn _, _, state, callback, _ ->
+      {:cont, state} = callback.({:status, 200}, state)
+      {:cont, state} = callback.({:data, "data: " <> Jason.encode!(partial) <> "\n\n"}, state)
+      {:ok, state}
+    end)
+
+    assert {:error, :incomplete_native_stream} = GenAI.stream(thread(), nil, [])
   end
 
   test "GenAI.stream preserves Accumulate sink and returned handler across compatible switch" do

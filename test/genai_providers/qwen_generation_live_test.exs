@@ -151,7 +151,8 @@ defmodule GenAI.QwenGenerationLiveTest do
             acc: acc,
             framing: GenAI.Provider.Qwen.Native.SSE.new(),
             observer: nil,
-            request_id: nil
+            request_id: nil,
+            received_choice: true
           }
 
           case GenAI.Provider.Qwen.Native.StreamHandler.finish(state) do

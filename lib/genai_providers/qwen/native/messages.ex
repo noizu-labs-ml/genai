@@ -78,10 +78,12 @@ defmodule GenAI.Provider.Qwen.Native.Messages do
   defp part(_), do: {:error, :unsupported_native_content}
   defp wrap_call(call), do: with({:ok, encoded} <- tool_call(call), do: {:ok, {:call, encoded}})
 
-  defp tool_call(%{id: id, tool_name: name, arguments: args})
+  defp tool_call(%{id: id, tool_name: name} = call)
        when is_binary(id) and is_binary(name) do
-    case Jason.encode(args) do
-      {:ok, json} -> {:ok, %{id: id, type: "function", function: %{name: name, arguments: json}}}
+    with {:ok, normalized} <- GenAI.Tool.Call.normalize(call),
+         {:ok, json} <- Jason.encode(normalized.arguments) do
+      {:ok, %{id: id, type: "function", function: %{name: name, arguments: json}}}
+    else
       _ -> {:error, :invalid_native_tool_call}
     end
   end

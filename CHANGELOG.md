@@ -3,7 +3,7 @@ Change Log
 All notable changes to this project will be documented in this file.
 
 ## v0.5.0 - Classifiers and native DashScope (2026-10-17)
-- Add hosted Jev/Alibaba classifiers, optional local Jev-Omni, native DashScope generation and pinned Core integration; include Core's required YAML dependency and isolate Qwen fixture mocks — [PR #23](https://github.com/noizu-labs-ml/genai/pull/23) (open, targets `develop`).
+- Add hosted Jev/Alibaba classifiers, optional local Jev-Omni and native DashScope generation; pin merged Core with required JSON/YAML dependencies, isolate fixture mocks, reject incomplete native streams and malformed tool collections, and normalize replayed tool arguments — [PR #23](https://github.com/noizu-labs-ml/genai/pull/23) (open, targets `develop`).
 
 ## v0.0.1 - Initial Release
 - Initial Text Only Generation.

@@ -65,7 +65,7 @@ thread = GenAI.with_stream_handler(thread, %GenAI.StreamHandler.Accumulate{sink:
 completion = acc.completion
 ```
 
-The native provider owns byte framing and forces incremental output. It supports LF/CRLF boundaries, multiline `data:`, native `event:error` plus numeric `status:`, `event:done`, and normal HTTP close without `[DONE]`. It preserves cumulative usage updates, reasoning deltas, tool argument fragments and completed correlated tool calls. Incomplete JSON arguments or an error after partial content fail the request.
+The native provider owns byte framing and forces incremental output. It supports LF/CRLF boundaries, multiline `data:`, native `event:error` plus numeric `status:`, `event:done`, and normal HTTP close without `[DONE]` after a terminal choice finish reason. It preserves cumulative usage updates, reasoning deltas, tool argument fragments and completed correlated tool calls. Empty HTTP bodies, usage-only responses and partial streams without a terminal marker return `:incomplete_native_stream`. An explicitly finished empty choice is valid. Incomplete JSON arguments or an error after partial content fail the request.
 
 An existing Accumulate sink or custom handler callback remains active. Custom callbacks receive complete, normalized OpenAI-style SSE frames after native decoding, with the OpenAI decoder selected for their handler. Native framing is not injected into the continuing thread, so switching back to compatible-mode retains the requested handler. Returned final completion includes reasoning and tools as semantic message parts.
 

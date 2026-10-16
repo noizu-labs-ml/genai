@@ -677,7 +677,7 @@ This library is released under the MIT License.
 # Classifier integration
 
 GenAI 0.5.0 adds hosted Jev, Alibaba System One and an optional local Jev-Omni
-adapter. See [classifier providers](docs/classifier-providers.md) for pinned Core 0.4.0
+adapter. See [classifier providers](docs/classifier-providers.md) for merged Core 0.4.0
 source, local overrides, result semantics and explicit live-test prerequisites.
 
 ## Native DashScope generation

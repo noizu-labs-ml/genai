@@ -105,14 +105,14 @@ defmodule GenAI.MixProject do
   defp elixirc_paths(_), do: ["lib"]
 
   # Core 0.4.0 is co-developed and not yet published. Normal source checkouts
-  # use this immutable feature commit; GENAI_CORE_PATH remains a local/CI override.
+  # use this immutable merged commit; GENAI_CORE_PATH remains a local/CI override.
   # Switch to the released Hex constraint before publishing this GenAI version.
   defp genai_core_dep do
     case System.get_env("GENAI_CORE_PATH") do
       nil ->
         {:genai_core, "~> 0.4.0",
          git: "https://github.com/noizu-labs-ml/genai-core.git",
-         ref: "1ccad392d252811f652da41624f16b83ac237912"}
+         ref: "a98208599ab003f6ef1cc8ffdb01e91d01d5331b"}
 
       path ->
         {:genai_core, path: path, override: true}

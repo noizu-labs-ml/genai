@@ -1,7 +1,7 @@
 # Classifier providers
 
 GenAI 0.5.0 requires Core 0.4.0. Until Core is published, normal source checkouts
-use immutable Git commit `1ccad392d252811f652da41624f16b83ac237912`.
+use merged Core Git commit `a98208599ab003f6ef1cc8ffdb01e91d01d5331b`.
 Set `GENAI_CORE_PATH` to override it with a local classifier Core checkout.
 Before publishing this GenAI version to Hex, switch the dependency to released
 Core `~> 0.4.0`; source testing and PRs do not require publication.
@@ -90,8 +90,8 @@ Inline and fork live cases also require `QWEN_API_KEY` and
 correlated tool result insertion and exactly one continuing turn with preserved
 history after branch selection.
 
-**Current verification:** the final default-dependency test run passed 63 offline
-fixtures (29 native, 27 classifier/pipeline integration, 7 existing Qwen), with
+**Current verification:** the review-fix default-dependency test run passed 68 offline
+fixtures (34 native, 27 classifier/pipeline integration, 7 existing Qwen), with
 zero failures and four explicitly excluded live/advanced cases. All four Qwen
 compatible/native chat/tool-stream live cases passed. Alibaba's direct
 multi-question classification, dynamic extraction/classification/continuation,
@@ -102,7 +102,7 @@ cases also passed (three live cases, six other-provider cases excluded).
 The local run used matching model identity, GPU layers 99, context 2048 and
 batch/microbatch 256, and retained all history/correlated-tool/one-turn checks.
 CI checks out Core commit
-`1ccad392d252811f652da41624f16b83ac237912` into `.ci/genai-core` and sets
+`a98208599ab003f6ef1cc8ffdb01e91d01d5331b` into `.ci/genai-core` and sets
 `GENAI_CORE_PATH`, rather than silently using an old/default Core version.
 No package publication is required for source-path testing.
 

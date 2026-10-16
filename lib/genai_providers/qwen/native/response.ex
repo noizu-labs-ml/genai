@@ -67,8 +67,10 @@ defmodule GenAI.Provider.Qwen.Native.Response do
   def message(json) when is_map(json) do
     with "assistant" <- get(json, :role),
          {:ok, content} <- content(get(json, :content)),
+         calls = get(json, :tool_calls),
+         true <- is_nil(calls) or is_list(calls),
          {:ok, calls} <-
-           GenAI.Provider.Qwen.Native.Messages.collect(get(json, :tool_calls) || [], &call/1) do
+           GenAI.Provider.Qwen.Native.Messages.collect(calls || [], &call/1) do
       reasoning = get(json, :reasoning_content)
 
       parts =
@@ -82,6 +84,7 @@ defmodule GenAI.Provider.Qwen.Native.Response do
           {:ok, GenAI.Message.ToolUsage.new(role: :assistant, content: parts, tool_calls: calls)}
     else
       {:error, _} = error -> error
+      false -> {:error, :invalid_native_tool_call}
       _ -> {:error, :invalid_native_message}
     end
   end
