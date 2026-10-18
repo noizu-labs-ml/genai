@@ -9,7 +9,7 @@ GenAI Elixir Library: A Framework for Interacting with Generative AI
 
 **Version:** 0.3.9
 
-This repository contains the provider extensions for an Elixir library interacting with various generative AI providers and models through a common interface. The framework itself (chat threads, media `Request`/`Job`/`Router`, protocols) lives in the separate **genai-core** Hex package (`{:genai_core, "~> 0.3"}`), which this library depends on. The library is designed to be flexible, extensible, and easy to use.
+This repository contains the provider extensions for an Elixir library interacting with various generative AI providers and models through a common interface. The framework itself (chat threads, media `Request`/`Job`/`Router`, protocols) lives in the separate **genai-core** library. This version requires Core 0.4.0 and pins its immutable Git source until the Hex release is available; `GENAI_CORE_PATH` can override that source for development. The library is designed to be flexible, extensible, and easy to use.
 
 It currently supports: 
 - Local Models via my ex_llama nif wrapper for the llama_cpp rust library 
@@ -44,6 +44,11 @@ The GenAI lib exposes and extends (such as master prompt instructions to extend 
 * **Media generation:** ADR-016 media pipeline (`GenAI.Media.Request` + capability router) covers image generation, speech (TTS), transcription (STT), music, and sound effects across OpenAI, Gemini, Suno, and ElevenLabs.
 * **Tool integration:** Enables extending the capabilities of the framework by integrating external tools, even with models that don't have native tool support, through system prompts and custom parsing.
 * **Dynamic chat chain support:** Allows for building complex conversational AI systems with multiple steps and dynamic model selection.
+
+Forked conversations are protocol-backed `GenAI.Thread.Fork` values. Run,
+stream, and tool-loop operations preserve each branch's settings and continuation,
+and return ordered results identified by their full branch paths. See
+[Forked conversation threads](docs/fork-threads.md) for return shapes and examples.
 
 ### MCP tool sources
 
@@ -674,3 +679,12 @@ Contributions are welcome! Please see the `CONTRIBUTING.md` file for guidelines.
 ### License
 
 This library is released under the MIT License.
+# Classifier integration
+
+GenAI 0.5.0 adds hosted Jev, Alibaba System One and an optional local Jev-Omni
+adapter. See [classifier providers](docs/classifier-providers.md) for merged Core 0.4.0
+source, local overrides, result semantics and explicit live-test prerequisites.
+
+## Native DashScope generation
+
+Use `GenAI.Provider.Qwen.Models.native(model_id)` for native DashScope text generation, or `native(model_id, api: :multimodal)` for native multimodal models. Set `QWEN_NATIVE_BASE_URL` to the regional workspace `/api/v1` base. Existing `Qwen.Models.model/1` keeps compatible-mode. See [setup and format conversions](docs/dashscope-native.md).
