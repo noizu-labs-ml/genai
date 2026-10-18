@@ -111,11 +111,7 @@ defmodule GenAI.MixProject do
   defp genai_core_dep do
     case System.get_env("GENAI_CORE_PATH") do
       nil ->
-        {:genai_core, "~> 0.4.0",
-         git: "https://github.com/noizu-labs-ml/genai-core.git",
-         ref: "8e311fb18d14e72d32570ae4677bdb52b870f232",
-         override: true}
-
+        {:genai_core, "~> 0.4.0"}
       path ->
         {:genai_core, path: path, override: true}
     end
