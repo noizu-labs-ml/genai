@@ -16,6 +16,10 @@ defmodule GenAI.MixProject do
       build_path: cache_path("_build"),
       deps: deps(),
       elixirc_paths: elixirc_paths(Mix.env()),
+      escript: [
+        main_module: ToborGrade.CLI,
+        name: "tobor-grade"
+      ],
       docs: [
         main: "readme",
         source_url: "https://github.com/noizu-labs-ml/genai",
