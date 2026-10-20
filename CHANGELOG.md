@@ -2,6 +2,9 @@ Change Log
 ==============
 All notable changes to this project will be documented in this file.
 
+## Unreleased
+- Add `tobor-grade` CLI (`mix tobor_grade` task + `mix escript.build` binary) wrapping `GenAI.Classifier.Router.classify/2`: hosted Jev `jev-latest` `:choice` transcript verdicts (`continuation | topic-switch | new-task | more-context-needed`), `--walkback N` (cap 5) retry on `more-context-needed`, Alibaba `decision-model-preview` 0-100 `:score` via `--score` reusing the SystemOne `:alibaba_rounded_hundredths` policy, `--sink jsonl:<path>` result appends (`{component?, verdict, score?, transcript_path, walkback_used, timestamp}`) and the `TOBOR_GRADING=1` recursion guard — `feature/tobor-grade` → `develop`.
+
 ## v0.5.0 - Classifiers and native DashScope (2026-10-17)
 - Integrate protocol-backed fork threads, branch-keyed provider/tool-loop results and stream events; pin merged fork Core with an optional ExLLama dependency override and verify native/compatible Standard/Session continuations — [PR #24](https://github.com/noizu-labs-ml/genai/pull/24) → `develop` (merged 2026-10-17; source `4b69269`).
 - Add hosted Jev/Alibaba classifiers, optional local Jev-Omni and native DashScope generation; pin merged Core with required JSON/YAML dependencies, isolate fixture mocks, reject incomplete native streams and malformed tool collections, and normalize replayed tool arguments — [PR #23](https://github.com/noizu-labs-ml/genai/pull/23) → `develop` (merged 2026-10-17; source `67b3b45`).
