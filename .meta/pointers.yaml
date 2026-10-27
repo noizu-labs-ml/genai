@@ -1,0 +1,122 @@
+---
+pointers:
+  09b0883f-9658-5732-afb4-ace493887dd4:
+    created_at: 2026-10-27T02:45:52.388919Z
+    description: 'Project entry point: usage, provider setup, configuration, and contribution guide.'
+    file_path: README.md
+    function: genai readme
+    kind: file
+    line: 2
+    locations:
+      - file_path: README.md
+        line: 2
+    token: 𓓻𓳪𔌳𔊔
+    updated_at: 2026-10-27T02:45:52.388919Z
+  31ae8e43-0edd-5bdc-b4ca-85a6dd7e081d:
+    created_at: 2026-10-27T02:45:52.388954Z
+    description: Shared TypeSafe System One wire adapter for hosted classifier providers.
+    file_path: lib/genai_providers/system_one.ex
+    function: genai provider systemone
+    kind: module
+    line: 3
+    locations:
+      - file_path: lib/genai_providers/system_one.ex
+        line: 3
+    token: 𔙳𔏪𔊉𓌍
+    updated_at: 2026-10-27T02:45:52.388954Z
+  3e519f70-8fbf-5b7d-ad06-1ebd4a621858:
+    created_at: 2026-10-27T02:45:52.388951Z
+    description: Transcript grading CLI for the component-eval platform (Jev/Alibaba verdicts, walkback retries, jsonl sink).
+    file_path: lib/tobor_grade.ex
+    function: tobor grade
+    kind: module
+    line: 3
+    locations:
+      - file_path: lib/tobor_grade.ex
+        line: 3
+    token: 𔆩𓅢𓾛𓞘
+    updated_at: 2026-10-27T02:45:52.388951Z
+  41315064-1dba-584e-8a27-baac13a514c4:
+    created_at: 2026-10-27T02:45:52.388915Z
+    description: Hosted TypeSafe Jev classifier provider (choice/boolean/score); does not generate chat text.
+    file_path: lib/genai_providers/jev.ex
+    function: genai provider jev
+    kind: module
+    line: 3
+    locations:
+      - file_path: lib/genai_providers/jev.ex
+        line: 3
+    token: 𓆟𓜧𓬸𓱔
+    updated_at: 2026-10-27T02:45:52.388915Z
+  71ae01f2-b50c-5f91-88d1-347b39dfb1e2:
+    created_at: 2026-10-27T02:45:52.388923Z
+    description: Retrieves a list of models supported by the OpenAI API for given user.
+    file_path: lib/genai_providers/open_ai.ex
+    function: models
+    kind: function
+    line: 14
+    locations:
+      - file_path: lib/genai_providers/open_ai.ex
+        line: 14
+    token: 𓔟𓆣𓷊𔆒
+    updated_at: 2026-10-27T02:45:52.388923Z
+  73139bdb-b7a1-51b0-9344-37bb52f18151:
+    created_at: 2026-10-27T02:45:52.388939Z
+    description: Adapts supervised Noizu.MCP.Client processes into the GenAI.Tool.Source registry.
+    file_path: lib/genai/tool/source/mcp.ex
+    function: genai tool source mcp
+    kind: module
+    line: 3
+    locations:
+      - file_path: lib/genai/tool/source/mcp.ex
+        line: 3
+    token: 𓜅𔉗𓏹𓥱
+    updated_at: 2026-10-27T02:45:52.388939Z
+  73ab3b21-cb47-5a7e-92f3-58f84c39c54f:
+    created_at: 2026-10-27T02:45:52.388943Z
+    description: 'Architecture overview: provider pattern, request lifecycle, media routing, tool sources, transcript grading.'
+    file_path: docs/PROJ-ARCH.md
+    function: genai proj-arch doc
+    kind: file
+    line: 2
+    locations:
+      - file_path: docs/PROJ-ARCH.md
+        line: 2
+    token: 𓳊𓚞𓵷𓀟
+    updated_at: 2026-10-27T02:45:52.388943Z
+  b87594b8-fe0b-5571-a322-7867fce2c088:
+    created_at: 2026-10-27T02:45:52.388934Z
+    description: Boots the GenAI supervision tree (Finch HTTP client).
+    file_path: lib/application.ex
+    function: start
+    kind: function
+    line: 10
+    locations:
+      - file_path: lib/application.ex
+        line: 10
+    token: 𓙗𓹑𓲊𓸸
+    updated_at: 2026-10-27T02:45:52.388934Z
+  db91d189-9e1f-5822-b8b1-1f135c486c89:
+    created_at: 2026-10-27T02:45:52.388947Z
+    description: Retrieves a list of available Groq models.
+    file_path: lib/genai_providers/anthropic.ex
+    function: models
+    kind: function
+    line: 10
+    locations:
+      - file_path: lib/genai_providers/anthropic.ex
+        line: 10
+    token: 𔄒𓘩𓘼𓡙
+    updated_at: 2026-10-27T02:45:52.388947Z
+  f6e29d7f-30e2-5c26-a4a9-ab9c45b63bff:
+    created_at: 2026-10-27T02:45:52.388899Z
+    description: Retrieves a list of available Mistral models.
+    file_path: lib/genai_providers/gemini.ex
+    function: models
+    kind: function
+    line: 14
+    locations:
+      - file_path: lib/genai_providers/gemini.ex
+        line: 14
+    token: 𓄭𔋭𓴪𓞯
+    updated_at: 2026-10-27T02:45:52.388899Z

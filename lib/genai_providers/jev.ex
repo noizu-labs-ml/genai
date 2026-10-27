@@ -1,5 +1,7 @@
 defmodule GenAI.Provider.Jev do
-  @moduledoc "Hosted TypeSafe Jev classifiers. This provider does not generate chat text."
+  @moduledoc """
+  〚📦:41315064-1dba-584e-8a27-baac13a514c4〛 genai provider jev :: Hosted TypeSafe Jev classifier provider (choice/boolean/score); does not generate chat text.
+  """
   @behaviour GenAI.Classifier.ProviderBehaviour
   alias GenAI.Provider.SystemOne
 

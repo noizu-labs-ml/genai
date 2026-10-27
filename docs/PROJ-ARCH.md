@@ -1,4 +1,5 @@
 # Project Architecture
+<!-- 〚📁:73ab3b21-cb47-5a7e-92f3-58f84c39c54f〛 genai proj-arch doc :: Architecture overview: provider pattern, request lifecycle, media routing, tool sources, transcript grading. -->
 
 ## Overview
 
