@@ -1,5 +1,6 @@
 # Contributing
-Please feel free to submit an feature request/issues/clarification items you ahve under Issues! ^_^. 
+<!-- 〚📁:09b0883f-9658-5732-afb4-ace493887dd4〛 genai readme :: Project entry point: usage, provider setup, configuration, and contribution guide. -->
+Please feel free to submit an feature request/issues/clarification items you ahve under Issues! ^_^.
 
 -----
 

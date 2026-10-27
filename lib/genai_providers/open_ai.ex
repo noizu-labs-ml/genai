@@ -11,9 +11,8 @@ defmodule GenAI.Provider.OpenAI do
   # models/1
   # ------------------
   @doc """
-  Retrieves a list of models supported by the OpenAI API for given user.
+  〚🔧:71ae01f2-b50c-5f91-88d1-347b39dfb1e2〛 models :: Retrieves a list of models supported by the OpenAI API for given user.
   """
-  # <REMOVED UUID HERE> models :: Retrieves a list of models supported by the OpenAI API for given user.
   def models(settings \\ []) do
     headers = headers(settings)
     call = api_call(:get, "#{@base_url}/v1/models", headers)
