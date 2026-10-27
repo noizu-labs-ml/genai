@@ -1,6 +1,6 @@
 # Project Schema
 
-GenAI is a **library, not a service**: it owns no database, no migrations, and no KV store. The structured data in this repo is (1) mix/runtime configuration, (2) environment-variable contracts, (3) the provider media-routing registry, and (4) the MCP tool-source interface contract. Core request/response structs (`GenAI.Message`, `GenAI.Thread`, `GenAI.Model`, …) live in the sibling `genai_core` dependency — documented there, consumed here.
+GenAI is a **library, not a service**: it owns no database, no migrations, and no KV store. The structured data in this repo is (1) mix/runtime configuration, (2) environment-variable contracts, (3) the provider media-routing registry, (4) the MCP tool-source interface contract, and (5) the transcript-grading CLI's input/sink file formats. Core request/response structs (`GenAI.Message`, `GenAI.Thread`, `GenAI.Model`, …) live in the sibling `genai_core` dependency — documented there, consumed here.
 
 Code locations for each schema below are mapped in [PROJ-LAYOUT.md](PROJ-LAYOUT.md).
 
@@ -48,12 +48,13 @@ Configured in `config/test.exs` (and mirrored by consumers); each key reads env 
 | `:zai` | `api_key` | `ZAI_API_KEY` | — |
 | `:cerebras` | `api_key` | `CEREBRAS_API_KEY` | — |
 | `:openrouter` | `api_key`, `http_referer`, `app_title` | `OPENROUTER_API_KEY`, `OPENROUTER_HTTP_REFERER`, `OPENROUTER_APP_TITLE` | `https://github.com/noizu-labs-ml/genai` / `"Noizu GenAI"` |
-| `:qwen` | `api_key`, `token_api_key`, `token_plan`, `base_url`, `token_plan_base_url` | `QWEN_API_KEY` (fallback `DASHSCOPE_API_KEY`), `QWEN_TOKEN_KEY`, —, `QWEN_BASE_URL`, `QWEN_TOKEN_BASE_URL` | `token_plan: false`; intl compatible-mode / Singapore token-plan hosts |
+| `:qwen` | `api_key`, `token_api_key`, `token_plan`, `base_url`, `token_plan_base_url`, `decision_base_url`, `native_base_url` | `QWEN_API_KEY` (fallback `DASHSCOPE_API_KEY`), `QWEN_TOKEN_KEY`, —, config-only, config-only, `QWEN_DECISION_BASE_URL`, `QWEN_NATIVE_BASE_URL` | `token_plan: false`; intl compatible-mode / Singapore token-plan hosts |
+| `:jev` | `api_key`, `base_url` | `JEV_API_KEY` (fallback `TYPESAFE_API_KEY`), `JEV_BASE_URL` | hosted TypeSafe System One endpoint |
 | `:litellm` | `api_key`, `base_url` | `LITELLM_API_KEY`, `LITELLM_BASE_URL` | `http://localhost:4000` |
 | `:suno` | `api_key`, `base_url` | `SUNO_API_KEY`, `SUNO_BASE_URL` | `https://api.sunoapi.org` |
 | `:ollama` | base url only, read at call time | `OLLAMA_BASE_URL` | `http://localhost:11434` |
 
-Additional runtime env read directly by `lib/` code: `ELEVENLABS_API_KEY` (ElevenLabs provider).
+Additional runtime env read directly by `lib/` code: `ELEVENLABS_API_KEY` (ElevenLabs provider), `DASHSCOPE_API_KEY`/`QWEN_API_KEY` (native encoder + classifier fallbacks). Note: `QWEN_BASE_URL`/`QWEN_TOKEN_BASE_URL` are **not** read by current code — plan-host overrides are config keys (`base_url:` / `token_plan_base_url:`), not env vars.
 
 `.envrc` (gitignored, direnv) is the local carrier for all of the above — never commit values.
 
@@ -92,6 +93,30 @@ All values pass through `json_safe/1`: atoms stringify, tuples become lists, uns
 | `include_payloads` | `false` | Registry telemetry records arguments/results |
 | `mcp_options` | `[]` | Explicit passthrough, merged over forwarded options |
 | forwarded | — | `:progress`, `:progress_token`, `:telemetry_metadata`, `:timeout` |
+
+## Data Interface: Transcript Grading CLI (`lib/tobor_grade.ex` + `mix/tasks/tobor_grade.ex`)
+
+`mix tobor_grade --transcript <path> [--walkback N] --sink jsonl:<path> [--score] [--component <tag>]` (identical flags in the `mix escript.build` binary). Exit codes: 0 graded · 1 grading failure · 2 usage · 3 recursion guard (`TOBOR_GRADING` set). Classifier requests go through `GenAI.Classifier.Router.classify/2` (core).
+
+### Transcript input (JSONL, Claude Code session shape)
+
+| Field | Type | Notes |
+|-------|------|-------|
+| type | string | `"user"` / `"assistant"` rendered as turns; other types rendered if content present |
+| message.content | string or block list | text blocks render verbatim; `tool_use` → `[tool call: name]`; `tool_result` rendered truncated (400 chars); non-text content JSON-compacted + truncated |
+
+Blank lines skipped; malformed JSON on any line fails fast (`{:invalid_transcript_line, n}`). Walk-back drops the newest real user turn (user event with non-tool-result content) and everything after it; the first turn is never dropped.
+
+### Result sink record (one JSON line per `--sink jsonl:<path>` append)
+
+| Field | Presence | Shape |
+|-------|----------|-------|
+| component | optional | `--component <tag>` passthrough |
+| verdict | always | choice id (`continuation \| topic-switch \| new-task \| more-context-needed`) or grade label |
+| score | `--score` runs | 0.0–100.0 float (1 decimal) or null |
+| transcript_path | always | input path as given |
+| walkback_used | always | integer 0..5 |
+| timestamp | always | ISO 8601 UTC |
 
 ## Core Structs (external — `genai_core`)
 

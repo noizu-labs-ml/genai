@@ -5,6 +5,11 @@ lib/
 ├── application.ex                  # OTP Application supervisor — starts Finch HTTP client
 ├── genai/                          # Core-adjacent extras
 │   └── tool/source/mcp.ex          #   MCP tool source (tools served over MCP)
+├── tobor_grade.ex                  # Transcript grading CLI core (classify loop, walkback, jsonl sink)
+├── tobor_grade/
+│   ├── cli.ex                      #   escript entry point (mix escript.build)
+│   └── transcript.ex               #   JSONL transcript loader/renderer + walk-back
+├── mix/tasks/tobor_grade.ex        # `mix tobor_grade` task — same flags/exit codes as the escript
 └── genai_providers/                # All provider implementations
     ├── anthropic.ex                # Anthropic (Claude) provider
     ├── anthropic/
@@ -51,12 +56,19 @@ lib/
     │   ├── encoder.ex
     │   ├── encoder_protocol.ex
     │   └── models.ex
-    ├── qwen.ex                     # Qwen / Alibaba DashScope (compatible-mode + token plan)
+    ├── qwen.ex                     # Qwen / Alibaba DashScope (compatible-mode + token plan; delegates classify/2 to Qwen.Classifier)
     ├── qwen/
     │   ├── encoder.ex
     │   ├── encoder_protocol.ex
     │   ├── models.ex
     │   ├── dashscope.ex            #   DashScope host/credential handling
+    │   ├── classifier.ex           #   Alibaba decision-model-preview classifier (workspace System One endpoint)
+    │   ├── native.ex               #   Native DashScope generation provider (explicit native_base_url)
+    │   ├── native/
+    │   │   ├── encoder.ex          #     Native request encoding + credentials
+    │   │   ├── messages.ex         #     Native message mapping
+    │   │   ├── response.ex         #     Native response normalization
+    │   │   └── stream_decoder.ex   #     SSE stream decoding (rejects incomplete streams)
     │   ├── image.ex                #   Image generation
     │   ├── speech.ex               #   Text-to-speech
     │   └── video.ex                #   Video generation
@@ -83,10 +95,18 @@ lib/
     │   └── media.ex                #   Media generation via LiteLLM
     ├── eleven_labs.ex              # ElevenLabs (voice) provider — flat module
     ├── suno.ex                     # Suno (music) provider — flat module
+    ├── jev.ex                      # Hosted TypeSafe Jev classifiers (choice/boolean/score; no chat text)
+    ├── jev/
+    │   ├── local.ex                #   Optional local Jev-Omni classifier variant
+    │   └── models.ex               #   jev-latest / preview model references + catalog discovery
+    ├── system_one.ex               # Shared TypeSafe System One wire adapter (all classifiers)
+    ├── system_one_rounded.ex       # Inferred Alibaba score-distribution policy (SystemOne.Rounded)
     ├── media_helpers.ex            # Shared helpers for media providers
     └── media/
         └── openai_compat.ex        # OpenAI-compatible media API plumbing
 ```
+
+Classifier contracts (`GenAI.Classifier.{ProviderBehaviour,Request,Question,Result,…}` and `GenAI.Classifier.Router`) live in `genai_core`; this repo contributes the adapters above. See [../classifier-providers.md](../classifier-providers.md) and [../dashscope-native.md](../dashscope-native.md).
 
 ## Provider Structure Pattern
 

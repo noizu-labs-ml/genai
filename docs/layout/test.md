@@ -5,6 +5,7 @@ test/
 ├── gen_ai_test.exs                 # Core GenAI module tests
 ├── tool_test.exs                   # Tool/function calling tests
 ├── mcp_tool_source_test.exs        # MCP tool source tests
+├── tobor_grade_test.exs            # Transcript grading CLI (loop, walkback, sink, guard)
 ├── test_helper.exs                 # Test bootstrap — configures Mimic, tags
 ├── providers/                      # Per-provider test files
 │   ├── anthropic_test.exs
@@ -19,6 +20,11 @@ test/
 │   ├── xai_test.exs
 │   └── zai_test.exs
 ├── genai_providers/                # Cross-provider suites
+│   ├── classifier_providers_test.exs         # Jev / SystemOne / Qwen.Classifier adapters (mocked)
+│   ├── classifier_live_test.exs              # Hosted classifier round trips (live, API keys)
+│   ├── fork_thread_test.exs                  # Protocol-backed fork threads (#24)
+│   ├── qwen_native_test.exs                  # Native DashScope generation + stream handling
+│   ├── qwen_generation_live_test.exs         # Native DashScope round trips (live, API keys)
 │   ├── eleven_labs_test.exs        #   ElevenLabs voice provider
 │   ├── image_provider_test.exs     #   Image generation across providers
 │   ├── media_providers_test.exs    #   Media providers (Suno, LiteLLM media, …)

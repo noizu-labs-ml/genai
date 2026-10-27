@@ -4,6 +4,8 @@
 genai/
 ├── lib/
 │   ├── application.ex
+│   ├── tobor_grade.ex + tobor_grade/ (cli, transcript)
+│   ├── mix/tasks/tobor_grade.ex
 │   ├── genai/tool/source/mcp.ex
 │   └── genai_providers/
 │       ├── anthropic.ex + anthropic/
@@ -14,23 +16,27 @@ genai/
 │       ├── xai.ex + xai/
 │       ├── deep_seek.ex + deep_seek/
 │       ├── ollama.ex + ollama/
-│       ├── qwen.ex + qwen/ (dashscope, image, speech, video)
+│       ├── qwen.ex + qwen/ (dashscope, classifier, native/, image, speech, video)
 │       ├── zai.ex + zai/
 │       ├── cerebras.ex + cerebras/
 │       ├── open_router.ex + open_router/
 │       ├── litellm.ex + litellm/ (media)
 │       ├── eleven_labs.ex
 │       ├── suno.ex
+│       ├── jev.ex + jev/ (local, models)
+│       ├── system_one.ex
+│       ├── system_one_rounded.ex
 │       ├── media_helpers.ex
 │       └── media/openai_compat.ex
 ├── config/
 ├── test/
 │   ├── providers/
-│   ├── genai_providers/
+│   ├── genai_providers/ (classifier, fork-thread, qwen-native suites)
 │   ├── support/
 │   ├── gen_ai_test.exs
 │   ├── tool_test.exs
-│   └── mcp_tool_source_test.exs
+│   ├── mcp_tool_source_test.exs
+│   └── tobor_grade_test.exs
 ├── examples/
 ├── priv/media/
 ├── .github/workflows/

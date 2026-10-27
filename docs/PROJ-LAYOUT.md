@@ -4,8 +4,10 @@
 genai/
 ├── lib/                            # Source code → [layout/lib.md](layout/lib.md)
 │   ├── application.ex              #   OTP application supervisor (Finch HTTP client)
+│   ├── tobor_grade.ex + tobor_grade/ #  Transcript grading CLI (run loop, escript CLI, transcript loader)
+│   ├── mix/tasks/tobor_grade.ex    #   `mix tobor_grade` task (same flags as the escript)
 │   ├── genai/                      #   Extras: MCP tool source
-│   └── genai_providers/            #   Provider implementations (Anthropic, OpenAI, Gemini, Mistral, Groq, xAI, DeepSeek, ZAI, Cerebras, Qwen, Ollama, LiteLLM, OpenRouter, ElevenLabs, Suno + media helpers)
+│   └── genai_providers/            #   Provider implementations (Anthropic, OpenAI, Gemini, Mistral, Groq, xAI, DeepSeek, ZAI, Cerebras, Qwen incl. native DashScope + classifier, Ollama, LiteLLM, OpenRouter, ElevenLabs, Suno, Jev/SystemOne hosted classifiers + media helpers)
 ├── config/                         # Mix environment configuration
 │   ├── config.exs                  #   Shared config
 │   ├── dev.exs                     #   Dev overrides
@@ -17,6 +19,7 @@ genai/
 │   ├── gen_ai_test.exs             #   Core module tests
 │   ├── tool_test.exs               #   Tool/function calling tests
 │   ├── mcp_tool_source_test.exs    #   MCP tool source tests
+│   ├── tobor_grade_test.exs        #   Transcript grading CLI tests
 │   └── test_helper.exs             #   Test bootstrap
 ├── examples/                       # Runnable example scripts
 │   └── openai_voice_chat_cli.exs   #   OpenAI voice chat CLI demo
@@ -54,6 +57,7 @@ genai/
 ## Notes
 
 - The main `GenAI` module is defined in the `genai_core` dependency, not in this repo
+- Classifier contracts (`GenAI.Classifier.*`) also live in `genai_core`; this repo ships the TypeSafe/SystemOne and Alibaba adapters plus the `tobor-grade` CLI (see [classifier-providers.md](classifier-providers.md))
 - Each chat provider follows the same 3-file pattern: main module, encoder, models; several also carry extra capability modules (image, speech, audio, video — see layout/lib.md)
 - Provider encoder protocols are split into `encoder.ex` (implementation) and `encoder_protocol.ex` (protocol definition)
 - `doc/` (ExDoc output), `erl_crash.dump`, and `genai-*.tar` snapshots at the repo root are gitignored build/release artifacts — not part of the tree

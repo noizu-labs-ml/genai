@@ -2,7 +2,7 @@
 
 ## Overview
 
-GenAI is an Elixir library that provides a unified interface for multiple generative AI providers. It uses Elixir protocols and OTP behaviours to abstract provider differences behind a consistent API. The core abstractions (`GenAI`, `GenAI.Message`, `GenAI.Model`, `GenAI.Media.Router`, …) live in a separate `genai_core` dependency; this repo contains the provider implementations — chat, media, and voice — plus the OTP application and the MCP tool-source adapter that ties them together.
+GenAI is an Elixir library that provides a unified interface for multiple generative AI providers. It uses Elixir protocols and OTP behaviours to abstract provider differences behind a consistent API. The core abstractions (`GenAI`, `GenAI.Message`, `GenAI.Model`, `GenAI.Media.Router`, `GenAI.Classifier.Router`, …) live in a separate `genai_core` dependency; this repo contains the provider implementations — chat, media, voice, and hosted classifiers — plus the OTP application, the MCP tool-source adapter, and the `tobor-grade` transcript grading CLI that ties them together.
 
 ## System Diagram
 
@@ -54,6 +54,8 @@ graph TB
 | Provider `EncoderProtocol` | Per-provider protocol for encoding messages, tools, and content types |
 | Media capability modules | `{provider}/{image,speech,audio,transcription,video,media}.ex` — registered in `config :genai, :media_providers` and routed by modality |
 | `GenAI.Tool.Source.MCP` | Adapts supervised MCP clients into the tool registry (`source_id__tool_name` namespacing; `:noizu_mcp` optional at runtime) |
+| Classifier adapters | `GenAI.Provider.Jev` (hosted TypeSafe, via shared `SystemOne` wire adapter), `GenAI.Provider.Qwen.Classifier` (Alibaba `decision-model-preview`) — serve `GenAI.Classifier.Router` from core |
+| `ToborGrade` + CLI/mix task | Transcript grading CLI (`mix tobor_grade` / escript): Jev `:choice` verdicts, Alibaba `:score` via `--score`, `--walkback` retry, `--sink jsonl:<path>` |
 
 → *Components ↔ directories: see [PROJ-LAYOUT.md](PROJ-LAYOUT.md)*
 
@@ -76,6 +78,12 @@ Media generation (image / speech / audio / transcription / video / music) routes
 ## Tool Sources (MCP)
 
 Tools for `run_with_tools/3` come from `GenAI.Tool.Registry` (core). This repo's `GenAI.Tool.Source.MCP` snapshots tools from supervised `Noizu.MCP.Client` processes under stable `source_id__tool_name` names. The client is an optional runtime dependency — absent `:noizu_mcp`, registration and calls fail fast with `{:missing_optional_dependency, :noizu_mcp}`. See [PROJ-SCHEMA.md](PROJ-SCHEMA.md) for the normalized tool/result shapes and safety options.
+
+## Transcript Grading (tobor-grade)
+
+`ToborGrade.run/2` loads a JSONL transcript (Claude Code session shape), renders it to plain text, and sends one classifier request through `GenAI.Classifier.Router.classify/2` (Core 0.4.0): hosted Jev `jev-latest` for `:choice` verdicts, or Alibaba `decision-model-preview` for 0–100 `:score` grading (`--score`, reusing the SystemOne `:alibaba_rounded_hundredths` policy). On `more-context-needed` it walks the transcript back one user turn (`--walkback N`, cap 5) and re-grades; results append as one JSON line to `--sink jsonl:<path>`. `TOBOR_GRADING=1` in the environment refuses to run (a grading session must not grade itself). Exit codes: 0 graded · 1 grading failure · 2 usage · 3 recursion guard.
+
+→ *See [classifier-providers.md](classifier-providers.md) for the classifier endpoints and configuration*
 
 ## Key Decisions
 
