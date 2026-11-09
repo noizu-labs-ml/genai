@@ -1,6 +1,6 @@
 # Project Schema Summary
 
-No relational store — GenAI is a Hex library. Data = mix config, env contracts, media routing registry, MCP tool interface. Details: [PROJ-SCHEMA.md](PROJ-SCHEMA.md). Core structs (`GenAI.Message`, `Thread`, `Model`, `Tool`) live in sibling `genai-core`.
+No relational store — GenAI is a Hex library. Data = mix config, env contracts, media routing registry, MCP tool interface, transcript-grading CLI input/sink formats. Details: [PROJ-SCHEMA.md](PROJ-SCHEMA.md). Core structs (`GenAI.Message`, `Thread`, `Model`, `Tool`) live in sibling `genai-core`.
 
 ## Mix config keys (`config :genai, …`)
 
@@ -10,13 +10,14 @@ No relational store — GenAI is a Hex library. Data = mix config, env contracts
 | `:media_providers` | ordered module list (modality router, ADR-016) | specific providers before `LiteLLM.Media` fallback |
 | `:anthropic` `:openai` `:gemini` `:mistral` `:groq` `:xai` `:deepseek` `:zai` `:cerebras` | api_key | — |
 | `:openrouter` | api_key, http_referer, app_title | noizu-labs-ml referer |
-| `:qwen` | api_key, token_api_key, token_plan, base_url, token_plan_base_url | `token_plan: false`; DashScope intl + token-plan hosts |
+| `:qwen` | api_key, token_api_key, token_plan, base_url, token_plan_base_url, decision_base_url, native_base_url | `token_plan: false`; DashScope intl + token-plan hosts |
+| `:jev` | api_key, base_url | hosted TypeSafe System One endpoint |
 | `:litellm` | api_key, base_url | `http://localhost:4000` |
 | `:suno` | api_key, base_url | `https://api.sunoapi.org` |
 
 ## Env vars
 
-`ANTHROPIC_API_KEY` · `OPENAI_API_KEY` · `GEMINI_API_KEY` · `MISTRAL_API_KEY` · `GROQ_API_KEY` · `XAI_API_KEY` · `DEEPSEEK_API_KEY` · `ZAI_API_KEY` · `CEREBRAS_API_KEY` · `OPENROUTER_API_KEY` (+`_HTTP_REFERER`, `_APP_TITLE`) · `QWEN_API_KEY` (fallback `DASHSCOPE_API_KEY`) · `QWEN_TOKEN_KEY` · `QWEN_BASE_URL` · `QWEN_TOKEN_BASE_URL` · `LITELLM_API_KEY` · `LITELLM_BASE_URL` · `SUNO_API_KEY` · `SUNO_BASE_URL` · `ELEVENLABS_API_KEY` · `OLLAMA_BASE_URL`
+`ANTHROPIC_API_KEY` · `OPENAI_API_KEY` · `GEMINI_API_KEY` · `MISTRAL_API_KEY` · `GROQ_API_KEY` · `XAI_API_KEY` · `DEEPSEEK_API_KEY` · `ZAI_API_KEY` · `CEREBRAS_API_KEY` · `OPENROUTER_API_KEY` (+`_HTTP_REFERER`, `_APP_TITLE`) · `QWEN_API_KEY` (fallback `DASHSCOPE_API_KEY`) · `QWEN_TOKEN_KEY` · `QWEN_DECISION_BASE_URL` · `QWEN_NATIVE_BASE_URL` · `JEV_API_KEY` (fallback `TYPESAFE_API_KEY`) · `JEV_BASE_URL` · `LITELLM_API_KEY` · `LITELLM_BASE_URL` · `SUNO_API_KEY` · `SUNO_BASE_URL` · `ELEVENLABS_API_KEY` · `OLLAMA_BASE_URL` · `TOBOR_GRADING` (recursion guard)
 
 ## MCP tool interface (`GenAI.Tool.Source.MCP`)
 
@@ -26,6 +27,12 @@ No relational store — GenAI is a Hex library. Data = mix config, env contracts
 - Result: `content` (list) / `structured_content` / `is_error` (true ⇒ `{:error, payload}`)
 - Options: `include_mcp_meta`, `include_payloads`, `mcp_options`; forwards `progress`, `progress_token`, `telemetry_metadata`, `timeout`
 - All output `json_safe` — no atoms created from remote keys
+
+## Transcript grading CLI (`tobor_grade`)
+
+- Input: JSONL transcript (Claude Code session shape: `type` user/assistant + `message.content`); malformed line fails fast
+- Sink: one JSON line `{component?, verdict, score?, transcript_path, walkback_used, timestamp}` appended to `jsonl:<path>`
+- Exit codes: 0 graded · 1 failure · 2 usage · 3 recursion guard (`TOBOR_GRADING=1`)
 
 ## Fixtures
 

@@ -1,5 +1,7 @@
 defmodule GenAI.Tool.Source.MCP do
   @moduledoc """
+  〚📦:73139bdb-b7a1-51b0-9344-37bb52f18151〛 genai tool source mcp :: Adapts supervised Noizu.MCP.Client processes into the GenAI.Tool.Source registry.
+
   Adapts an already supervised `Noizu.MCP.Client` to `GenAI.Tool.Source`.
 
   This module deliberately calls `Noizu.MCP.Client` at runtime. GenAI therefore

@@ -14,6 +14,8 @@
 ## This Repo
 - `GenAI.Application` — OTP supervisor starting Finch HTTP pool
 - Chat providers: Anthropic, OpenAI, Gemini, Mistral, Groq, xAI, DeepSeek, ZAI, Cerebras, Qwen, Ollama, OpenRouter, LiteLLM
+- Classifier adapters: Jev (hosted TypeSafe via shared SystemOne wire adapter), Qwen.Classifier (Alibaba decision-model-preview); serving `GenAI.Classifier.Router` (core)
+- `ToborGrade` — transcript grading CLI (`mix tobor_grade` / escript): Jev `:choice` verdicts, Alibaba `:score`, walkback retry, jsonl sink
 - Media/voice capability modules: OpenAI (image/speech/audio/transcription), Gemini (image), Qwen (image/speech/video), LiteLLM.Media, Suno, ElevenLabs
 - `GenAI.Tool.Source.MCP` — adapts supervised `Noizu.MCP.Client` into the tool registry (`source_id__tool_name` namespace; `:noizu_mcp` optional at runtime)
 

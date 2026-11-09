@@ -109,9 +109,8 @@ defmodule GenAI.MixProject do
   defp elixirc_paths(:test), do: ["lib", "test/support"]
   defp elixirc_paths(_), do: ["lib"]
 
-  # Core 0.4.0 is co-developed and not yet published. Normal source checkouts
-  # use this immutable merged commit; GENAI_CORE_PATH remains a local/CI override.
-  # Switch to the released Hex constraint before publishing this GenAI version.
+  # Core 0.4.0 is published to Hex (2026-10-18). Normal source checkouts use the
+  # released Hex constraint; GENAI_CORE_PATH remains a local/CI source override.
   defp genai_core_dep do
     case System.get_env("GENAI_CORE_PATH") do
       nil ->

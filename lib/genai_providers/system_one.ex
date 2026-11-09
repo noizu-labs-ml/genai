@@ -1,5 +1,7 @@
 defmodule GenAI.Provider.SystemOne do
   @moduledoc """
+  〚📦:31ae8e43-0edd-5bdc-b4ca-85a6dd7e081d〛 genai provider systemone :: Shared TypeSafe System One wire adapter for hosted classifier providers.
+
   Shared TypeSafe System One wire adapter. All external keys stay strings.
   Score indices are validated before remapping to the caller's numeric rubric.
   Noul probabilities use an explicit boolean threshold; no confidence is invented.

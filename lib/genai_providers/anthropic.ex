@@ -7,11 +7,10 @@ defmodule GenAI.Provider.Anthropic do
   use GenAI.InferenceProviderBehaviour
 
   @doc """
-  Retrieves a list of available Groq models.
+  〚🔧:db91d189-9e1f-5822-b8b1-1f135c486c89〛 models :: Retrieves a list of available Groq models.
 
   This function calls the Groq API to retrieve a list of models and returns them as a list of `GenAI.Model` structs.
   """
-  # <REMOVED UUID HERE> models :: Retrieves a list of available Groq models.
   def models(settings \\ []) do
     headers = headers(settings)
     call = api_call(:get, "#{@base_url}/v1/models", headers)

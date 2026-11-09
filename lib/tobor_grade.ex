@@ -1,5 +1,7 @@
 defmodule ToborGrade do
   @moduledoc """
+  〚📦:3e519f70-8fbf-5b7d-ad06-1ebd4a621858〛 tobor grade :: Transcript grading CLI for the component-eval platform (Jev/Alibaba verdicts, walkback retries, jsonl sink).
+
   `tobor-grade` — transcript grading CLI for the component-eval platform.
 
   Wraps `GenAI.Classifier.Router.classify/2` (Core 0.4.0):
