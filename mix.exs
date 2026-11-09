@@ -16,6 +16,10 @@ defmodule GenAI.MixProject do
       build_path: cache_path("_build"),
       deps: deps(),
       elixirc_paths: elixirc_paths(Mix.env()),
+      escript: [
+        main_module: ToborGrade.CLI,
+        name: "tobor-grade"
+      ],
       docs: [
         main: "readme",
         source_url: "https://github.com/noizu-labs-ml/genai",
@@ -105,17 +109,12 @@ defmodule GenAI.MixProject do
   defp elixirc_paths(:test), do: ["lib", "test/support"]
   defp elixirc_paths(_), do: ["lib"]
 
-  # Core 0.4.0 is co-developed and not yet published. Normal source checkouts
-  # use this immutable merged commit; GENAI_CORE_PATH remains a local/CI override.
-  # Switch to the released Hex constraint before publishing this GenAI version.
+  # Core 0.4.0 is published to Hex (2026-10-18). Normal source checkouts use the
+  # released Hex constraint; GENAI_CORE_PATH remains a local/CI source override.
   defp genai_core_dep do
     case System.get_env("GENAI_CORE_PATH") do
       nil ->
-        {:genai_core, "~> 0.4.0",
-         git: "https://github.com/noizu-labs-ml/genai-core.git",
-         ref: "8e311fb18d14e72d32570ae4677bdb52b870f232",
-         override: true}
-
+        {:genai_core, "~> 0.4.0"}
       path ->
         {:genai_core, path: path, override: true}
     end

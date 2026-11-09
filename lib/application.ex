@@ -6,7 +6,9 @@ defmodule GenAI.Application do
   use Application
 
   @impl true
-  # <REMOVED UUID HERE> start :: auto-generated pointer for public function start
+  @doc """
+  〚🔧:b87594b8-fe0b-5571-a322-7867fce2c088〛 start :: Boots the GenAI supervision tree (Finch HTTP client).
+  """
   def start(_type, _args) do
     children = [
       {Finch, name: GenAI.Finch}
