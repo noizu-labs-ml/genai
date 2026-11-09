@@ -1,6 +1,6 @@
 # Contributing
 <!-- 〚📁:09b0883f-9658-5732-afb4-ace493887dd4〛 genai readme :: Project entry point: usage, provider setup, configuration, and contribution guide. -->
-Please feel free to submit an feature request/issues/clarification items you ahve under Issues! ^_^.
+Please feel free to submit feature requests, issues, or clarification items under Issues! ^_^.
 
 -----
 
@@ -8,9 +8,9 @@ GenAI Library
 ====
 GenAI Elixir Library: A Framework for Interacting with Generative AI
 
-**Version:** 0.3.9
+**Version:** 0.5.0
 
-This repository contains the provider extensions for an Elixir library interacting with various generative AI providers and models through a common interface. The framework itself (chat threads, media `Request`/`Job`/`Router`, protocols) lives in the separate **genai-core** library. This version requires Core 0.4.0 and pins its immutable Git source until the Hex release is available; `GENAI_CORE_PATH` can override that source for development. The library is designed to be flexible, extensible, and easy to use.
+This repository contains the provider extensions for an Elixir library interacting with various generative AI providers and models through a common interface. The framework itself (chat threads, media `Request`/`Job`/`Router`, protocols) lives in the separate **genai-core** library. This version requires Core 0.4.0, published to Hex on 2026-10-18; source checkouts resolve Core from its released Hex package, and `GENAI_CORE_PATH` can point at a local Core checkout for development. The library is designed to be flexible, extensible, and easy to use.
 
 It currently supports: 
 - Local Models via my ex_llama nif wrapper for the llama_cpp rust library 
@@ -28,6 +28,7 @@ It currently supports:
 - Ollama (local LLM inference)
 - LiteLLM (OpenAI-compatible proxy)
 - Media generation providers: OpenAI (image / speech / transcription), Gemini (image), Suno (music / SFX, async), ElevenLabs (speech / SFX / music)
+- Classifier providers: hosted Jev (TypeSafe), Alibaba System One / SystemOneRounded, optional local Jev-Omni bridge
 
 Media generation — image, speech, transcription, music, and sound effects — is shipped (ADR-016), not pending: build a `GenAI.Media.Request`, and the capability `GenAI.Media.Router` dispatches it to a registered provider.
 
@@ -43,6 +44,8 @@ The GenAI lib exposes and extends (such as master prompt instructions to extend 
 * **Modular structure:** Well-organized code for improved maintainability and clarity.
 * **Support for multiple providers:** Currently supports OpenAI, Anthropic, Mistral, Gemini, Groq, XAI, DeepSeek, ZAI, Cerebras, Qwen (Alibaba DashScope), OpenRouter, Ollama, and LiteLLM.
 * **Media generation:** ADR-016 media pipeline (`GenAI.Media.Request` + capability router) covers image generation, speech (TTS), transcription (STT), music, and sound effects across OpenAI, Gemini, Suno, and ElevenLabs.
+* **Classifier grading:** hosted Jev and Alibaba System One / SystemOneRounded classifiers return `:choice` / `:boolean` / `:score` verdicts through `GenAI.Classifier.Router` (see [classifier providers](docs/classifier-providers.md)).
+* **Anthropic prompt caching:** `with_setting(thread, :cache_control, :ephemeral)` marks ephemeral cache breakpoints (system prompt or individual content blocks; the Anthropic 4-breakpoint cap is enforced), and cache read/creation token usage is parsed into run responses.
 * **Tool integration:** Enables extending the capabilities of the framework by integrating external tools, even with models that don't have native tool support, through system prompts and custom parsing.
 * **Dynamic chat chain support:** Allows for building complex conversational AI systems with multiple steps and dynamic model selection.
 
@@ -55,7 +58,7 @@ and return ordered results identified by their full branch paths. See
 
 GenAI can register an already supervised `Noizu.MCP.Client` as a tool source.
 The bridge is runtime-only: GenAI lists `:noizu_mcp` as an optional Hex
-dependency (`~> 0.1.6`), so applications that do not use MCP do not acquire it
+dependency (`~> 0.5.0`), so applications that do not use MCP do not acquire it
 and GenAI retains its Elixir 1.16 floor.
 
 Add `:noizu_mcp` in the consuming application, supervise the client there, and
@@ -64,8 +67,8 @@ register it with a stable source id:
 ```elixir
 def deps do
   [
-    {:genai, "~> 0.3"},
-    {:noizu_mcp, "~> 0.1.6"}
+    {:genai, "~> 0.5.0"},
+    {:noizu_mcp, "~> 0.5.0"}
   ]
 end
 ```
@@ -99,14 +102,37 @@ metadata. Opaque MCP `_meta` values are omitted unless the server is trusted and
 `include_mcp_meta: true` is passed. GenAI execution telemetry excludes arguments
 and results by default; `include_payloads: true` is an explicit opt-in.
 
+### tobor-grade CLI (transcript grading)
+
+GenAI ships a transcript grading CLI over the classifier router
+(`GenAI.Classifier.Router.classify/2`), available as a mix task or a standalone
+escript binary:
+
+```bash
+mix tobor_grade --transcript <path> [--walkback N] --sink jsonl:<path> [--score] [--component <tag>]
+mix escript.build   # produces ./tobor-grade with the same arguments
+```
+
+- Default lane: hosted Jev (`jev-latest`) `:choice` verdict —
+  `continuation | topic-switch | new-task | more-context-needed`.
+- `--score`: Alibaba `decision-model-preview` 0-100 `:score` grading (the
+  `:alibaba_rounded_hundredths` distribution policy applies inside the
+  SystemOne adapter).
+- `--walkback N` (cap 5): on `more-context-needed`, walk the transcript back
+  one user turn and re-grade, up to N times.
+- `--sink jsonl:<path>` appends one line per grade:
+  `{component?, verdict, score?, transcript_path, walkback_used, timestamp}`.
+- Refuses to run when `TOBOR_GRADING=1` is set (recursion guard).
+- Exit codes: 0 graded · 1 grading failure · 2 usage · 3 recursion guard.
+
 ### Getting Started
 
-1. Add the `gen_ai` dependency to your `mix.exs` file:
+1. Add the `genai` dependency to your `mix.exs` file:
 
 ```elixir
 def deps do
   [
-    {:genai, "~> 0.3"}
+    {:genai, "~> 0.5.0"}
   ]
 end
 ```
@@ -630,17 +656,17 @@ The GenAI library is designed to be easily extensible with new model providers. 
 
 Once you have implemented the provider module and protocols, you can use it with the GenAI library just like any other supported provider.
 
-### Future Features
+### Roadmap
 
-* **Response tree execution:** Implement a dedicated `GenAI.ResponseTree` module to define and execute complex response plan trees with conditional branching and different actions at each node.
-* **Streaming support:** Implement the `stream` function for real-time interaction with models that offer this feature.
-* **Enhanced model selection:** Improve the model selection logic to consider factors like cost, performance, and context size.
-* **Improved error handling:** Provide more specific and informative error messages.
-* **Comprehensive tests:** Expand the test suite to cover more functionalities and edge cases.
-* **Detailed documentation:** Add comprehensive documentation for all modules and functions.
-* **Support for more providers:** Explore the possibility of adding support for other generative AI providers and models.
-* **Caching mechanism:** Implement a caching system to improve performance and reduce costs.
-* **Logging and analysis:** Develop a mechanism for logging and analyzing interactions with generative AI models.
+Much of the original wishlist has shipped: media generation (ADR-016), Anthropic
+prompt caching (v0.4.0), classifier providers with hosted Jev and Alibaba System
+One (v0.5.0), native DashScope generation (v0.5.0), and stream events across
+forked-thread/tool-loop operations (v0.5.0). Remaining candidates:
+
+* **Response tree execution:** a dedicated `GenAI.ResponseTree` module for complex response plan trees with conditional branching and different actions at each node (forked threads already provide the branch-keyed continuation model).
+* **Dedicated stream entry point:** a top-level `stream` function for real-time interaction with streaming-capable models; stream events already flow through forked-thread and tool-loop operations.
+* **Grid search / optimization interface:** the proposed `GenAI.loop` / fitness / early-stopping syntax below is not yet implemented.
+* **Enhanced model selection:** weigh cost, performance, and context size automatically when resolving models.
 
 #### Grid Search/Optimization proposed interface. 
 ```elixir
@@ -680,7 +706,8 @@ Contributions are welcome! Please see the `CONTRIBUTING.md` file for guidelines.
 ### License
 
 This library is released under the MIT License.
-# Classifier integration
+
+## Classifier integration
 
 GenAI 0.5.0 adds hosted Jev, Alibaba System One and an optional local Jev-Omni
 adapter. See [classifier providers](docs/classifier-providers.md) for merged Core 0.4.0
