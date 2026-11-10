@@ -13,7 +13,7 @@ All notable changes to this project will be documented in this file.
 
 ## v0.5.2 - Producer dependency pickup (2026-11-10)
 - `noizu_mcp` 0.5.1 → 0.6.4 — producer vuln-fix release (bandit CVE wave + jose/ecto/plug_crypto/jsv advisory re-picks upstream); mix.exs constraint raised `~> 0.5.0` → `~> 0.6.0` (the old range pins major.minor, `>= 0.5.0 and < 0.6.0` — the resolver empirically chose 0.5.3 under it, refusing 0.6.4); surgical pins held in the lock: `jsv` 0.26.2 (resolver's 0.27.0 drag reverted) and `jose` 1.11.13. Bandit/ecto/plug_crypto are optional `noizu_mcp` deps GenAI does not install, so those advisories never reach GenAI's artifact.
-- `genai_core` 0.4.0 → 0.4.1 — producer vuln-fix release (mint ×17 advisories, hpax, ymlr); `~> 0.4.0` unchanged (admits 0.4.1); GenAI's lock already carried latest `mint` 1.11.0 / `hpax` 1.1.0 / `ymlr` 5.1.6, so no transitive movement; resolver drift (floki/nimble_options/shortuuid) reverted to keep the diff to the two producer entries — pickup [#36](https://github.com/noizu-labs-ml/genai/pull/36) → `develop`; → `stage` (#37).
+- `genai_core` 0.4.0 → 0.4.1 — producer vuln-fix release (mint ×17 advisories, hpax, ymlr); `~> 0.4.0` unchanged (admits 0.4.1); GenAI's lock already carried latest `mint` 1.11.0 / `hpax` 1.1.0 / `ymlr` 5.1.6, so no transitive movement; resolver drift (floki/nimble_options/shortuuid) reverted to keep the diff to the two producer entries — pickup [#36](https://github.com/noizu-labs-ml/genai/pull/36) → `develop`; → `stage` (#37); → `main` (#38).
 
 ## v0.5.1 - Security dependency bumps (2026-11-10)
 - `jose` 1.11.12 → 1.11.13 — EEF advisory set EEF-CVE-2026-65625…65632 (8 CVEs, local-vector ECDSA family); the `~> 1.11` constraint is unchanged, lock-only pickup.
