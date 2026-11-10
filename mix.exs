@@ -7,7 +7,7 @@ defmodule GenAI.MixProject do
       name: "Noizu Labs, GenAI Wrapper",
       description: description(),
       package: package(),
-      version: "0.5.1",
+      version: "0.5.2",
       elixir: "~> 1.16",
       start_permanent: Mix.env() == :prod,
       # Worktrees use absolute cache symlinks. Let Mix calculate asset links
@@ -140,7 +140,7 @@ defmodule GenAI.MixProject do
       {:mimic, "~> 2.3", only: :test},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
       {:sweet_xml, "~> 0.7", only: :test},
-      {:noizu_mcp, "~> 0.5.0", optional: true}
+      {:noizu_mcp, "~> 0.6.0", optional: true}
     ] ++ local_classifier_dep()
   end
 
