@@ -2,6 +2,9 @@ Change Log
 ==============
 All notable changes to this project will be documented in this file.
 
+## 2026-11-11
+- Qwen Image reference-image edits: `GenAI.Provider.Qwen.Image` now declares `input: [:text, :image]` and encodes up to 3 reference images as base64 data-URL content parts followed by the text part on the DashScope multimodal route (ported from media-tools' proven Rust body). Sync-only (async header 403s on our accounts), connection-drop retry over HTTP/1.1, all five response URL shapes, `size` `WxH`→`W*H` + 4:3/3:4 aspect map. Adds `test.fast` mix alias (`test --exclude slow --exclude live --no-cover`) and a gated `@tag :live` reference-edit proof — `feature/qwen-image-reference` → `epic.media-prompt` → `develop`.
+
 ## 2026-11-10
 - Docs overhaul: README refreshed for 0.5.0 — install snippets `{:genai, "~> 0.5.0"}`, `gen_ai` typo, Core-Hex paragraph (Core 0.4.0 published 2026-10-18, no more git-pin claim), `noizu_mcp` `~> 0.5.0` in the MCP section, new Features bullets (classifier grading, Anthropic prompt caching) + provider list entry (Jev / System One / SystemOneRounded), tobor-grade CLI section, "Future Features" replaced by an honest roadmap; CHANGELOG reordered to descending versions with hex.pm release dates, internal drafts v0.3.6–v0.3.8 folded into the hex releases that carried them, and v0.3.0 / v0.3.2 / v0.3.3 / v0.3.4 / v0.3.10 backfilled — landed direct to `develop`.
 
