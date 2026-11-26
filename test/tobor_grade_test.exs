@@ -232,7 +232,7 @@ defmodule ToborGradeTest do
       assert String.valid?(request.input)
       assert String.length(request.input) <= cap
       assert byte_size(request.input) <= cap * 4
-      assert Regex.match?(~r/\[\d+ characters omitted\]/, request.input)
+      assert Regex.match?(~r/\[\d+ or more characters omitted\]/, request.input)
       assert String.starts_with?(request.input, "é")
       assert String.ends_with?(request.input, "🛠")
     end
@@ -248,43 +248,76 @@ defmodule ToborGradeTest do
       assert request.input == input
     end
 
-    test "input just over the cap keeps head, exact-count marker, and tail" do
-      input = String.duplicate("🛠", 5_941) <> String.duplicate("x", 100)
-      assert String.length(input) == 6_041
+    test "an input of cap + 1 graphemes gets a truthful lower-bound marker" do
       cap = ToborGrade.input_cap_chars()
+      input = String.duplicate("a", cap + 1)
+      assert String.length(input) == cap + 1
 
       {:ok, request} = ToborGrade.build_request(input, %{score?: false, component: nil})
 
       assert String.valid?(request.input)
       assert String.length(request.input) <= cap
-      assert String.starts_with?(request.input, "🛠")
-      assert String.ends_with?(request.input, "x")
 
-      marker = Regex.run(~r/\[\d+ characters omitted\]/, request.input) |> List.first()
+      marker = Regex.run(~r/\[\d+ or more characters omitted\]/, request.input) |> List.first()
       assert marker != nil
 
       omitted =
         marker
         |> String.trim("[")
-        |> String.trim_trailing(" characters omitted]")
+        |> String.trim_trailing(" or more characters omitted]")
         |> String.to_integer()
 
-      # Everything the result holds besides the marker's own characters is
-      # kept graphemes, so the marker count must account for the rest exactly.
+      # The overshoot walk stops at cap + 1 steps, so N is exactly
+      # cap + 1 minus the graphemes kept in head and tail.
       kept = String.length(request.input) - String.length(marker)
-      assert omitted == String.length(input) - kept
+      assert omitted == cap + 1 - kept
     end
 
-    test "a one-million-character ASCII input is handled by the same walk without error" do
+    test "an input about a million graphemes past the cap gets the same marker as cap + 1" do
       cap = ToborGrade.input_cap_chars()
-      input = String.duplicate("a", 1_000_000)
+      input = String.duplicate("a", 503_000) <> String.duplicate("z", 503_001)
+      assert String.length(input) == 1_006_001
 
       {:ok, request} = ToborGrade.build_request(input, %{score?: false, component: nil})
 
       assert String.valid?(request.input)
       assert String.length(request.input) <= cap
-      assert Regex.match?(~r/\[\d+ characters omitted\]/, request.input)
-      assert String.starts_with?(request.input, "a")
+
+      marker = Regex.run(~r/\[\d+ or more characters omitted\]/, request.input) |> List.first()
+      assert marker != nil
+
+      # Right head and right tail: genuine prefix/suffix of the input.
+      [head, tail] = String.split(request.input, marker, parts: 2)
+      assert head == String.slice(input, 0, String.length(head))
+      assert head == String.duplicate("a", String.length(head))
+      assert tail == String.slice(input, -String.length(tail), String.length(tail))
+      assert tail == String.duplicate("z", String.length(tail))
+
+      # Same marker text as the cap + 1 case: N depends only on the cap and
+      # the kept graphemes, never on the input's total size.
+      kept = String.length(request.input) - String.length(marker)
+
+      omitted =
+        marker
+        |> String.trim("[")
+        |> String.trim_trailing(" or more characters omitted]")
+        |> String.to_integer()
+
+      assert omitted == cap + 1 - kept
+    end
+
+    test "an input of four-byte characters keeps whole characters in head and tail" do
+      cap = ToborGrade.input_cap_chars()
+      input = String.duplicate("🛠", cap + 1)
+      assert String.length(input) == cap + 1
+
+      {:ok, request} = ToborGrade.build_request(input, %{score?: false, component: nil})
+
+      assert String.valid?(request.input)
+      assert String.length(request.input) <= cap
+      assert Regex.match?(~r/\[\d+ or more characters omitted\]/, request.input)
+      assert String.starts_with?(request.input, "🛠")
+      assert String.ends_with?(request.input, "🛠")
     end
   end
 
