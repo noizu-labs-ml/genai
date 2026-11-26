@@ -3,7 +3,7 @@ Change Log
 All notable changes to this project will be documented in this file.
 
 ## 2026-11-26
-- decision-model GA id sweep + bounded, token-reported tobor-grade — review fixes: input cap is codepoint-safe head+tail truncation counted in characters, joined by a single "[N characters omitted]" marker carrying the exact omitted grapheme count, overshoot decided by a bounded grapheme walk (no byte-size guessing), docs now cover the preview id's rounded-hundredths policy, Qwen classifier default id sourced from `Models.decision_model/0` (#40)
+- decision-model GA id sweep + bounded, token-reported tobor-grade — review fixes: input cap is codepoint-safe head+tail truncation counted in characters, joined by a single "[N or more characters omitted]" marker carrying a truthful lower bound (the overshoot walk stops within cap + 1 steps and never counts the whole input), overshoot decided by a bounded grapheme walk (no byte-size guessing), docs now cover the preview id's rounded-hundredths policy, Qwen classifier default id sourced from `Models.decision_model/0` (#40)
 
 ## 2026-11-11
 - Qwen Image reference-image edits: `GenAI.Provider.Qwen.Image` now declares `input: [:text, :image]` and encodes up to 3 reference images as base64 data-URL content parts followed by the text part on the DashScope multimodal route (ported from media-tools' proven Rust body). Sync-only (async header 403s on our accounts), connection-drop retry over HTTP/1.1, all five response URL shapes, `size` `WxH`→`W*H` + 4:3/3:4 aspect map. Adds `test.fast` mix alias (`test --exclude slow --exclude live --no-cover`) and a gated `@tag :live` reference-edit proof — `feature/qwen-image-reference` → `epic.media-prompt` → `develop`.

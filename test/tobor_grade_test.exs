@@ -319,6 +319,18 @@ defmodule ToborGradeTest do
       assert String.starts_with?(request.input, "🛠")
       assert String.ends_with?(request.input, "🛠")
     end
+
+    test "the marker reserve holds the longest marker the caps can produce" do
+      # Mirrors lib/tobor_grade.ex: the marker reserve is a literal 64
+      # characters; head and tail split the remainder of the cap. The
+      # longest marker the code can produce formats cap + 1 (the degenerate
+      # case where the kept tail holds nothing); the day a cap bump
+      # outgrows the reserve, this test fails.
+      cap = ToborGrade.input_cap_chars()
+      reserve = 64
+      longest_marker = "[#{cap + 1} or more characters omitted]"
+      assert String.length(longest_marker) <= reserve
+    end
   end
 
   describe "grading runs" do
