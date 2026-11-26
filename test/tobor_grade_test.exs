@@ -207,7 +207,7 @@ defmodule ToborGradeTest do
           %{score?: true, component: nil}
         )
 
-      assert byte_size(request.input) == ToborGrade.input_cap_chars()
+      assert byte_size(request.input) <= ToborGrade.input_cap_chars()
     end
 
     test "input is capped at ToborGrade.input_cap_chars/0 for the choice lane" do
@@ -217,7 +217,7 @@ defmodule ToborGradeTest do
           %{score?: false, component: nil}
         )
 
-      assert byte_size(request.input) == ToborGrade.input_cap_chars()
+      assert byte_size(request.input) <= ToborGrade.input_cap_chars()
     end
 
     test "multibyte input is cut at a codepoint boundary, keeping the head and the tail" do
@@ -230,10 +230,24 @@ defmodule ToborGradeTest do
       {:ok, request} = ToborGrade.build_request(input, %{score?: false, component: nil})
 
       assert String.valid?(request.input)
-      assert String.length(request.input) == cap
+      assert String.length(request.input) <= cap
       assert byte_size(request.input) <= cap * 4
+      assert Regex.match?(~r/\[\d+ characters omitted\]/, request.input)
       assert String.starts_with?(request.input, "é")
       assert String.ends_with?(request.input, "🛠")
+    end
+
+    test "input far over the cap keeps head and tail around a byte-counted omission marker" do
+      cap = ToborGrade.input_cap_chars()
+      input = String.duplicate("a", 25_000) <> "END-OF-TRANSCRIPT"
+
+      {:ok, request} = ToborGrade.build_request(input, %{score?: false, component: nil})
+
+      assert Regex.match?(~r/\[\d+ bytes of transcript omitted\]/, request.input)
+      assert String.valid?(request.input)
+      assert String.length(request.input) <= cap
+      assert String.starts_with?(request.input, "a")
+      assert String.ends_with?(request.input, "END-OF-TRANSCRIPT")
     end
   end
 

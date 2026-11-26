@@ -25,14 +25,19 @@ defmodule ToborGrade do
   @walkback_cap 5
   # Every classifier call sends at most this many characters (graphemes) of
   # rendered transcript — never a whole session or a dataset. Oversized input
-  # keeps the head and the tail: the head carries the task set-up, the tail
-  # carries the latest turn the verdict is about.
+  # keeps the head and the tail with an omission marker between them.
   @input_cap_chars 6_000
-  # Head/tail split of `@input_cap_chars`, in characters (graphemes). Both
-  # halves are cut with String.slice/3, so a cut never splits a UTF-8
-  # codepoint; counts are characters, not bytes.
-  @input_cap_head_chars div(@input_cap_chars, 2)
-  @input_cap_tail_chars @input_cap_chars - @input_cap_head_chars
+  # Head/tail split of the cap minus the marker reserve, in characters
+  # (graphemes); all character cuts use String.slice/3, so no cut ever
+  # splits a UTF-8 codepoint, and head + marker + tail always fits the cap.
+  @input_cap_marker_max_chars 64
+  @input_cap_head_chars div(@input_cap_chars - @input_cap_marker_max_chars, 2)
+  @input_cap_tail_chars @input_cap_chars - @input_cap_marker_max_chars - @input_cap_head_chars
+  # Byte pre-cut windows for inputs far over the cap (a UTF-8 codepoint is at
+  # most 4 bytes): slicing by bytes first keeps every grapheme operation on
+  # small binaries — the middle is only counted by byte_size, never scanned.
+  @head_bytes 4 * @input_cap_head_chars + 8
+  @tail_bytes 4 * @input_cap_tail_chars + 8
   @verdicts ["continuation", "topic-switch", "new-task", "more-context-needed"]
   @walkback_verdict "more-context-needed"
 
@@ -183,7 +188,7 @@ defmodule ToborGrade do
   # Classifier requests
   # ---------------------------------------------------------------------------
 
-  @doc "Build the classifier request for one rendered transcript input. Input longer than `input_cap_chars/0` characters is truncated, keeping the head and the tail at codepoint boundaries; the cut is silent — the string payload has no room for a flag."
+  @doc "Build the classifier request for one rendered transcript input. Input longer than `input_cap_chars/0` characters is truncated, keeping the head and the tail at codepoint boundaries with an omission marker between them (`[N characters omitted]`, or `[N bytes of transcript omitted]` when far over the cap); head + marker + tail always stays within the cap."
   @spec build_request(String.t(), %{score?: boolean(), component: String.t() | nil}) ::
           {:ok, map()} | {:error, term()}
   def build_request(input, args) when is_binary(input) do
@@ -193,17 +198,55 @@ defmodule ToborGrade do
   end
 
   # Deterministic head+tail truncation counted in characters (graphemes):
-  # keep the head and the tail, never send a huge dataset. The classifier
-  # input string has no room to flag that a cut happened; this comment and
-  # the `input_cap_chars/0` doc are the flag.
+  # keep the head and the tail with an omission marker between them, never
+  # send a huge dataset. The marker names its own unit: characters in the
+  # bounded path, bytes in the far-over path (counted by byte_size, no scan).
   defp capped_input(input) when byte_size(input) <= @input_cap_chars, do: input
 
+  # Far over the byte bound ⇒ a cut is certain (one character is at most
+  # four bytes): pre-cut head and tail by bytes at codepoint boundaries and
+  # count the middle by byte_size only — never scan a huge transcript.
+  defp capped_input(input) when byte_size(input) > @head_bytes + @tail_bytes do
+    head_window = valid_prefix(binary_part(input, 0, @head_bytes))
+    tail_window = valid_suffix(binary_part(input, byte_size(input) - @tail_bytes, @tail_bytes))
+    omitted_bytes = byte_size(input) - @head_bytes - @tail_bytes
+
+    String.slice(head_window, 0, @input_cap_head_chars) <>
+      "[#{omitted_bytes} bytes of transcript omitted]" <>
+      String.slice(tail_window, -@input_cap_tail_chars, @input_cap_tail_chars)
+  end
+
+  # Between the two byte bounds: a bounded String.length scan decides, and
+  # the marker reports the exact omitted character count.
   defp capped_input(input) do
-    if String.length(input) <= @input_cap_chars do
+    chars = String.length(input)
+
+    if chars <= @input_cap_chars do
       input
     else
-      String.slice(input, 0, @input_cap_head_chars) <>
-        String.slice(input, -@input_cap_tail_chars, @input_cap_tail_chars)
+      head = String.slice(input, 0, @input_cap_head_chars)
+      tail = String.slice(input, -@input_cap_tail_chars, @input_cap_tail_chars)
+      omitted = chars - @input_cap_head_chars - @input_cap_tail_chars
+      head <> "[#{omitted} characters omitted]" <> tail
+    end
+  end
+
+  # Drop trailing bytes until the prefix is valid UTF-8 (at most the 3 bytes
+  # of one codepoint split by the byte cut).
+  defp valid_prefix(bin) do
+    if String.valid?(bin) do
+      bin
+    else
+      valid_prefix(binary_part(bin, 0, byte_size(bin) - 1))
+    end
+  end
+
+  # Drop leading bytes until the suffix is valid UTF-8.
+  defp valid_suffix(bin) do
+    if String.valid?(bin) do
+      bin
+    else
+      valid_suffix(binary_part(bin, 1, byte_size(bin) - 1))
     end
   end
 
@@ -264,9 +307,9 @@ defmodule ToborGrade do
   @doc """
   Maximum characters (graphemes) of rendered transcript one classifier call
   sends (applied in `build_request/2`). Oversized input keeps the head and
-  the tail, cut with `String.slice/3` so no UTF-8 codepoint is ever split;
-  counts are characters, not bytes. The classifier input string has no room
-  to record that a cut happened — this doc is the flag.
+  the tail with an omission marker between them; cuts use `String.slice/3`
+  so no UTF-8 codepoint is ever split, and head + marker + tail always
+  stays within this cap.
   """
   @spec input_cap_chars() :: pos_integer()
   def input_cap_chars, do: @input_cap_chars
