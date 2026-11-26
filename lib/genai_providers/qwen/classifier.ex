@@ -1,5 +1,5 @@
 defmodule GenAI.Provider.Qwen.Classifier do
-  @moduledoc "Alibaba decision-model-preview uses a separately configured workspace System One endpoint."
+  @moduledoc "Alibaba decision-model uses a separately configured workspace System One endpoint."
   @behaviour GenAI.Classifier.ProviderBehaviour
 
   @impl true
@@ -17,7 +17,7 @@ defmodule GenAI.Provider.Qwen.Classifier do
       api_key:
         options[:api_key] || config[:decision_api_key] || config[:api_key] ||
           System.get_env("QWEN_API_KEY") || System.get_env("DASHSCOPE_API_KEY"),
-      model: options[:model_id] || "decision-model-preview"
+      model: options[:model_id] || "decision-model"
     ]
 
     GenAI.Provider.SystemOne.classify(GenAI.Provider.Qwen, request, settings, options)

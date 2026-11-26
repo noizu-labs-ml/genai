@@ -177,11 +177,11 @@ defmodule ToborGradeTest do
              ]
     end
 
-    test "score lane targets decision-model-preview with a 10-level 0-100 rubric" do
+    test "score lane targets decision-model with a 10-level 0-100 rubric" do
       assert {:ok, request} =
                ToborGrade.build_request("user: hello", %{score?: true, component: nil})
 
-      assert request.model.model == "decision-model-preview"
+      assert request.model.model == "decision-model"
       assert request.model.provider == GenAI.Provider.Qwen
 
       assert [%Question{type: :score, rubric: rubric, id: "quality"}] = request.questions
@@ -190,6 +190,34 @@ defmodule ToborGradeTest do
       scores = Enum.map(rubric, & &1.score)
       assert scores == Enum.sort(Enum.uniq(scores))
       assert Enum.min(scores) == 0 and Enum.max(scores) == 100
+    end
+
+    test "default model is the GA id decision-model" do
+      assert GenAI.Provider.Qwen.Models.decision_model().model == "decision-model"
+    end
+
+    test "decision_model_preview is deprecated but still returns the preview id" do
+      assert GenAI.Provider.Qwen.Models.decision_model_preview().model == "decision-model-preview"
+    end
+
+    test "input is capped at ToborGrade.input_cap_chars/0 for the score lane" do
+      {:ok, request} =
+        ToborGrade.build_request(
+          String.duplicate("x", ToborGrade.input_cap_chars() + 5_000),
+          %{score?: true, component: nil}
+        )
+
+      assert byte_size(request.input) == ToborGrade.input_cap_chars()
+    end
+
+    test "input is capped at ToborGrade.input_cap_chars/0 for the choice lane" do
+      {:ok, request} =
+        ToborGrade.build_request(
+          String.duplicate("y", ToborGrade.input_cap_chars() + 5_000),
+          %{score?: false, component: nil}
+        )
+
+      assert byte_size(request.input) == ToborGrade.input_cap_chars()
     end
   end
 

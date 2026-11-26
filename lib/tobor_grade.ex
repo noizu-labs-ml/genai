@@ -9,10 +9,11 @@ defmodule ToborGrade do
   - default lane: hosted Jev (`GenAI.Provider.Jev.Models.latest/0`, model
     `jev-latest` via TypeSafe) answering one `:choice` question —
     `continuation | topic-switch | new-task | more-context-needed`.
-  - `--score`: Alibaba's decision model (`GenAI.Provider.Qwen.Models.decision_model_preview/0`)
-    answering one 0-100 `:score` question. The SystemOne adapter's inferred
-    `:alibaba_rounded_hundredths` distribution policy applies automatically to
-    `decision-model-preview` requests; it is reused here, never re-implemented.
+  - `--score`: Alibaba's decision model (`GenAI.Provider.Qwen.Models.decision_model/0`,
+    GA id `decision-model`) answering one 0-100 `:score` question. The SystemOne
+    adapter's inferred `:alibaba_rounded_hundredths` distribution policy applies
+    automatically to decision-model requests (the retired `decision-model-preview`
+    id is still recognised); it is reused here, never re-implemented.
   - `--walkback N` (cap 5): when the verdict is `more-context-needed`, walk the
     transcript back one user turn and re-grade, up to N times.
   - `--sink jsonl:<path>`: append one JSON line
@@ -22,6 +23,9 @@ defmodule ToborGrade do
   """
 
   @walkback_cap 5
+  # Every classifier call sends at most this many characters of rendered
+  # transcript (head truncation) — never a whole session or a dataset.
+  @input_cap_chars 6_000
   @verdicts ["continuation", "topic-switch", "new-task", "more-context-needed"]
   @walkback_verdict "more-context-needed"
 
@@ -176,7 +180,16 @@ defmodule ToborGrade do
   @spec build_request(String.t(), %{score?: boolean(), component: String.t() | nil}) ::
           {:ok, map()} | {:error, term()}
   def build_request(input, args) when is_binary(input) do
+    input = capped_input(input)
+
     if args.score?, do: score_request(input), else: choice_request(input)
+  end
+
+  # Deterministic head truncation: keep the head, never send a huge dataset.
+  defp capped_input(input) when byte_size(input) <= @input_cap_chars, do: input
+
+  defp capped_input(input) do
+    binary_part(input, 0, @input_cap_chars)
   end
 
   defp choice_request(input) do
@@ -219,7 +232,7 @@ defmodule ToborGrade do
 
     request(
       %{input: input, questions: [question]},
-      GenAI.Provider.Qwen.Models.decision_model_preview()
+      GenAI.Provider.Qwen.Models.decision_model()
     )
   end
 
@@ -233,12 +246,26 @@ defmodule ToborGrade do
   @spec walkback_cap() :: pos_integer()
   def walkback_cap, do: @walkback_cap
 
+  @doc """
+  Maximum characters of rendered transcript one classifier call sends
+  (deterministic head truncation, applied in `build_request/2`).
+  """
+  @spec input_cap_chars() :: pos_integer()
+  def input_cap_chars, do: @input_cap_chars
+
   # ---------------------------------------------------------------------------
   # Result extraction
   # ---------------------------------------------------------------------------
 
   defp extract(args, result) do
     question_id = if args.score?, do: "quality", else: "verdict"
+
+    input_tokens =
+      case result.usage do
+        %{input_tokens: t} when is_integer(t) -> t
+        %{"input_tokens" => t} when is_integer(t) -> t
+        _ -> nil
+      end
 
     with answer when not is_nil(answer) <-
            Enum.find(result.answers, &(&1.question_id == question_id)) do
@@ -249,10 +276,10 @@ defmodule ToborGrade do
             number -> Float.round(number * 1.0, 1)
           end
 
-        {:ok, %{verdict: answer.grade || "ungraded", score: score}}
+        {:ok, %{verdict: answer.grade || "ungraded", score: score, input_tokens: input_tokens}}
       else
         verdict = answer.choice_id || answer.value
-        {:ok, %{verdict: verdict, score: nil}}
+        {:ok, %{verdict: verdict, score: nil, input_tokens: input_tokens}}
       end
     else
       nil -> {:error, {:missing_answer, question_id}}

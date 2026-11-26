@@ -8,7 +8,7 @@ defmodule Mix.Tasks.ToborGrade do
 
   - default lane: hosted Jev (`jev-latest`) `:choice` verdict —
     continuation | topic-switch | new-task | more-context-needed.
-  - `--score`: Alibaba `decision-model-preview` 0-100 `:score` grading
+  - `--score`: Alibaba `decision-model` 0-100 `:score` grading
     (`:alibaba_rounded_hundredths` policy applies inside the SystemOne adapter).
   - `--walkback N` (cap #{ToborGrade.walkback_cap()}): on `more-context-needed`,
     walk the transcript back one user turn and re-grade, up to N times.

@@ -115,7 +115,7 @@ mix escript.build   # produces ./tobor-grade with the same arguments
 
 - Default lane: hosted Jev (`jev-latest`) `:choice` verdict —
   `continuation | topic-switch | new-task | more-context-needed`.
-- `--score`: Alibaba `decision-model-preview` 0-100 `:score` grading (the
+- `--score`: Alibaba `decision-model` 0-100 `:score` grading (the
   `:alibaba_rounded_hundredths` distribution policy applies inside the
   SystemOne adapter).
 - `--walkback N` (cap 5): on `more-context-needed`, walk the transcript back
