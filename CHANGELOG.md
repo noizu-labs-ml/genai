@@ -3,6 +3,7 @@ Change Log
 All notable changes to this project will be documented in this file.
 
 ## 2026-11-26
+- test(providers): explicit mock ownership for the open_router and zai tests; ends the release-gate race (#42)
 - decision-model GA id sweep + bounded, token-reported tobor-grade — review fixes: input cap is codepoint-safe head+tail truncation counted in characters, joined by a single "[N or more characters omitted]" marker carrying a truthful lower bound (the overshoot walk stops within cap + 1 steps and never counts the whole input), overshoot decided by a bounded grapheme walk (no byte-size guessing), docs now cover the preview id's rounded-hundredths policy, Qwen classifier default id sourced from `Models.decision_model/0` (#40)
 
 ## 2026-11-11
