@@ -115,9 +115,10 @@ No package publication is required for source-path testing.
 
 ## Alibaba rounded-hundredths policy
 
-Only Qwen requests whose actual encoded model is `decision-model`
-default to `distribution_policy: :alibaba_rounded_hundredths`. Jev, other models,
-and Core retain strict validation. Pass `distribution_policy: :strict` to require
+Only Qwen requests whose actual encoded model is `decision-model` — or the
+retired `decision-model-preview` id, still answered by the same workspace
+endpoint — default to `distribution_policy: :alibaba_rounded_hundredths`.
+Jev, other models, and Core retain strict validation. Pass `distribution_policy: :strict` to require
 unit wire mass and native-score consistency within the existing `1e-6` bounds:
 
 ```elixir

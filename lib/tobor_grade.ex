@@ -23,9 +23,16 @@ defmodule ToborGrade do
   """
 
   @walkback_cap 5
-  # Every classifier call sends at most this many characters of rendered
-  # transcript (head truncation) — never a whole session or a dataset.
+  # Every classifier call sends at most this many characters (graphemes) of
+  # rendered transcript — never a whole session or a dataset. Oversized input
+  # keeps the head and the tail: the head carries the task set-up, the tail
+  # carries the latest turn the verdict is about.
   @input_cap_chars 6_000
+  # Head/tail split of `@input_cap_chars`, in characters (graphemes). Both
+  # halves are cut with String.slice/3, so a cut never splits a UTF-8
+  # codepoint; counts are characters, not bytes.
+  @input_cap_head_chars div(@input_cap_chars, 2)
+  @input_cap_tail_chars @input_cap_chars - @input_cap_head_chars
   @verdicts ["continuation", "topic-switch", "new-task", "more-context-needed"]
   @walkback_verdict "more-context-needed"
 
@@ -176,7 +183,7 @@ defmodule ToborGrade do
   # Classifier requests
   # ---------------------------------------------------------------------------
 
-  @doc "Build the classifier request for one rendered transcript input."
+  @doc "Build the classifier request for one rendered transcript input. Input longer than `input_cap_chars/0` characters is truncated, keeping the head and the tail at codepoint boundaries; the cut is silent — the string payload has no room for a flag."
   @spec build_request(String.t(), %{score?: boolean(), component: String.t() | nil}) ::
           {:ok, map()} | {:error, term()}
   def build_request(input, args) when is_binary(input) do
@@ -185,11 +192,19 @@ defmodule ToborGrade do
     if args.score?, do: score_request(input), else: choice_request(input)
   end
 
-  # Deterministic head truncation: keep the head, never send a huge dataset.
+  # Deterministic head+tail truncation counted in characters (graphemes):
+  # keep the head and the tail, never send a huge dataset. The classifier
+  # input string has no room to flag that a cut happened; this comment and
+  # the `input_cap_chars/0` doc are the flag.
   defp capped_input(input) when byte_size(input) <= @input_cap_chars, do: input
 
   defp capped_input(input) do
-    binary_part(input, 0, @input_cap_chars)
+    if String.length(input) <= @input_cap_chars do
+      input
+    else
+      String.slice(input, 0, @input_cap_head_chars) <>
+        String.slice(input, -@input_cap_tail_chars, @input_cap_tail_chars)
+    end
   end
 
   defp choice_request(input) do
@@ -247,8 +262,11 @@ defmodule ToborGrade do
   def walkback_cap, do: @walkback_cap
 
   @doc """
-  Maximum characters of rendered transcript one classifier call sends
-  (deterministic head truncation, applied in `build_request/2`).
+  Maximum characters (graphemes) of rendered transcript one classifier call
+  sends (applied in `build_request/2`). Oversized input keeps the head and
+  the tail, cut with `String.slice/3` so no UTF-8 codepoint is ever split;
+  counts are characters, not bytes. The classifier input string has no room
+  to record that a cut happened — this doc is the flag.
   """
   @spec input_cap_chars() :: pos_integer()
   def input_cap_chars, do: @input_cap_chars

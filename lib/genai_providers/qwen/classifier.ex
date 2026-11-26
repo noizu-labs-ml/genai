@@ -17,7 +17,8 @@ defmodule GenAI.Provider.Qwen.Classifier do
       api_key:
         options[:api_key] || config[:decision_api_key] || config[:api_key] ||
           System.get_env("QWEN_API_KEY") || System.get_env("DASHSCOPE_API_KEY"),
-      model: options[:model_id] || "decision-model"
+      # Single source of truth for the GA id: `Models.decision_model/0`.
+      model: options[:model_id] || GenAI.Provider.Qwen.Models.decision_model().model
     ]
 
     GenAI.Provider.SystemOne.classify(GenAI.Provider.Qwen, request, settings, options)

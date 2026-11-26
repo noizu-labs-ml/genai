@@ -219,6 +219,22 @@ defmodule ToborGradeTest do
 
       assert byte_size(request.input) == ToborGrade.input_cap_chars()
     end
+
+    test "multibyte input is cut at a codepoint boundary, keeping the head and the tail" do
+      cap = ToborGrade.input_cap_chars()
+      # 2-byte é and 4-byte emoji: a byte cut at the cap boundary would split
+      # one of these codepoints and produce invalid UTF-8.
+      input = String.duplicate("é", 3_500) <> String.duplicate("🛠", 3_500)
+      assert String.length(input) > cap
+
+      {:ok, request} = ToborGrade.build_request(input, %{score?: false, component: nil})
+
+      assert String.valid?(request.input)
+      assert String.length(request.input) == cap
+      assert byte_size(request.input) <= cap * 4
+      assert String.starts_with?(request.input, "é")
+      assert String.ends_with?(request.input, "🛠")
+    end
   end
 
   describe "grading runs" do
