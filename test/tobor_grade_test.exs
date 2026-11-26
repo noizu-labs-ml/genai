@@ -237,17 +237,54 @@ defmodule ToborGradeTest do
       assert String.ends_with?(request.input, "🛠")
     end
 
-    test "input far over the cap keeps head and tail around a byte-counted omission marker" do
-      cap = ToborGrade.input_cap_chars()
-      input = String.duplicate("a", 25_000) <> "END-OF-TRANSCRIPT"
+    test "input within the character cap is never truncated by its byte size" do
+      # 5_941 four-byte characters: 23_764 bytes, over the old byte-bound
+      # guard, but comfortably within the 6_000-character cap.
+      input = String.duplicate("🛠", 5_941)
+      assert String.length(input) == 5_941
 
       {:ok, request} = ToborGrade.build_request(input, %{score?: false, component: nil})
 
-      assert Regex.match?(~r/\[\d+ bytes of transcript omitted\]/, request.input)
+      assert request.input == input
+    end
+
+    test "input just over the cap keeps head, exact-count marker, and tail" do
+      input = String.duplicate("🛠", 5_941) <> String.duplicate("x", 100)
+      assert String.length(input) == 6_041
+      cap = ToborGrade.input_cap_chars()
+
+      {:ok, request} = ToborGrade.build_request(input, %{score?: false, component: nil})
+
       assert String.valid?(request.input)
       assert String.length(request.input) <= cap
+      assert String.starts_with?(request.input, "🛠")
+      assert String.ends_with?(request.input, "x")
+
+      marker = Regex.run(~r/\[\d+ characters omitted\]/, request.input) |> List.first()
+      assert marker != nil
+
+      omitted =
+        marker
+        |> String.trim("[")
+        |> String.trim_trailing(" characters omitted]")
+        |> String.to_integer()
+
+      # Everything the result holds besides the marker's own characters is
+      # kept graphemes, so the marker count must account for the rest exactly.
+      kept = String.length(request.input) - String.length(marker)
+      assert omitted == String.length(input) - kept
+    end
+
+    test "a one-million-character ASCII input is handled by the same walk without error" do
+      cap = ToborGrade.input_cap_chars()
+      input = String.duplicate("a", 1_000_000)
+
+      {:ok, request} = ToborGrade.build_request(input, %{score?: false, component: nil})
+
+      assert String.valid?(request.input)
+      assert String.length(request.input) <= cap
+      assert Regex.match?(~r/\[\d+ characters omitted\]/, request.input)
       assert String.starts_with?(request.input, "a")
-      assert String.ends_with?(request.input, "END-OF-TRANSCRIPT")
     end
   end
 
