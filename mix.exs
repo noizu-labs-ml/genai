@@ -7,7 +7,7 @@ defmodule GenAI.MixProject do
       name: "Noizu Labs, GenAI Wrapper",
       description: description(),
       package: package(),
-      version: "0.5.2",
+      version: "0.5.3",
       elixir: "~> 1.16",
       start_permanent: Mix.env() == :prod,
       # Worktrees use absolute cache symlinks. Let Mix calculate asset links
@@ -42,8 +42,20 @@ defmodule GenAI.MixProject do
           threshold: 40
         ],
         ignore_modules: []
-      ]
+      ],
+      aliases: aliases()
     ]
+  end
+
+  # Fast lane (sdet-engineer): per-change run excludes slow + live tests and coverage.
+  defp aliases do
+    [
+      "test.fast": ["test --exclude slow --exclude live --no-cover"]
+    ]
+  end
+
+  def cli do
+    [preferred_envs: ["test.fast": :test]]
   end
 
   defp cache_path(name) do

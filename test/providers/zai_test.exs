@@ -1,6 +1,10 @@
 defmodule GenAI.Provider.ZAITest do
   use ExUnit.Case
+  use Mimic
   import GenAI.Test.Support.Common
+
+  setup :set_mimic_private
+  setup :verify_on_exit!
 
   @moduletag provider: :zai
 

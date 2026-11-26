@@ -177,11 +177,11 @@ defmodule ToborGradeTest do
              ]
     end
 
-    test "score lane targets decision-model-preview with a 10-level 0-100 rubric" do
+    test "score lane targets decision-model with a 10-level 0-100 rubric" do
       assert {:ok, request} =
                ToborGrade.build_request("user: hello", %{score?: true, component: nil})
 
-      assert request.model.model == "decision-model-preview"
+      assert request.model.model == "decision-model"
       assert request.model.provider == GenAI.Provider.Qwen
 
       assert [%Question{type: :score, rubric: rubric, id: "quality"}] = request.questions
@@ -190,6 +190,187 @@ defmodule ToborGradeTest do
       scores = Enum.map(rubric, & &1.score)
       assert scores == Enum.sort(Enum.uniq(scores))
       assert Enum.min(scores) == 0 and Enum.max(scores) == 100
+    end
+
+    test "default model is the GA id decision-model" do
+      assert GenAI.Provider.Qwen.Models.decision_model().model == "decision-model"
+    end
+
+    test "decision_model_preview is deprecated but still returns the preview id" do
+      assert GenAI.Provider.Qwen.Models.decision_model_preview().model == "decision-model-preview"
+    end
+
+    test "input is capped at ToborGrade.input_cap_chars/0 for the score lane" do
+      {:ok, request} =
+        ToborGrade.build_request(
+          String.duplicate("x", ToborGrade.input_cap_chars() + 5_000),
+          %{score?: true, component: nil}
+        )
+
+      assert byte_size(request.input) <= ToborGrade.input_cap_chars()
+    end
+
+    test "input is capped at ToborGrade.input_cap_chars/0 for the choice lane" do
+      {:ok, request} =
+        ToborGrade.build_request(
+          String.duplicate("y", ToborGrade.input_cap_chars() + 5_000),
+          %{score?: false, component: nil}
+        )
+
+      assert byte_size(request.input) <= ToborGrade.input_cap_chars()
+    end
+
+    test "multibyte input is cut at a codepoint boundary, keeping the head and the tail" do
+      cap = ToborGrade.input_cap_chars()
+      # 2-byte é and 4-byte emoji: a byte cut at the cap boundary would split
+      # one of these codepoints and produce invalid UTF-8.
+      input = String.duplicate("é", 3_500) <> String.duplicate("🛠", 3_500)
+      assert String.length(input) > cap
+
+      {:ok, request} = ToborGrade.build_request(input, %{score?: false, component: nil})
+
+      assert String.valid?(request.input)
+      assert String.length(request.input) <= cap
+      assert byte_size(request.input) <= cap * 4
+      assert Regex.match?(~r/\[\d+ or more characters omitted\]/, request.input)
+      assert String.starts_with?(request.input, "é")
+      assert String.ends_with?(request.input, "🛠")
+    end
+
+    test "input within the character cap is never truncated by its byte size" do
+      # 5_941 four-byte characters: 23_764 bytes, over the old byte-bound
+      # guard, but comfortably within the 6_000-character cap.
+      input = String.duplicate("🛠", 5_941)
+      assert String.length(input) == 5_941
+
+      {:ok, request} = ToborGrade.build_request(input, %{score?: false, component: nil})
+
+      assert request.input == input
+    end
+
+    test "an input of cap + 1 graphemes gets a truthful lower-bound marker" do
+      cap = ToborGrade.input_cap_chars()
+      input = String.duplicate("a", cap + 1)
+      assert String.length(input) == cap + 1
+
+      {:ok, request} = ToborGrade.build_request(input, %{score?: false, component: nil})
+
+      assert String.valid?(request.input)
+      assert String.length(request.input) <= cap
+
+      marker = Regex.run(~r/\[\d+ or more characters omitted\]/, request.input) |> List.first()
+      assert marker != nil
+
+      omitted =
+        marker
+        |> String.trim("[")
+        |> String.trim_trailing(" or more characters omitted]")
+        |> String.to_integer()
+
+      # The overshoot walk stops at cap + 1 steps, so N is exactly
+      # cap + 1 minus the graphemes kept in head and tail.
+      kept = String.length(request.input) - String.length(marker)
+      assert omitted == cap + 1 - kept
+    end
+
+    test "an input about a million graphemes past the cap gets the same marker as cap + 1" do
+      cap = ToborGrade.input_cap_chars()
+      input = String.duplicate("a", 503_000) <> String.duplicate("z", 503_001)
+      assert String.length(input) == 1_006_001
+
+      {:ok, request} = ToborGrade.build_request(input, %{score?: false, component: nil})
+
+      assert String.valid?(request.input)
+      assert String.length(request.input) <= cap
+
+      marker = Regex.run(~r/\[\d+ or more characters omitted\]/, request.input) |> List.first()
+      assert marker != nil
+
+      # Right head and right tail: genuine prefix/suffix of the input.
+      [head, tail] = String.split(request.input, marker, parts: 2)
+      assert head == String.slice(input, 0, String.length(head))
+      assert head == String.duplicate("a", String.length(head))
+      assert tail == String.slice(input, -String.length(tail), String.length(tail))
+      assert tail == String.duplicate("z", String.length(tail))
+
+      # Same marker text as the cap + 1 case: N depends only on the cap and
+      # the kept graphemes, never on the input's total size.
+      kept = String.length(request.input) - String.length(marker)
+
+      omitted =
+        marker
+        |> String.trim("[")
+        |> String.trim_trailing(" or more characters omitted]")
+        |> String.to_integer()
+
+      assert omitted == cap + 1 - kept
+    end
+
+    test "an input of four-byte characters keeps whole characters in head and tail" do
+      cap = ToborGrade.input_cap_chars()
+      input = String.duplicate("🛠", cap + 1)
+      assert String.length(input) == cap + 1
+
+      {:ok, request} = ToborGrade.build_request(input, %{score?: false, component: nil})
+
+      assert String.valid?(request.input)
+      assert String.length(request.input) <= cap
+      assert Regex.match?(~r/\[\d+ or more characters omitted\]/, request.input)
+      assert String.starts_with?(request.input, "🛠")
+      assert String.ends_with?(request.input, "🛠")
+    end
+
+    test "the marker reserve holds the longest marker the caps can produce" do
+      # Mirrors lib/tobor_grade.ex: the marker reserve is a literal 64
+      # characters; head and tail split the remainder of the cap. The
+      # longest marker the code can produce formats cap + 1 (the degenerate
+      # case where the kept tail holds nothing); the day a cap bump
+      # outgrows the reserve, this test fails.
+      cap = ToborGrade.input_cap_chars()
+      reserve = 64
+      longest_marker = "[#{cap + 1} or more characters omitted]"
+      assert String.length(longest_marker) <= reserve
+    end
+
+    test "a short multi-codepoint input widens the tail window without raising" do
+      # 13 bytes per grapheme: "a" + six U+0301 combining marks. The first
+      # window (8 bytes x tail budget = 23,744 bytes) holds ~1,826 graphemes,
+      # below the 2,968 tail budget, so the window widens — and the widened
+      # size is clamped to the input's own byte size (78,013) instead of
+      # running binary_part/3 past the end.
+      cluster = "a" <> String.duplicate("́", 6)
+      input = String.duplicate(cluster, 6_001)
+      assert String.length(input) == 6_001
+      assert byte_size(input) == 78_013
+
+      {:ok, request} = ToborGrade.build_request(input, %{score?: false, component: nil})
+
+      assert String.valid?(request.input)
+      assert String.length(request.input) <= ToborGrade.input_cap_chars()
+      assert Regex.match?(~r/\[\d+ or more characters omitted\]/, request.input)
+      assert String.starts_with?(request.input, "a")
+      assert String.ends_with?(request.input, cluster)
+    end
+
+    test "a byte window that starts inside a codepoint is aligned before the walk" do
+      # 3-byte ellipsis glyphs then 4-byte wrench emoji: 24,000 bytes total,
+      # so the tail window starts at byte 256 — inside a 3-byte codepoint —
+      # and must be moved forward to a boundary before it is walked.
+      input = String.duplicate("…", 4_000) <> String.duplicate("🛠", 3_000)
+      assert String.length(input) == 7_000
+      assert byte_size(input) == 24_000
+
+      {:ok, request} = ToborGrade.build_request(input, %{score?: false, component: nil})
+
+      assert String.valid?(request.input)
+      assert String.length(request.input) <= ToborGrade.input_cap_chars()
+      assert String.starts_with?(request.input, "…")
+      assert String.ends_with?(request.input, "🛠")
+    end
+
+    test "an empty input passes through the cap untouched" do
+      {:ok, request} = ToborGrade.build_request("", %{score?: false, component: nil})
+      assert request.input == ""
     end
   end
 

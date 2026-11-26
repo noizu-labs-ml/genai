@@ -53,8 +53,9 @@ defmodule GenAI.Provider.ImageProviderTest do
       assert [%{input: [:text], output: :image, mode: :sync}] = GeminiImage.supported_modalities()
     end
 
-    test "qwen declares text -> image sync" do
-      assert [%{input: [:text], output: :image, mode: :sync}] = QwenImage.supported_modalities()
+    test "qwen declares text/image -> image sync" do
+      assert [%{input: [:text, :image], output: :image, mode: :sync}] =
+               QwenImage.supported_modalities()
     end
   end
 

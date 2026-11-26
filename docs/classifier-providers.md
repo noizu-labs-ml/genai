@@ -16,7 +16,7 @@ model references. `Models.list/1` discovers TypeSafe's `models[]` / `name` catal
 Hosted classification uses `https://api.typesafe.ai/v1/systemone` by default and
 `JEV_API_KEY` (`TYPESAFE_API_KEY` fallback). Override `JEV_BASE_URL` when needed.
 
-`GenAI.Provider.Qwen.Models.decision_model_preview/0` selects Alibaba's classifier.
+`GenAI.Provider.Qwen.Models.decision_model/0` selects Alibaba's classifier.
 Set `QWEN_DECISION_BASE_URL` to the actual workspace compatible-mode `/v1` base.
 The adapter appends `/systemone` once. It uses `QWEN_API_KEY` or a configured
 `decision_api_key`; ordinary Qwen chat/token-plan configuration stays separate.
@@ -115,9 +115,10 @@ No package publication is required for source-path testing.
 
 ## Alibaba rounded-hundredths policy
 
-Only Qwen requests whose actual encoded model is `decision-model-preview`
-default to `distribution_policy: :alibaba_rounded_hundredths`. Jev, other models,
-and Core retain strict validation. Pass `distribution_policy: :strict` to require
+Only Qwen requests whose actual encoded model is `decision-model` — or the
+retired `decision-model-preview` id, still answered by the same workspace
+endpoint — default to `distribution_policy: :alibaba_rounded_hundredths`.
+Jev, other models, and Core retain strict validation. Pass `distribution_policy: :strict` to require
 unit wire mass and native-score consistency within the existing `1e-6` bounds:
 
 ```elixir

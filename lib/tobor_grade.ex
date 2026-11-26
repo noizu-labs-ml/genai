@@ -9,10 +9,11 @@ defmodule ToborGrade do
   - default lane: hosted Jev (`GenAI.Provider.Jev.Models.latest/0`, model
     `jev-latest` via TypeSafe) answering one `:choice` question —
     `continuation | topic-switch | new-task | more-context-needed`.
-  - `--score`: Alibaba's decision model (`GenAI.Provider.Qwen.Models.decision_model_preview/0`)
-    answering one 0-100 `:score` question. The SystemOne adapter's inferred
-    `:alibaba_rounded_hundredths` distribution policy applies automatically to
-    `decision-model-preview` requests; it is reused here, never re-implemented.
+  - `--score`: Alibaba's decision model (`GenAI.Provider.Qwen.Models.decision_model/0`,
+    GA id `decision-model`) answering one 0-100 `:score` question. The SystemOne
+    adapter's inferred `:alibaba_rounded_hundredths` distribution policy applies
+    automatically to decision-model requests (the retired `decision-model-preview`
+    id is still recognised); it is reused here, never re-implemented.
   - `--walkback N` (cap 5): when the verdict is `more-context-needed`, walk the
     transcript back one user turn and re-grade, up to N times.
   - `--sink jsonl:<path>`: append one JSON line
@@ -22,6 +23,24 @@ defmodule ToborGrade do
   """
 
   @walkback_cap 5
+  # Every classifier call sends at most this many characters (graphemes) of
+  # rendered transcript — never a whole session or a dataset. Oversized input
+  # keeps the head and the tail with a single omission marker between them.
+  @input_cap_chars 6_000
+  # Head/tail split of the cap minus the marker reserve, in characters
+  # (graphemes); cuts are grapheme-aligned, so no cut ever splits a UTF-8
+  # codepoint, and head + marker + tail always fits the cap.
+  @input_cap_marker_max_chars 64
+  @input_cap_head_chars div(@input_cap_chars - @input_cap_marker_max_chars, 2)
+  @input_cap_tail_chars @input_cap_chars - @input_cap_marker_max_chars - @input_cap_head_chars
+  # The tail is cut from one byte window at the end (never a walk from the
+  # start): about 8 bytes per wanted grapheme, moved forward to a codepoint
+  # boundary and walked once; if it holds fewer graphemes than wanted (long
+  # clusters), widen it by a factor up to a byte ceiling and keep what it
+  # holds at the ceiling.
+  @input_cap_tail_window_bytes 8 * @input_cap_tail_chars
+  @input_cap_tail_window_widen_factor 4
+  @input_cap_tail_window_max_bytes 32 * @input_cap_tail_chars
   @verdicts ["continuation", "topic-switch", "new-task", "more-context-needed"]
   @walkback_verdict "more-context-needed"
 
@@ -172,11 +191,107 @@ defmodule ToborGrade do
   # Classifier requests
   # ---------------------------------------------------------------------------
 
-  @doc "Build the classifier request for one rendered transcript input."
+  @doc "Build the classifier request for one rendered transcript input. Input longer than `input_cap_chars/0` characters is truncated, keeping the head and the tail at codepoint boundaries with a single `[N or more characters omitted]` marker between them (the count is a truthful lower bound — the overshoot walk stops within cap + 1 steps and never counts the whole input); head + marker + tail always stays within the cap."
   @spec build_request(String.t(), %{score?: boolean(), component: String.t() | nil}) ::
           {:ok, map()} | {:error, term()}
   def build_request(input, args) when is_binary(input) do
+    input = capped_input(input)
+
     if args.score?, do: score_request(input), else: choice_request(input)
+  end
+
+  # Deterministic head+tail truncation counted in characters (graphemes):
+  # keep the head and the tail with one "[N or more characters omitted]"
+  # marker between them, never send a huge dataset. The overshoot decision
+  # stops after cap + 1 graphemes and never counts the whole input, so the
+  # marker count is a truthful lower bound (cap + 1 minus the graphemes
+  # kept in head and tail); the tail comes from one bounded byte window at
+  # the end, never a walk from the start.
+  defp capped_input(input) do
+    case grapheme_census(input, 0, []) do
+      {:within_cap, _count} ->
+        input
+
+      {:over_cap, head_graphemes} ->
+        tail_graphemes = tail_graphemes(input)
+        tail = Enum.join(tail_graphemes)
+        omitted = @input_cap_chars + 1 - @input_cap_head_chars - length(tail_graphemes)
+        head = Enum.reverse(head_graphemes) |> Enum.join("")
+        marker = "[#{omitted} or more characters omitted]"
+
+        head <> marker <> tail
+    end
+  end
+
+  # Walk graphemes with String.next_grapheme/1, keeping the first
+  # @input_cap_head_chars graphemes as the head. Returns as soon as the
+  # count passes @input_cap_chars — at most cap + 1 steps, whether the
+  # input is 6 KB or 6 MB — and never scans the whole input: within-cap
+  # inputs simply run out of graphemes first.
+  defp grapheme_census(rest, count, head_acc) do
+    case String.next_grapheme(rest) do
+      nil ->
+        {:within_cap, count}
+
+      {grapheme, rest} ->
+        count = count + 1
+        head_acc = if count <= @input_cap_head_chars, do: [grapheme | head_acc], else: head_acc
+
+        if count > @input_cap_chars do
+          {:over_cap, head_acc}
+        else
+          grapheme_census(rest, count, head_acc)
+        end
+    end
+  end
+
+  # The tail, from one byte window at the end of the input: cut ~8 bytes
+  # per wanted grapheme off the end, move the window's start forward to a
+  # codepoint boundary, walk just that window once. If it holds fewer
+  # graphemes than wanted (long clusters), widen it by
+  # @input_cap_tail_window_widen_factor up to @input_cap_tail_window_max_bytes
+  # and keep whatever it holds at the ceiling — a truthful tail lower bound.
+  # A widening step is clamped to the input's own byte size: once the window
+  # is the whole input there is nothing left to widen, so it returns what
+  # the input holds.
+  defp tail_graphemes(input) do
+    limit = min(@input_cap_tail_window_max_bytes, byte_size(input))
+    do_tail_graphemes(input, min(@input_cap_tail_window_bytes, limit), limit)
+  end
+
+  defp do_tail_graphemes(input, bytes, limit) do
+    window = codepoint_aligned(binary_part(input, byte_size(input) - bytes, bytes))
+    graphemes = window_graphemes(window, [])
+
+    if length(graphemes) >= @input_cap_tail_chars or bytes >= limit do
+      # The walk accumulated reversed, so its first N entries are the
+      # window's LAST N graphemes — reverse them into input order.
+      graphemes |> Enum.take(@input_cap_tail_chars) |> Enum.reverse()
+    else
+      # Never widen past the input itself: binary_part/3 would raise on a
+      # negative start. A clamped step means the next round's window IS the
+      # whole input, which takes whatever it holds via bytes >= limit.
+      do_tail_graphemes(input, min(bytes * @input_cap_tail_window_widen_factor, byte_size(input)), limit)
+    end
+  end
+
+  # Move the window's start forward to a codepoint boundary: a byte cut
+  # from the end may land inside a multi-byte character, so drop leading
+  # bytes until the window is valid UTF-8 (at most 3 bytes).
+  defp codepoint_aligned(bin) do
+    if String.valid?(bin) do
+      bin
+    else
+      codepoint_aligned(binary_part(bin, 1, byte_size(bin) - 1))
+    end
+  end
+
+  # Walk one bounded window into a reversed grapheme list.
+  defp window_graphemes(rest, acc) do
+    case String.next_grapheme(rest) do
+      nil -> acc
+      {grapheme, rest} -> window_graphemes(rest, [grapheme | acc])
+    end
   end
 
   defp choice_request(input) do
@@ -219,7 +334,7 @@ defmodule ToborGrade do
 
     request(
       %{input: input, questions: [question]},
-      GenAI.Provider.Qwen.Models.decision_model_preview()
+      GenAI.Provider.Qwen.Models.decision_model()
     )
   end
 
@@ -233,12 +348,31 @@ defmodule ToborGrade do
   @spec walkback_cap() :: pos_integer()
   def walkback_cap, do: @walkback_cap
 
+  @doc """
+  Maximum characters (graphemes) of rendered transcript one classifier call
+  sends (applied in `build_request/2`). Oversized input keeps the head and
+  the tail with a single `[N or more characters omitted]` marker between
+  them; the overshoot decision walks at most cap + 1 graphemes and never
+  counts the whole input (the marker count is a truthful lower bound), the
+  tail is cut from one bounded byte window at the end (never a walk from
+  the start), and head + marker + tail always stays within this cap.
+  """
+  @spec input_cap_chars() :: pos_integer()
+  def input_cap_chars, do: @input_cap_chars
+
   # ---------------------------------------------------------------------------
   # Result extraction
   # ---------------------------------------------------------------------------
 
   defp extract(args, result) do
     question_id = if args.score?, do: "quality", else: "verdict"
+
+    input_tokens =
+      case result.usage do
+        %{input_tokens: t} when is_integer(t) -> t
+        %{"input_tokens" => t} when is_integer(t) -> t
+        _ -> nil
+      end
 
     with answer when not is_nil(answer) <-
            Enum.find(result.answers, &(&1.question_id == question_id)) do
@@ -249,10 +383,10 @@ defmodule ToborGrade do
             number -> Float.round(number * 1.0, 1)
           end
 
-        {:ok, %{verdict: answer.grade || "ungraded", score: score}}
+        {:ok, %{verdict: answer.grade || "ungraded", score: score, input_tokens: input_tokens}}
       else
         verdict = answer.choice_id || answer.value
-        {:ok, %{verdict: verdict, score: nil}}
+        {:ok, %{verdict: verdict, score: nil, input_tokens: input_tokens}}
       end
     else
       nil -> {:error, {:missing_answer, question_id}}

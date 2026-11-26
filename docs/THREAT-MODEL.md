@@ -2,7 +2,7 @@
 
 ## Overview
 
-GenAI is a Hex-published Elixir **library**, not a deployed service: it has no ingress, no database, and no perimeter of its own. It executes inside consumer applications and does three security-relevant things on their behalf: (1) it holds and transmits provider API keys alongside user prompts to third-party AI APIs, (2) since the MCP tool-source adapter landed, it ingests **externally-controlled data** — tool definitions, schemas, and results from MCP servers — and republishes it to LLMs and telemetry, and (3) the `tobor-grade` CLI reads local agent transcripts and egresses their rendered contents to hosted classifier endpoints (TypeSafe Jev, Alibaba decision-model-preview), appending verdicts to a local JSONL sink. The trust boundaries that matter are consumer-process ↔ MCP server, consumer-process ↔ provider APIs, library ↔ telemetry sinks, and operator workstation ↔ grading endpoints.
+GenAI is a Hex-published Elixir **library**, not a deployed service: it has no ingress, no database, and no perimeter of its own. It executes inside consumer applications and does three security-relevant things on their behalf: (1) it holds and transmits provider API keys alongside user prompts to third-party AI APIs, (2) since the MCP tool-source adapter landed, it ingests **externally-controlled data** — tool definitions, schemas, and results from MCP servers — and republishes it to LLMs and telemetry, and (3) the `tobor-grade` CLI reads local agent transcripts and egresses their rendered contents to hosted classifier endpoints (TypeSafe Jev, Alibaba decision-model), appending verdicts to a local JSONL sink. The trust boundaries that matter are consumer-process ↔ MCP server, consumer-process ↔ provider APIs, library ↔ telemetry sinks, and operator workstation ↔ grading endpoints.
 
 Assets: provider API keys (config/env), prompt/thread content in transit, MCP tool results, consumer telemetry streams, transcript contents (may embed secrets overheard by graded agent sessions). Grounding: components and data flow in [PROJ-ARCH.md](PROJ-ARCH.md); implementing directories in [PROJ-LAYOUT.md](PROJ-LAYOUT.md); interface contracts in [PROJ-SCHEMA.md](PROJ-SCHEMA.md).
 
@@ -23,7 +23,7 @@ graph LR
     Adapter -.opt-in.-> Tele
 
     TR[Local transcript JSONL] --> TG[ToborGrade CLI]
-    TG -->|rendered transcript + keys egress| CE[Grading endpoints: TypeSafe Jev / Alibaba decision-model-preview]
+    TG -->|rendered transcript + keys egress| CE[Grading endpoints: TypeSafe Jev / Alibaba decision-model]
     TG -->|verdict line append| Sink[Local jsonl sink]
 
     Internet -->|configurable base URLs| Lib

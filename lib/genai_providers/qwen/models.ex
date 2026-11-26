@@ -1,5 +1,15 @@
 defmodule GenAI.Provider.Qwen.Models do
-  @doc "Alibaba classifier model; requires a workspace decision_base_url, rather than the chat endpoint."
+  @doc """
+  Alibaba decision model (general availability, 2026-11-26); requires a workspace
+  decision_base_url, rather than the chat endpoint.
+  """
+  def decision_model, do: model("decision-model")
+
+  @doc """
+  Deprecated: use `decision_model/0` (general availability since 2026-11-26).
+  Kept so callers still sending the preview id keep today's behaviour; the
+  workspace endpoint still answers `decision-model-preview`.
+  """
   def decision_model_preview, do: model("decision-model-preview")
 
   @moduledoc """
