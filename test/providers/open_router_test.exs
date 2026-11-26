@@ -1,5 +1,9 @@
 defmodule GenAI.Provider.OpenRouterTest do
   use ExUnit.Case
+  use Mimic
+
+  setup :set_mimic_private
+  setup :verify_on_exit!
 
   @moduletag provider: :openrouter
 
