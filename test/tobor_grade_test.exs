@@ -331,6 +331,47 @@ defmodule ToborGradeTest do
       longest_marker = "[#{cap + 1} or more characters omitted]"
       assert String.length(longest_marker) <= reserve
     end
+
+    test "a short multi-codepoint input widens the tail window without raising" do
+      # 13 bytes per grapheme: "a" + six U+0301 combining marks. The first
+      # window (8 bytes x tail budget = 23,744 bytes) holds ~1,826 graphemes,
+      # below the 2,968 tail budget, so the window widens — and the widened
+      # size is clamped to the input's own byte size (78,013) instead of
+      # running binary_part/3 past the end.
+      cluster = "a" <> String.duplicate("́", 6)
+      input = String.duplicate(cluster, 6_001)
+      assert String.length(input) == 6_001
+      assert byte_size(input) == 78_013
+
+      {:ok, request} = ToborGrade.build_request(input, %{score?: false, component: nil})
+
+      assert String.valid?(request.input)
+      assert String.length(request.input) <= ToborGrade.input_cap_chars()
+      assert Regex.match?(~r/\[\d+ or more characters omitted\]/, request.input)
+      assert String.starts_with?(request.input, "a")
+      assert String.ends_with?(request.input, cluster)
+    end
+
+    test "a byte window that starts inside a codepoint is aligned before the walk" do
+      # 3-byte ellipsis glyphs then 4-byte wrench emoji: 24,000 bytes total,
+      # so the tail window starts at byte 256 — inside a 3-byte codepoint —
+      # and must be moved forward to a boundary before it is walked.
+      input = String.duplicate("…", 4_000) <> String.duplicate("🛠", 3_000)
+      assert String.length(input) == 7_000
+      assert byte_size(input) == 24_000
+
+      {:ok, request} = ToborGrade.build_request(input, %{score?: false, component: nil})
+
+      assert String.valid?(request.input)
+      assert String.length(request.input) <= ToborGrade.input_cap_chars()
+      assert String.starts_with?(request.input, "…")
+      assert String.ends_with?(request.input, "🛠")
+    end
+
+    test "an empty input passes through the cap untouched" do
+      {:ok, request} = ToborGrade.build_request("", %{score?: false, component: nil})
+      assert request.input == ""
+    end
   end
 
   describe "grading runs" do

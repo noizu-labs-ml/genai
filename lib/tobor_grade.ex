@@ -251,6 +251,9 @@ defmodule ToborGrade do
   # graphemes than wanted (long clusters), widen it by
   # @input_cap_tail_window_widen_factor up to @input_cap_tail_window_max_bytes
   # and keep whatever it holds at the ceiling — a truthful tail lower bound.
+  # A widening step is clamped to the input's own byte size: once the window
+  # is the whole input there is nothing left to widen, so it returns what
+  # the input holds.
   defp tail_graphemes(input) do
     limit = min(@input_cap_tail_window_max_bytes, byte_size(input))
     do_tail_graphemes(input, min(@input_cap_tail_window_bytes, limit), limit)
@@ -265,7 +268,10 @@ defmodule ToborGrade do
       # window's LAST N graphemes — reverse them into input order.
       graphemes |> Enum.take(@input_cap_tail_chars) |> Enum.reverse()
     else
-      do_tail_graphemes(input, bytes * @input_cap_tail_window_widen_factor, limit)
+      # Never widen past the input itself: binary_part/3 would raise on a
+      # negative start. A clamped step means the next round's window IS the
+      # whole input, which takes whatever it holds via bytes >= limit.
+      do_tail_graphemes(input, min(bytes * @input_cap_tail_window_widen_factor, byte_size(input)), limit)
     end
   end
 
