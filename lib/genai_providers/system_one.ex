@@ -23,7 +23,11 @@ defmodule GenAI.Provider.SystemOne do
     end
   end
 
-  defp classifier_policy(options, GenAI.Provider.Qwen, "decision-model-preview"),
+  # The decision model is GA as `decision-model` (2026-11-26); the preview id
+  # still answers on the same workspace endpoint and keeps today's behaviour.
+  @decision_model_ids ["decision-model", "decision-model-preview"]
+
+  defp classifier_policy(options, GenAI.Provider.Qwen, id) when id in @decision_model_ids,
     do: Keyword.put_new(options, :distribution_policy, :alibaba_rounded_hundredths)
 
   defp classifier_policy(options, _, _), do: Keyword.put(options, :distribution_policy, :strict)
@@ -118,8 +122,8 @@ defmodule GenAI.Provider.SystemOne do
     model_name = json["model"] || (request.model && request.model.model)
 
     policy =
-      if provider == GenAI.Provider.Qwen and model_name == "decision-model-preview" and
-           (is_nil(request.model) or request.model.model == "decision-model-preview"),
+      if provider == GenAI.Provider.Qwen and model_name in @decision_model_ids and
+           (is_nil(request.model) or request.model.model in @decision_model_ids),
          do: Keyword.get(options, :distribution_policy, :strict),
          else: :strict
 

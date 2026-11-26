@@ -62,7 +62,7 @@ lib/
     │   ├── encoder_protocol.ex
     │   ├── models.ex
     │   ├── dashscope.ex            #   DashScope host/credential handling
-    │   ├── classifier.ex           #   Alibaba decision-model-preview classifier (workspace System One endpoint)
+    │   ├── classifier.ex           #   Alibaba decision-model classifier (workspace System One endpoint)
     │   ├── native.ex               #   Native DashScope generation provider (explicit native_base_url)
     │   ├── native/
     │   │   ├── encoder.ex          #     Native request encoding + credentials

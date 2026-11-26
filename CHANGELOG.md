@@ -2,6 +2,9 @@ Change Log
 ==============
 All notable changes to this project will be documented in this file.
 
+## 2026-11-26
+- decision-model GA id sweep + bounded, token-reported tobor-grade — review fixes: input cap is codepoint-safe head+tail truncation counted in characters, joined by a single "[N or more characters omitted]" marker carrying a truthful lower bound (the overshoot walk stops within cap + 1 steps and never counts the whole input), overshoot decided by a bounded grapheme walk (no byte-size guessing), docs now cover the preview id's rounded-hundredths policy, Qwen classifier default id sourced from `Models.decision_model/0` (#40)
+
 ## 2026-11-11
 - Qwen Image reference-image edits: `GenAI.Provider.Qwen.Image` now declares `input: [:text, :image]` and encodes up to 3 reference images as base64 data-URL content parts followed by the text part on the DashScope multimodal route (ported from media-tools' proven Rust body). Sync-only (async header 403s on our accounts), connection-drop retry over HTTP/1.1, all five response URL shapes, `size` `WxH`→`W*H` + 4:3/3:4 aspect map. Adds `test.fast` mix alias (`test --exclude slow --exclude live --no-cover`) and a gated `@tag :live` reference-edit proof — `feature/qwen-image-reference` → `epic.media-prompt` → `develop`.
 
@@ -12,7 +15,13 @@ All notable changes to this project will be documented in this file.
 - Doc sweep: refresh `docs/PROJ-LAYOUT`/`PROJ-ARCH`/`PROJ-SCHEMA`/`THREAT-MODEL` (+ summaries and layout detail pages) for the classifier providers, native DashScope, and `tobor-grade` landing — corrected stale `:qwen` base-URL env claims, documented `:jev`/`QWEN_DECISION_BASE_URL`/`QWEN_NATIVE_BASE_URL` config/env surface, tobor-grade CLI flag/sink/transcript interfaces, and threat entries T-010/T-011 — landed direct to `develop`; doc-pointer seed (`.meta/pointers.yaml`, bounded starter set) via companion PR #29.
 
 ## Unreleased
+
+- Model-id sweep: the Alibaba classifier model is now GA `decision-model` (`GenAI.Provider.Qwen.Models.decision_model/0`); `decision_model_preview/0` is deprecated and still returns the preview id; the SystemOne `:alibaba_rounded_hundredths` policy and decode clause recognise BOTH ids so callers still sending `decision-model-preview` keep today's behaviour; `tobor_grade` caps every classifier call at `ToborGrade.input_cap_chars/0` (6,000 characters, head truncation) and reports `usage.input_tokens` in outcomes and the sink; `--score` default moved to `decision-model`.
 - Add `tobor-grade` CLI (`mix tobor_grade` task + `mix escript.build` binary) wrapping `GenAI.Classifier.Router.classify/2`: hosted Jev `jev-latest` `:choice` transcript verdicts (`continuation | topic-switch | new-task | more-context-needed`), `--walkback N` (cap 5) retry on `more-context-needed`, Alibaba `decision-model-preview` 0-100 `:score` via `--score` reusing the SystemOne `:alibaba_rounded_hundredths` policy, `--sink jsonl:<path>` result appends (`{component?, verdict, score?, transcript_path, walkback_used, timestamp}`) and the `TOBOR_GRADING=1` recursion guard — `feature/tobor-grade` → `develop`.
+
+## v0.5.3 (2026-11-26)
+- Decision-model GA id sweep + bounded, token-reported tobor-grade: classifier model ids move to GA `decision-model` (`decision_model_preview/0` deprecated, still recognised for callers still sending it), `tobor_grade` caps every classifier call at `ToborGrade.input_cap_chars/0` (6,000 characters, codepoint-safe head+tail truncation with a truthful `[N or more characters omitted]` lower-bound marker — the overshoot walk stops within cap + 1 steps and never counts the whole input; the tail comes from one bounded byte window at the end) and reports `usage.input_tokens` in outcomes and the sink; `--score` default moved to `decision-model` — [PR #40](https://github.com/noizu-labs-ml/genai/pull/40) → `develop`.
+- Qwen Image reference-image edits on the multimodal route: `GenAI.Provider.Qwen.Image` declares `input: [:text, :image]` and encodes up to 3 reference images as base64 data-URL content parts followed by the text part on the DashScope multimodal route (commit `f6c84b9` on `develop`, never separately released).
 
 ## v0.5.2 - Producer dependency pickup (2026-11-10)
 - `noizu_mcp` 0.5.1 → 0.6.4 — producer vuln-fix release (bandit CVE wave + jose/ecto/plug_crypto/jsv advisory re-picks upstream); mix.exs constraint raised `~> 0.5.0` → `~> 0.6.0` (the old range pins major.minor, `>= 0.5.0 and < 0.6.0` — the resolver empirically chose 0.5.3 under it, refusing 0.6.4); surgical pins held in the lock: `jsv` 0.26.2 (resolver's 0.27.0 drag reverted) and `jose` 1.11.13. Bandit/ecto/plug_crypto are optional `noizu_mcp` deps GenAI does not install, so those advisories never reach GenAI's artifact.

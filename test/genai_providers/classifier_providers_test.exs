@@ -243,12 +243,12 @@ defmodule GenAI.ClassifierProvidersTest do
     Mimic.expect(Finch, :request, fn req, _, _ ->
       assert req.host == "workspace.example"
       assert req.path == "/compatible-mode/v1/systemone"
-      assert Jason.decode!(req.body)["model"] == "decision-model-preview"
-      {:ok, reply(%{response() | "model" => "decision-model-preview"})}
+      assert Jason.decode!(req.body)["model"] == "decision-model"
+      {:ok, reply(%{response() | "model" => "decision-model"})}
     end)
 
     assert {:ok, %Result{provider: Qwen}} =
-             GenAI.classify(%{request() | model: Qwen.Models.decision_model_preview()},
+             GenAI.classify(%{request() | model: Qwen.Models.decision_model()},
                api_key: "fixture-key",
                decision_base_url: "https://workspace.example/compatible-mode/v1"
              )
@@ -384,7 +384,7 @@ defmodule GenAI.ClassifierProvidersTest do
 
   defp rounded_decode(body, options \\ []) do
     SystemOne.decode(
-      Map.put(body, "model", "decision-model-preview"),
+      Map.put(body, "model", "decision-model"),
       normalized(),
       Qwen,
       Keyword.put_new(options, :distribution_policy, :alibaba_rounded_hundredths)
@@ -490,7 +490,7 @@ defmodule GenAI.ClassifierProvidersTest do
   test "Qwen default policy uses the actual encoded model and strict override remains usable" do
     body =
       response()
-      |> Map.put("model", "decision-model-preview")
+      |> Map.put("model", "decision-model")
       |> put_in(["answers", "route", "probabilities"], %{"billing" => 0.79, "technical" => 0.2})
 
     Mimic.expect(Finch, :request, 3, fn _, _, _ -> {:ok, reply(body)} end)
@@ -503,6 +503,22 @@ defmodule GenAI.ClassifierProvidersTest do
 
     assert {:error, :invalid_system_one_distribution} =
              Qwen.classify(overridden, distribution_policy: :alibaba_rounded_hundredths)
+  end
+
+  test "the retired preview id decision-model-preview keeps the rounded-hundredths policy" do
+    body =
+      response()
+      |> Map.put("model", "decision-model-preview")
+      |> put_in(["answers", "route", "probabilities"], %{"billing" => 0.79, "technical" => 0.2})
+
+    Mimic.expect(Finch, :request, fn _, _, _ -> {:ok, reply(body)} end)
+
+    preview_request = %Request{
+      request()
+      | model: %GenAI.Model{model: "decision-model-preview", provider: Qwen}
+    }
+
+    assert {:ok, _} = Qwen.classify(preview_request)
   end
 
   test "Alibaba policy keeps previously valid strict high-precision and large-choice responses" do
@@ -527,7 +543,7 @@ defmodule GenAI.ClassifierProvidersTest do
       })
 
     wire = %{
-      "model" => "decision-model-preview",
+      "model" => "decision-model",
       "answers" => %{
         "pick" => %{
           "type" => "choice",
